@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Console - จัดการบัญชีผู้ใช้ (Account Settings)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Universal Theme Manager & API Config -->
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <script src="config.js"></script>
+
+    <style>
+        :root {
+            --bg-main: #0b0e14;
+            --bg-card: #121721;
+            --bg-sidebar: #121721;
+            --bg-topbar: #121721;
+            --border-color: #1e2638;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --input-bg: #0b0e14;
+            --hover-bg: #161c28;
+            --accent-blue: #388bfd;
+            --accent-green: #3fb950;
+            --accent-red: #f85149;
+            --btn-back-bg: #1c2333;
+            --google-red: #ea4335;
+            --facebook-blue: #1877f2;
+            --color-scheme: dark;
+        }
+
+        html.light-theme {
+            --bg-main: #f6f8fa;
+            --bg-card: #ffffff;
+            --bg-sidebar: #ffffff;
+            --bg-topbar: #ffffff;
+            --border-color: #d0d7de;
+            --text-primary: #1f2328;
+            --text-secondary: #656d76;
+            --input-bg: #ffffff;
+            --hover-bg: #f3f4f6;
+            --accent-blue: #0969da;
+            --accent-green: #1a7f37;
+            --accent-red: #cf222e;
+            --btn-back-bg: #f3f4f6;
+            --color-scheme: light;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Kanit', sans-serif;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Style */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            padding: 0 24px 20px 24px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand span.version {
+            font-size: 0.75rem;
+            background: rgba(56, 139, 253, 0.15);
+            color: var(--accent-blue);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 400;
+        }
+
+        .nav-group-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            padding: 20px 24px 8px 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item a:hover {
+            color: var(--text-primary);
+            background-color: var(--hover-bg);
+        }
+
+        .nav-item.active a {
+            color: var(--accent-blue);
+            background-color: rgba(56, 139, 253, 0.1);
+            border-left-color: var(--accent-blue);
+            font-weight: 500;
+        }
+
+        .nav-item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item-content i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: var(--bg-topbar);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .page-title {
+            font-size: 1.15rem;
+            font-weight: 500;
+        }
+
+        .theme-toggle-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle-btn:hover {
+            background-color: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        .content-container {
+            padding: 32px;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-header h2 {
+            font-size: 1.15rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Profile Banner */
+        .profile-hero {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .profile-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1f6feb, #388bfd);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
+            flex-shrink: 0;
+        }
+
+        .profile-details h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .profile-details .username {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        /* Role Badges */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.82rem;
+            font-weight: 500;
+        }
+
+        .role-admin  { background-color: rgba(56,139,253,0.15); color: var(--accent-blue); }
+        .role-editor { background-color: rgba(63,185,80,0.15);  color: #3fb950; }
+        .role-viewer { background-color: rgba(139,148,158,0.15);color: var(--text-secondary); }
+
+        /* OAuth Provider Cards */
+        .oauth-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .oauth-item {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .oauth-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .oauth-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .oauth-icon.google {
+            background-color: rgba(234, 67, 53, 0.12);
+            color: var(--google-red);
+        }
+
+        .oauth-icon.facebook {
+            background-color: rgba(24, 119, 242, 0.12);
+            color: var(--facebook-blue);
+        }
+
+        .oauth-name {
+            font-weight: 500;
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
+
+        .oauth-status {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .oauth-status.connected {
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+
+        /* Buttons */
+        .btn-connect-google {
+            background-color: #ffffff;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .btn-connect-google:hover {
+            background-color: #f8f9fa;
+            border-color: #c6c6c6;
+        }
+
+        .btn-connect-facebook {
+            background-color: var(--facebook-blue);
+            color: #ffffff;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .btn-connect-facebook:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-unlink {
+            background-color: transparent;
+            color: var(--accent-red);
+            border: 1px solid rgba(248, 81, 73, 0.4);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-unlink:hover {
+            background-color: rgba(248, 81, 73, 0.12);
+            border-color: var(--accent-red);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .btn-submit {
+            background-color: #1f6feb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover {
+            background-color: #388bfd;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success { border-left: 4px solid var(--accent-green); }
+        .toast.error   { border-left: 4px solid var(--accent-red); }
+        .toast.info    { border-left: 4px solid var(--accent-blue); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to   { transform: translateX(0); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .content-container { padding: 16px; }
+            .oauth-item { flex-direction: column; align-items: flex-start; }
+            .profile-hero { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-boxes-stacked" style="color: var(--accent-blue);"></i> Asset Console <span class="version">v3.4</span>
+        </div>
+
+        <div class="nav-group-label">NAVIGATION</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-list.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-list-check"></i> รายการทรัพย์สินทั้งหมด</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-detail.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="print-qr.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="borrow-return.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="maintenance.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="audit.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</div>
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-group-label">MANAGEMENT</div>
+        <ul class="nav-menu">
+            <li class="nav-item active">
+                <a href="account.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</div>
+                </a>
+            </li>
+            <li class="nav-item" id="navSettingsItem">
+                <a href="settings.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-users-gear"></i> จัดการสิทธิ์ & ผู้ใช้</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="backup.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-database"></i> สำรอง & กู้คืนข้อมูล</div>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="topbar-left">
+                <span class="page-title"><i class="fa-solid fa-id-card"></i> ข้อมูลบัญชีผู้ใช้ & บัญชีที่เชื่อมต่อ</span>
+            </div>
+            <div class="topbar-right">
+                <button class="theme-toggle-btn" onclick="toggleTheme()" title="เปลี่ยนธีมสี">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+                <button class="btn-unlink" onclick="handleLogout()" style="color:var(--text-secondary); border-color:var(--border-color);">
+                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                </button>
+            </div>
+        </header>
+
+        <main class="content-container">
+
+            <!-- Profile Overview Card -->
+            <div class="card">
+                <div class="profile-hero">
+                    <div class="profile-avatar" id="userAvatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="profile-details">
+                        <h3 id="userDisplayName">กำลังโหลดข้อมูล...</h3>
+                        <div class="username" id="userUsername">@loading</div>
+                        <div id="userRoleBadge">
+                            <span class="role-badge role-viewer"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OAuth Linked Accounts Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-link" style="color:var(--accent-blue);"></i> บัญชีภายนอกที่เชื่อมต่อ (OAuth Accounts)</h2>
+                </div>
+                <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:20px;">
+                    เชื่อมต่ออีเมลของคุณกับ Google หรือ Facebook เพื่อความสะดวกรวดเร็วในการเข้าสู่ระบบ และอนุญาตให้คุณเข้าถึงระบบได้ด้วยอีเมลอื่นๆ ของคุณ
+                </p>
+
+                <div class="oauth-list">
+                    <!-- Google Item -->
+                    <div class="oauth-item" id="googleItem">
+                        <div class="oauth-info">
+                            <div class="oauth-icon google">
+                                <i class="fa-brands fa-google"></i>
+                            </div>
+                            <div>
+                                <div class="oauth-name">Google Account</div>
+                                <div class="oauth-status" id="googleStatusText">กำลังตรวจสอบสถานะ...</div>
+                            </div>
+                        </div>
+                        <div id="googleActionArea">
+                            <!-- ปุ่ม Render อัตโนมัติด้วย JS -->
+                        </div>
+                    </div>
+
+                    <!-- Facebook Item -->
+                    <div class="oauth-item" id="facebookItem">
+                        <div class="oauth-info">
+                            <div class="oauth-icon facebook">
+                                <i class="fa-brands fa-facebook-f"></i>
+                            </div>
+                            <div>
+                                <div class="oauth-name">Facebook Account</div>
+                                <div class="oauth-status" id="facebookStatusText">กำลังตรวจสอบสถานะ...</div>
+                            </div>
+                        </div>
+                        <div id="facebookActionArea">
+                            <!-- ปุ่ม Render อัตโนมัติด้วย JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Helper Note -->
+                <div style="margin-top:20px; padding:14px 18px; background:rgba(56,139,253,0.08); border:1px solid rgba(56,139,253,0.2); border-radius:8px; font-size:0.85rem; color:var(--text-secondary);">
+                    <i class="fa-solid fa-circle-info" style="color:var(--accent-blue);"></i>
+                    สามารถกำหนด Client ID & Secret ของ Google หรือ Facebook ได้ในไฟล์ <code>oauth.config.js</code> เพื่อเปิดใช้งานระบบ OAuth จริงอย่างสมบูรณ์
+                </div>
+            </div>
+
+            <!-- Change Password Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-key" style="color:var(--accent-blue);"></i> เปลี่ยนรหัสผ่านของฉัน</h2>
+                </div>
+                <form id="changePasswordForm" onsubmit="handleChangePassword(event)" style="max-width:440px;">
+                    <div class="form-group">
+                        <label for="newPassword">รหัสผ่านใหม่</label>
+                        <input type="password" id="newPassword" class="form-control" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">ยืนยันรหัสผ่านใหม่อีกครั้ง</label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="••••••••" required>
+                    </div>
+                    <div id="pwdError" style="color:var(--accent-red); font-size:0.85rem; margin-bottom:12px; display:none;"></div>
+                    <button type="submit" class="btn-submit" id="btnSubmitPwd">
+                        <i class="fa-solid fa-floppy-disk"></i> อัปเดตรหัสผ่าน
+                    </button>
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Toast Notification Area -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const TOKEN = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+        const API   = window.API_BASE_URL || '';
+        let currentUser = null;
+
+        // ── Theme: ใช้จาก theme.js กลาง (window.toggleTheme / window.updateThemeIcons) ──
+
+        // ── Toast ──────────────────────────────────────────────
+        function showToast(type, message) {
+            const container = document.getElementById('toastContainer');
+            const div = document.createElement('div');
+            div.className = `toast ${type}`;
+            const icons = { success: 'fa-check-circle', error: 'fa-triangle-exclamation', info: 'fa-info-circle' };
+            div.innerHTML = `<i class="fa-solid ${icons[type] || 'fa-info-circle'}"></i> <span>${message}</span>`;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 4500);
+        }
+
+        // ── Auth & Profile ─────────────────────────────────────
+        async function loadProfile() {
+            if (!TOKEN) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API}/api/me`, {
+                    headers: { Authorization: `Bearer ${TOKEN}` }
+                });
+                const json = await res.json();
+                if (!json.success) {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('authToken');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                currentUser = json.user;
+                document.getElementById('userDisplayName').textContent = currentUser.name || currentUser.username;
+                document.getElementById('userUsername').textContent = `@${currentUser.username}`;
+
+                // Role Badge
+                const roleMap = {
+                    admin:  ['fa-shield',    'role-admin',  'ผู้ดูแลระบบ (Admin)'],
+                    editor: ['fa-pen-ruler', 'role-editor', 'ผู้แก้ไข (Editor)'],
+                    viewer: ['fa-eye',       'role-viewer', 'ผู้ชม (Viewer)']
+                };
+                const [icon, cls, label] = roleMap[currentUser.role] || ['fa-circle-user', 'role-viewer', currentUser.role];
+                document.getElementById('userRoleBadge').innerHTML = `
+                    <span class="role-badge ${cls}"><i class="fa-solid ${icon}"></i> ${label}</span>
+                `;
+
+                // ซ่อนเมนูตั้งค่าสำหรับสิทธิ์ที่ไม่ใช่ admin
+                if (currentUser.role !== 'admin') {
+                    const settingsNav = document.getElementById('navSettingsItem');
+                    if (settingsNav) settingsNav.style.display = 'none';
+                }
+
+                // โหลดบัญชี OAuth ที่เชื่อมต่อ
+                await loadLinkedAccounts();
+            } catch (err) {
+                console.error('loadProfile error:', err);
+            }
+        }
+
+        // ── OAuth Linked Accounts ──────────────────────────────
+        async function loadLinkedAccounts() {
+            try {
+                const res = await fetch(`${API}/api/me/linked-accounts`, {
+                    headers: { Authorization: `Bearer ${TOKEN}` }
+                });
+                const json = await res.json();
+                const linkedAccounts = json.data || [];
+
+                const googleAcc   = linkedAccounts.find(a => a.provider === 'google');
+                const facebookAcc = linkedAccounts.find(a => a.provider === 'facebook');
+
+                // Render Google UI
+                const googleStatus = document.getElementById('googleStatusText');
+                const googleAction = document.getElementById('googleActionArea');
+                if (googleAcc) {
+                    googleStatus.className = 'oauth-status connected';
+                    googleStatus.innerHTML = `<i class="fa-solid fa-check"></i> เชื่อมต่อแล้ว: ${googleAcc.email || googleAcc.display_name}`;
+                    googleAction.innerHTML = `
+                        <button class="btn-unlink" onclick="unlinkProvider('google')">
+                            <i class="fa-solid fa-link-slash"></i> ยกเลิกการเชื่อมต่อ
+                        </button>
+                    `;
+                } else {
+                    googleStatus.className = 'oauth-status';
+                    googleStatus.textContent = 'ยังไม่ได้เชื่อมต่อบัญชี';
+                    googleAction.innerHTML = `
+                        <a href="${API}/api/auth/google?token=${TOKEN}&return_to=/account.html" class="btn-connect-google">
+                            <i class="fa-brands fa-google" style="color:var(--google-red);"></i> เชื่อมต่อกับ Google
+                        </a>
+                    `;
+                }
+
+                // Render Facebook UI
+                const fbStatus = document.getElementById('facebookStatusText');
+                const fbAction = document.getElementById('facebookActionArea');
+                if (facebookAcc) {
+                    fbStatus.className = 'oauth-status connected';
+                    fbStatus.innerHTML = `<i class="fa-solid fa-check"></i> เชื่อมต่อแล้ว: ${facebookAcc.email || facebookAcc.display_name}`;
+                    fbAction.innerHTML = `
+                        <button class="btn-unlink" onclick="unlinkProvider('facebook')">
+                            <i class="fa-solid fa-link-slash"></i> ยกเลิกการเชื่อมต่อ
+                        </button>
+                    `;
+                } else {
+                    fbStatus.className = 'oauth-status';
+                    fbStatus.textContent = 'ยังไม่ได้เชื่อมต่อบัญชี';
+                    fbAction.innerHTML = `
+                        <a href="${API}/api/auth/facebook?token=${TOKEN}&return_to=/account.html" class="btn-connect-facebook">
+                            <i class="fa-brands fa-facebook-f"></i> เชื่อมต่อกับ Facebook
+                        </a>
+                    `;
+                }
+            } catch (err) {
+                console.error('loadLinkedAccounts error:', err);
+            }
+        }
+
+        // ── Unlink Provider ────────────────────────────────────
+        async function unlinkProvider(provider) {
+            const providerName = provider === 'google' ? 'Google' : 'Facebook';
+            if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการเชื่อมต่อบัญชี ${providerName}?`)) return;
+
+            try {
+                const res = await fetch(`${API}/api/auth/unlink/${provider}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${TOKEN}` }
+                });
+                const json = await res.json();
+                if (json.success) {
+                    showToast('success', `ยกเลิกการเชื่อมต่อ ${providerName} เรียบร้อยแล้ว`);
+                    await loadLinkedAccounts();
+                } else {
+                    showToast('error', json.message || 'เกิดข้อผิดพลาด');
+                }
+            } catch (err) {
+                showToast('error', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+            }
+        }
+
+        // ── Change Password ────────────────────────────────────
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const newPwd     = document.getElementById('newPassword').value;
+            const confirmPwd = document.getElementById('confirmPassword').value;
+            const errEl      = document.getElementById('pwdError');
+            const btnEl      = document.getElementById('btnSubmitPwd');
+
+            errEl.style.display = 'none';
+
+            if (newPwd !== confirmPwd) {
+                errEl.textContent = 'รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            btnEl.disabled = true;
+            btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+
+            try {
+                const res = await fetch(`${API}/api/users/${currentUser.id}/password`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
+                    body: JSON.stringify({ password: newPwd })
+                });
+                const json = await res.json();
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> อัปเดตรหัสผ่าน';
+
+                if (json.success) {
+                    showToast('success', 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว');
+                    document.getElementById('changePasswordForm').reset();
+                } else {
+                    errEl.textContent = json.message || 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
+                    errEl.style.display = 'block';
+                }
+            } catch (err) {
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> อัปเดตรหัสผ่าน';
+                showToast('error', 'เกิดข้อผิดพลาดในการติดต่อเซิร์ฟเวอร์');
+            }
+        }
+
+        // ── Logout ─────────────────────────────────────────────
+        async function handleLogout() {
+            if (TOKEN) {
+                try {
+                    await fetch(`${API}/api/logout`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${TOKEN}` }
+                    });
+                } catch(e) {}
+            }
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('auth_user');
+            window.location.href = 'index.html';
+        }
+
+        // ── Init & URL Query Feedback ──────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            // theme.js จัดการ class/icon ให้แล้วตั้งแต่ <head> - ไม่ต้องซ้ำ
+            if (window.updateThemeIcons) window.updateThemeIcons();
+
+            loadProfile();
+
+            // เช็คว่าเพิ่ง redirect กลับมาจากการ link บัญชีหรือไม่
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('linked') === 'google') {
+                showToast('success', 'เชื่อมต่อบัญชี Google สำเร็จเรียบร้อย!');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (urlParams.get('linked') === 'facebook') {
+                showToast('success', 'เชื่อมต่อบัญชี Facebook สำเร็จเรียบร้อย!');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (urlParams.get('error') === 'oauth_disabled') {
+                showToast('info', 'ระบบ OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน oauth.config.js');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (urlParams.get('error')) {
+                showToast('error', 'การเชื่อมต่อบัญชีไม่สำเร็จ: ' + urlParams.get('error'));
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+    </script>
+</body>
+
+</html>

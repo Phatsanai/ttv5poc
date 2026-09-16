@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Console - ตั้งค่าระบบ & สิทธิ์ผู้ใช้</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Universal Theme Manager & API Config -->
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <script src="config.js"></script>
+
+    <style>
+        :root {
+            --bg-main: #0b0e14;
+            --bg-card: #121721;
+            --bg-sidebar: #121721;
+            --bg-topbar: #121721;
+            --border-color: #1e2638;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --input-bg: #0b0e14;
+            --hover-bg: #161c28;
+            --accent-blue: #388bfd;
+            --btn-back-bg: #1c2333;
+            --color-scheme: dark;
+        }
+
+        html.light-theme {
+            --bg-main: #f6f8fa;
+            --bg-card: #ffffff;
+            --bg-sidebar: #ffffff;
+            --bg-topbar: #ffffff;
+            --border-color: #d0d7de;
+            --text-primary: #1f2328;
+            --text-secondary: #656d76;
+            --input-bg: #ffffff;
+            --hover-bg: #f3f4f6;
+            --accent-blue: #0969da;
+            --btn-back-bg: #f3f4f6;
+            --color-scheme: light;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.25s, color 0.25s;
+        }
+
+        /* Sidebar Style */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+            transition: background-color 0.25s, border-color 0.25s;
+        }
+
+        .brand {
+            padding: 0 24px 20px 24px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand span.version {
+            font-size: 0.75rem;
+            background: rgba(56, 139, 253, 0.15);
+            color: var(--accent-blue);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 400;
+        }
+
+        .nav-group-label {
+            padding: 20px 24px 8px 24px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item a:hover {
+            color: var(--text-primary);
+            background-color: var(--hover-bg);
+        }
+
+        .nav-item.active a {
+            color: var(--accent-blue);
+            background-color: rgba(56, 139, 253, 0.1);
+            border-left: 3px solid var(--accent-blue);
+            font-weight: 500;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .badge-neutral {
+            background-color: var(--hover-bg);
+            color: var(--text-secondary);
+        }
+
+        .badge-danger {
+            background-color: rgba(248, 81, 73, 0.15);
+            color: #ff7b72;
+        }
+
+        /* Main Wrapper */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: var(--bg-topbar);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            transition: background-color 0.25s, border-color 0.25s;
+        }
+
+        .btn-back {
+            background-color: var(--btn-back-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            transition: background 0.2s;
+        }
+
+        .btn-back:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-theme-toggle {
+            background-color: var(--btn-back-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .btn-theme-toggle:hover {
+            background-color: var(--hover-bg);
+            transform: scale(1.05);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: #f85149;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .content-area {
+            padding: 32px;
+            flex: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 1.35rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Tabs & Section Navigation */
+        .tabs-header {
+            display: flex;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        .card-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: background-color 0.25s, border-color 0.25s;
+        }
+
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Table */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: var(--hover-bg);
+            color: var(--text-secondary);
+            padding: 12px 16px;
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background-color: var(--hover-bg);
+        }
+
+        /* Role Badges */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .role-admin  { background-color: rgba(56,139,253,0.15); color: var(--accent-blue); }
+        .role-editor { background-color: rgba(63,185,80,0.15);  color: #3fb950; }
+        .role-viewer { background-color: rgba(139,148,158,0.15);color: var(--text-secondary); }
+
+        .oauth-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: rgba(234,67,53,0.12);
+            color: #ea4335;
+            margin-right: 4px;
+        }
+
+        .btn-primary {
+            background-color: #1f6feb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+        }
+
+        .btn-primary:hover {
+            background-color: #388bfd;
+        }
+
+        .btn-icon-only {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .btn-icon-only:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            background-color: var(--hover-bg);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 520px;
+            padding: 24px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-cancel {
+            background-color: var(--hover-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-boxes-stacked" style="color: var(--accent-blue);"></i> Asset Console <span
+                class="version">v3.4</span>
+        </div>
+
+        <div class="nav-group-label">NAVIGATION</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-list.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-list-check"></i> รายการทรัพย์สินทั้งหมด</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-detail.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="print-qr.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="borrow-return.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="maintenance.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="audit.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</div>
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-group-label">MANAGEMENT</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="account.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</div>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="settings.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="backup.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</div>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div>
+                <a href="dashboard.html" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
+                </a>
+            </div>
+            <div class="user-info">
+                <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()"
+                    title="สลับ Dark/Light Mode">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+                <div class="user-avatar" id="topbarAvatar">A</div>
+                <span style="font-size: 0.9rem;" id="topbarUserName">Admin User</span>
+                <button class="btn-logout" onclick="handleLogout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้ (Roles & Permissions)
+                </h1>
+            </div>
+
+            <!-- Tabs Header -->
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="switchTab('users')"><i class="fa-solid fa-users"></i>
+                    จัดการผู้ใช้งาน (Users)</button>
+                <button class="tab-btn" onclick="switchTab('roles')"><i class="fa-solid fa-user-shield"></i>
+                    กำหนดระดับสิทธิ์ (Role Permissions)</button>
+                <button class="tab-btn" onclick="switchTab('api')"><i class="fa-solid fa-network-wired"></i>
+                    การเชื่อมต่อ API (Cloudflare / Server)</button>
+            </div>
+
+            <!-- Tab 1: User Management -->
+            <div id="tab-users" class="card-box">
+                <div class="card-title">
+                    <span><i class="fa-solid fa-users"></i> รายชื่อผู้ใช้งานทั้งหมดในระบบ</span>
+                    <button class="btn-primary" onclick="openAddUserModal()" id="btnAddUser">
+                        <i class="fa-solid fa-plus"></i> เพิ่มผู้ใช้งานใหม่
+                    </button>
+                </div>
+                <div id="usersLoading" style="text-align:center;padding:20px;color:var(--text-secondary);">
+                    <i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...
+                </div>
+                <div class="table-responsive" id="usersTableWrapper" style="display:none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ชื่อ / Username</th>
+                                <th>ระดับสิทธิ์ (Role)</th>
+                                <th>บัญชีที่เชื่อมต่อ</th>
+                                <th>สร้างเมื่อ</th>
+                                <th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 2: Permissions Matrix -->
+            <div id="tab-roles" class="card-box" style="display: none;">
+                <div class="card-title">
+                    <span>ตารางแยกแยะสิทธิ์รายเมนู (Permissions Matrix)</span>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ชื่อหัวข้อ / เมนูระบบ</th>
+                                <th style="text-align: center;">Viewer (คนดู)</th>
+                                <th style="text-align: center;">Manager (ผู้จัดการ)</th>
+                                <th style="text-align: center;">Admin (ผู้ดูแลระบบ)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><b>1. ภาพรวมแดชบอร์ด</b></td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled> ดูได้</td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled> ดูได้</td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled> ดูได้</td>
+                            </tr>
+                            <tr>
+                                <td><b>2. รายการทรัพย์สินทั้งหมด</b></td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled> ดูได้อย่างเดียว
+                                </td>
+                                <td style="text-align: center;"><input type="checkbox" checked> เพิ่ม/แก้ไข ได้</td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled>
+                                    จัดการได้ทั้งหมด</td>
+                            </tr>
+                            <tr>
+                                <td><b>3. ระบบยืม - คืน ทรัพย์สิน</b></td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled> ดูประวัติได้
+                                </td>
+                                <td style="text-align: center;"><input type="checkbox" checked> บันทึกยืม/รับคืน ได้
+                                </td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled>
+                                    จัดการได้ทั้งหมด</td>
+                            </tr>
+                            <tr>
+                                <td><b>4. ตรวจนับสต็อก (Audit)</b></td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled> ดูรายงานได้
+                                </td>
+                                <td style="text-align: center;"><input type="checkbox" checked> สร้างรอบตรวจนับได้</td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled>
+                                    จัดการได้ทั้งหมด</td>
+                            </tr>
+                            <tr>
+                                <td><b>5. ตั้งค่าระบบ & สำรองข้อมูล</b></td>
+                                <td style="text-align: center;"><input type="checkbox" disabled> เข้าไม่ได้</td>
+                                <td style="text-align: center;"><input type="checkbox" disabled> เข้าไม่ได้</td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled>
+                                    จัดการได้ทั้งหมด</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button class="btn-primary" onclick="alert('บันทึกการปรับเปลี่ยนสิทธิ์เรียบร้อยแล้ว!')">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่าสิทธิ์
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 3: API & Cloudflare Configuration -->
+            <div id="tab-api" class="card-box" style="display:none;">
+                <div class="card-title">
+                    <span><i class="fa-solid fa-network-wired"></i> ตั้งค่าเชื่อมต่อ API หลังบ้าน (Cloudflare Frontend -> Backend Server)</span>
+                </div>
+                <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:20px; line-height:1.6;">
+                    ใช้สำหรับกำหนด URL ของเซิร์ฟเวอร์หลังบ้าน (Express + SQLite) เมื่อหน้าเว็บ Asset Console ทำงานอยู่บน Cloudflare Pages หรือโฮสต์ภายนอก
+                </p>
+
+                <div class="form-group" style="max-width:620px;">
+                    <label style="font-weight:500;">API Base URL (เช่น https://api.yourdomain.com หรือ http://localhost:8080 หรือ Cloudflare Tunnel URL):</label>
+                    <div style="display:flex; gap:10px; margin-top:6px;">
+                        <input type="text" id="inputApiBaseUrl" class="form-control" placeholder="ปล่อยว่างเพื่อใช้ Same-Origin (ค่าเริ่มต้น)">
+                        <button type="button" class="btn-primary" onclick="saveApiBaseUrlConfig()" style="white-space:nowrap;">
+                            <i class="fa-solid fa-floppy-disk"></i> บันทึกค่า
+                        </button>
+                        <button type="button" class="btn-cancel" onclick="resetApiBaseUrlConfig()" title="รีเซ็ตกลับเป็นค่าเริ่มต้น">
+                            <i class="fa-solid fa-rotate-left"></i> รีเซ็ต
+                        </button>
+                    </div>
+                    <div id="apiConfigStatus" style="font-size:0.85rem; margin-top:8px; color:var(--text-secondary);"></div>
+                </div>
+
+                <div style="margin-top:24px; padding:16px; border-radius:8px; background:rgba(56,139,253,0.08); border:1px solid rgba(56,139,253,0.2); max-width:620px;">
+                    <div style="font-weight:600; font-size:0.9rem; color:var(--text-primary); margin-bottom:6px;">
+                        <i class="fa-solid fa-circle-info" style="color:var(--accent-blue);"></i> ข้อมูลสถานะการเชื่อมต่อปัจจุบัน
+                    </div>
+                    <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
+                        • ค่าที่ใช้งานอยู่ขณะนี้: <code id="lblCurrentResolvedApi" style="color:var(--accent-blue); font-weight:600;">(กำลังตรวจสอบ...)</code><br>
+                        • โดเมนของหน้าเว็บนี้: <code id="lblCurrentOrigin"></code>
+                    </div>
+                    <div style="margin-top:14px; display:flex; gap:10px; align-items:center;">
+                        <button type="button" class="btn-primary" onclick="testApiConnection()" style="font-size:0.85rem; padding:6px 14px; background:var(--accent-blue);">
+                            <i class="fa-solid fa-heart-pulse"></i> ทดสอบการเชื่อมต่อ API (Health Check)
+                        </button>
+                        <span id="testApiResult" style="font-size:0.85rem;"></span>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modal เพิ่มผู้ใช้งานใหม่ -->
+    <div class="modal" id="addUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-plus"></i> เพิ่มผู้ใช้งานใหม่</h3>
+                <button class="close-btn" onclick="closeModal('addUserModal')">&times;</button>
+            </div>
+            <form id="addUserForm" onsubmit="handleSaveUser(event)">
+                <div class="form-group">
+                    <label>Username (สำหรับ Login)</label>
+                    <input type="text" id="newUsername" class="form-control" placeholder="ชื่อผู้ใช้" required>
+                </div>
+                <div class="form-group">
+                    <label>ชื่อที่แสดง</label>
+                    <input type="text" id="newName" class="form-control" placeholder="ชื่อ - นามสกุล">
+                </div>
+                <div class="form-group">
+                    <label>รหัสผ่าน</label>
+                    <input type="password" id="newPassword" class="form-control" placeholder="รหัสผ่าน" required>
+                </div>
+                <div class="form-group">
+                    <label>กำหนดระดับสิทธิ์ (Role)</label>
+                    <select id="newRole" class="form-control" required>
+                        <option value="viewer">Viewer — ดูข้อมูลได้อย่างเดียว</option>
+                        <option value="editor">Editor — เพิ่ม/แก้ไขทรัพย์สินได้ (ลบไม่ได้)</option>
+                        <option value="admin">Admin — จัดการได้ทุกอย่าง</option>
+                    </select>
+                </div>
+                <div id="addUserError" style="color:#ff7b72;font-size:0.85rem;margin-bottom:8px;display:none;"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal('addUserModal')">ยกเลิก</button>
+                    <button type="submit" class="btn-primary" id="btnSaveUser"><i class="fa-solid fa-floppy-disk"></i> บันทึกเพิ่มผู้ใช้</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal เปลี่ยน Role -->
+    <div class="modal" id="changeRoleModal">
+        <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-shield"></i> เปลี่ยนระดับสิทธิ์</h3>
+                <button class="close-btn" onclick="closeModal('changeRoleModal')">&times;</button>
+            </div>
+            <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:16px;">
+                ผู้ใช้: <strong id="roleTargetName" style="color:var(--text-primary);"></strong>
+            </p>
+            <div class="form-group">
+                <label>เลือก Role ใหม่</label>
+                <select id="roleSelectNew" class="form-control">
+                    <option value="viewer">Viewer — ดูข้อมูลได้อย่างเดียว</option>
+                    <option value="editor">Editor — เพิ่ม/แก้ไขทรัพย์สินได้</option>
+                    <option value="admin">Admin — จัดการได้ทุกอย่าง</option>
+                </select>
+            </div>
+            <input type="hidden" id="roleTargetId">
+            <div id="changeRoleError" style="color:#ff7b72;font-size:0.85rem;margin-bottom:8px;display:none;"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('changeRoleModal')">ยกเลิก</button>
+                <button type="button" class="btn-primary" onclick="confirmChangeRole()"><i class="fa-solid fa-check"></i> ยืนยันเปลี่ยน Role</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TOKEN = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+
+        // ── Auth Guard ─────────────────────────────────────────
+        function requireAuth() {
+            if (!TOKEN) { window.location.href = 'index.html'; return null; }
+            return TOKEN;
+        }
+
+        async function handleLogout() {
+            if (TOKEN) {
+                try {
+                    await fetch(getApiUrl('/api/logout'), {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${TOKEN}` }
+                    });
+                } catch(e) {}
+            }
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('auth_user');
+            window.location.href = 'index.html';
+        }
+
+        // ── Tabs ───────────────────────────────────────────────
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-users').style.display = tabName === 'users' ? 'block' : 'none';
+            document.getElementById('tab-roles').style.display = tabName === 'roles' ? 'block' : 'none';
+            document.getElementById('tab-api').style.display   = tabName === 'api'   ? 'block' : 'none';
+            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+            if (tabName === 'api') initApiTab();
+        }
+
+        // ── API Base URL Configuration ─────────────────────────
+        function initApiTab() {
+            const input = document.getElementById('inputApiBaseUrl');
+            const resolvedEl = document.getElementById('lblCurrentResolvedApi');
+            const originEl = document.getElementById('lblCurrentOrigin');
+            const saved = localStorage.getItem('api_base_url') || '';
+
+            if (input) input.value = saved;
+            if (originEl) originEl.textContent = window.location.origin;
+            if (resolvedEl) {
+                resolvedEl.textContent = window.API_BASE_URL || '(Same Origin / ปัจจุบันใช้ Host เดียวกัน)';
+            }
+        }
+
+        function saveApiBaseUrlConfig() {
+            const input = document.getElementById('inputApiBaseUrl');
+            const statusEl = document.getElementById('apiConfigStatus');
+            const val = (input ? input.value : '').trim();
+
+            window.setApiBaseUrl(val);
+            initApiTab();
+
+            if (statusEl) {
+                statusEl.innerHTML = `<span style="color:#3fb950;"><i class="fa-solid fa-circle-check"></i> บันทึกค่า API Base URL สำเร็จ! (${window.API_BASE_URL || 'Same-Origin'})</span>`;
+            }
+        }
+
+        function resetApiBaseUrlConfig() {
+            window.setApiBaseUrl('');
+            initApiTab();
+            const statusEl = document.getElementById('apiConfigStatus');
+            if (statusEl) {
+                statusEl.innerHTML = `<span style="color:var(--text-secondary);"><i class="fa-solid fa-rotate-left"></i> รีเซ็ตเป็นค่าเริ่มต้น Same-Origin เรียบร้อยแล้ว</span>`;
+            }
+        }
+
+        async function testApiConnection() {
+            const resEl = document.getElementById('testApiResult');
+            if (!resEl) return;
+            resEl.innerHTML = `<span style="color:var(--accent-blue);"><i class="fa-solid fa-spinner fa-spin"></i> กำลังทดสอบ...</span>`;
+
+            try {
+                const targetUrl = getApiUrl('/api/stats');
+                const t0 = performance.now();
+                const res = await fetch(targetUrl, {
+                    headers: TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}
+                });
+                const t1 = performance.now();
+                const latency = Math.round(t1 - t0);
+
+                if (res.ok) {
+                    resEl.innerHTML = `<span style="color:#3fb950; font-weight:600;"><i class="fa-solid fa-circle-check"></i> เชื่อมต่อสำเร็จ (${latency} ms)</span>`;
+                } else {
+                    resEl.innerHTML = `<span style="color:#ff7b72;"><i class="fa-solid fa-circle-exclamation"></i> เซิร์ฟเวอร์ตอบกลับรหัส ${res.status}</span>`;
+                }
+            } catch (err) {
+                resEl.innerHTML = `<span style="color:#ff7b72;"><i class="fa-solid fa-triangle-exclamation"></i> เชื่อมต่อไม่สำเร็จ: ${err.message}</span>`;
+            }
+        }
+
+        // ── Modals ─────────────────────────────────────────────
+        function openAddUserModal() {
+            document.getElementById('addUserForm').reset();
+            document.getElementById('addUserError').style.display = 'none';
+            document.getElementById('addUserModal').style.display = 'flex';
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // ── Role badge HTML ────────────────────────────────────
+        function roleBadge(role) {
+            const map = {
+                admin:  ['fa-shield',    'role-admin',  'Admin'],
+                editor: ['fa-pen-ruler', 'role-editor', 'Editor'],
+                viewer: ['fa-eye',       'role-viewer', 'Viewer']
+            };
+            const [icon, cls, label] = map[role] || ['fa-circle-question', 'role-viewer', role];
+            return `<span class="role-badge ${cls}"><i class="fa-solid ${icon}"></i> ${label}</span>`;
+        }
+
+        // ── Load Users from API ────────────────────────────────
+        async function loadUsers() {
+            const loading = document.getElementById('usersLoading');
+            const wrapper = document.getElementById('usersTableWrapper');
+            loading.style.display = 'block';
+            wrapper.style.display = 'none';
+
+            let curUsername = '';
+            try {
+                const u = JSON.parse(localStorage.getItem('auth_user') || '{}');
+                curUsername = u.username || '';
+                const nameEl = document.getElementById('topbarUserName');
+                if (nameEl) nameEl.textContent = u.name || u.username || 'Admin User';
+                const av = document.getElementById('topbarAvatar');
+                if (av) av.textContent = (u.name || u.username || 'A').charAt(0).toUpperCase();
+            } catch(e) {}
+
+            try {
+                const res = await fetch(getApiUrl('/api/users'), {
+                    headers: { Authorization: `Bearer ${TOKEN}` }
+                });
+                const json = await res.json();
+                loading.style.display = 'none';
+
+                if (!json.success) {
+                    loading.style.display = 'block';
+                    loading.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${json.message || 'โหลดไม่สำเร็จ — กรุณาเข้าสู่ระบบก่อน'}`;
+                    return;
+                }
+
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = '';
+                json.data.forEach(u => {
+                    const oauthHtml = (u.oauth_accounts || []).map(o => {
+                        const isGoogle = o.provider === 'google';
+                        const icon = isGoogle ? 'fa-brands fa-google' : 'fa-brands fa-facebook';
+                        const color = isGoogle ? '#ea4335' : '#1877f2';
+                        const bg = isGoogle ? 'rgba(234,67,53,0.12)' : 'rgba(24,119,242,0.12)';
+                        return `<span class="oauth-badge" style="background:${bg}; color:${color};"><i class="${icon}"></i> ${o.email || o.display_name}</span>`;
+                    }).join('') || '<span style="color:var(--text-secondary);font-size:0.8rem;">—</span>';
+
+                    const isSelf = (u.username === curUsername);
+                    tbody.innerHTML += `
+                    <tr>
+                        <td><b>${u.name || u.username}</b><br><span style="font-size:0.8rem;color:var(--text-secondary);">@${u.username}</span></td>
+                        <td>${roleBadge(u.role)}</td>
+                        <td>${oauthHtml}</td>
+                        <td style="font-size:0.82rem;color:var(--text-secondary);">${u.created_at||'—'}</td>
+                        <td style="display:flex;gap:6px;">
+                            <button class="btn-icon-only" title="กำหนด / เปลี่ยน Role" onclick="openChangeRoleModal(${u.id},'${u.name||u.username}','${u.role}')">
+                                <i class="fa-solid fa-user-shield"></i> เปลี่ยน Role
+                            </button>
+                            ${!isSelf ? `<button class="btn-icon-only" style="color:#ff7b72;" title="ลบผู้ใช้" onclick="deleteUser(${u.id},'${u.name||u.username}')"><i class="fa-solid fa-trash"></i></button>` : ''}
+                        </td>
+                    </tr>`;
+                });
+                wrapper.style.display = 'block';
+            } catch (err) {
+                loading.style.display = 'block';
+                loading.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์ (${err.message})`;
+            }
+        }
+
+        // ── Add User ───────────────────────────────────────────
+        async function handleSaveUser(e) {
+            e.preventDefault();
+            const errEl  = document.getElementById('addUserError');
+            const btnEl  = document.getElementById('btnSaveUser');
+            errEl.style.display = 'none';
+            btnEl.disabled = true;
+            btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+
+            const body = {
+                username: document.getElementById('newUsername').value.trim(),
+                name:     document.getElementById('newName').value.trim(),
+                password: document.getElementById('newPassword').value,
+                role:     document.getElementById('newRole').value
+            };
+            try {
+                const res  = await fetch(getApiUrl('/api/users'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
+                    body: JSON.stringify(body)
+                });
+                const json = await res.json();
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกเพิ่มผู้ใช้';
+
+                if (!json.success) {
+                    errEl.textContent = json.message;
+                    errEl.style.display = 'block';
+                } else {
+                    closeModal('addUserModal');
+                    loadUsers();
+                }
+            } catch (err) {
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกเพิ่มผู้ใช้';
+                errEl.textContent = 'เกิดข้อผิดพลาดในการติดต่อเซิร์ฟเวอร์: ' + err.message;
+                errEl.style.display = 'block';
+            }
+        }
+
+        // ── Change Role ────────────────────────────────────────
+        function openChangeRoleModal(id, name, currentRole) {
+            document.getElementById('roleTargetId').value   = id;
+            document.getElementById('roleTargetName').textContent = name;
+            document.getElementById('roleSelectNew').value  = currentRole;
+            document.getElementById('changeRoleError').style.display = 'none';
+            document.getElementById('changeRoleModal').style.display = 'flex';
+        }
+        async function confirmChangeRole() {
+            const id   = parseInt(document.getElementById('roleTargetId').value);
+            const role = document.getElementById('roleSelectNew').value;
+            const errEl = document.getElementById('changeRoleError');
+            errEl.style.display = 'none';
+
+            try {
+                const res  = await fetch(getApiUrl(`/api/users/${id}/role`), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
+                    body: JSON.stringify({ role })
+                });
+                const json = await res.json();
+                if (!json.success) {
+                    errEl.textContent = json.message;
+                    errEl.style.display = 'block';
+                } else {
+                    closeModal('changeRoleModal');
+                    loadUsers();
+                }
+            } catch (err) {
+                errEl.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ' + err.message;
+                errEl.style.display = 'block';
+            }
+        }
+
+        // ── Delete User ────────────────────────────────────────
+        async function deleteUser(id, name) {
+            if (!confirm(`ยืนยันลบผู้ใช้ "${name}" ออกจากระบบ?`)) return;
+            try {
+                const res  = await fetch(getApiUrl(`/api/users/${id}`), {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${TOKEN}` }
+                });
+                const json = await res.json();
+                if (!json.success) { alert('ลบไม่สำเร็จ: ' + json.message); return; }
+                loadUsers();
+            } catch (err) {
+                alert('เกิดข้อผิดพลาดในการติดต่อเซิร์ฟเวอร์: ' + err.message);
+            }
+        }
+
+        // ── Init ───────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            requireAuth();
+            if (window.updateThemeIcons) window.updateThemeIcons();
+            loadUsers();
+        });
+    </script>
+</body>
+
+</html>

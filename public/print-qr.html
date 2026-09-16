@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Console - พิมพ์สติกเกอร์ QR Code</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Universal Theme Manager -->
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <script src="config.js"></script>
+
+    <!-- ใช้ QRCode Library แบบนำเข้าสคริปต์เพื่อเรนเดอร์แบบ Offline รวดเร็ว ไม่ติด Block API -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        body {
+            background-color: #0b0e14;
+            color: #c9d1d9;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background-color: #121721;
+            border-right: 1px solid #1e2638;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            padding: 0 24px 20px 24px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #1e2638;
+        }
+
+        .brand span.version {
+            font-size: 0.75rem;
+            background: #1f293d;
+            color: #388bfd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 400;
+        }
+
+        .nav-group-label {
+            padding: 20px 24px 8px 24px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #6e7681;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            color: #8b949e;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item a:hover {
+            color: #f0f6fc;
+            background-color: #161b26;
+        }
+
+        .nav-item.active a {
+            color: #58a6ff;
+            background-color: #172338;
+            border-left: 3px solid #388bfd;
+            font-weight: 500;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .badge-neutral {
+            background-color: #21262d;
+            color: #8b949e;
+        }
+
+        .badge-danger {
+            background-color: #3d1d24;
+            color: #ff7b72;
+        }
+
+        /* Main Content Layout */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            overflow-x: hidden;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: #121721;
+            border-bottom: 1px solid #1e2638;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+
+        .btn-back {
+            background-color: #1c2333;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            transition: background 0.2s;
+        }
+
+        .btn-back:hover {
+            background-color: #273147;
+            color: #ffffff;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #1f6feb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: #f85149;
+            cursor: pointer;
+            margin-left: 12px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-logout:hover {
+            background-color: rgba(248, 81, 73, 0.1);
+        }
+
+        .content-area {
+            padding: 32px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .page-title {
+            font-size: 1.35rem;
+            color: #f0f6fc;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-box {
+            background-color: #121721;
+            border: 1px solid #1e2638;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 20px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #f0f6fc;
+            font-size: 0.95rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) minmax(220px, auto);
+            gap: 16px;
+            align-items: end;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #8b949e;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: #0b0e14;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: #f0f6fc;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .btn-print {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+            height: 42px;
+            white-space: nowrap;
+            font-size: 0.95rem;
+        }
+
+        .btn-print:hover {
+            background-color: #2ea043;
+        }
+
+        /* Range Slider Panel */
+        .slider-panel {
+            background-color: #121721;
+            border: 1px solid #1e2638;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .slider-panel input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #21262d;
+            outline: none;
+        }
+
+        .slider-panel input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #238636;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .slider-panel input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .preview-title {
+            font-size: 0.95rem;
+            color: #8b949e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Dynamic Sticker Container */
+        .sticker-sheet {
+            background-color: #121721;
+            border: 1px solid #1e2638;
+            border-radius: 8px;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: var(--sticker-gap-v, 12px) 16px;
+            max-width: 100%;
+        }
+
+        /* Wrapper ของแต่ละสติกเกอร์ */
+        .sticker-card-wrapper {
+            background: #1c2333;
+            border: 1px solid #2d3548;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+            min-width: 0;
+            width: 100%;
+        }
+
+        .sticker-item {
+            border: 2px solid #000000;
+            border-radius: 6px;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #ffffff;
+            box-sizing: border-box;
+            width: var(--item-w, var(--sticker-width-mm, 100%));
+            max-width: 100%;
+            height: var(--item-h, var(--sticker-height-mm, 24.5mm));
+            transition: all 0.1s;
+            overflow: hidden;
+        }
+
+        .sticker-qr {
+            width: var(--item-qr, var(--qr-size-mm, 17mm));
+            height: var(--item-qr, var(--qr-size-mm, 17mm));
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sticker-qr img,
+        .sticker-qr canvas {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+        }
+
+        .sticker-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .sticker-code {
+            font-size: 0.7rem;
+            font-weight: 300;
+            color: #000000;
+            letter-spacing: 0.5px;
+            line-height: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sticker-line {
+            width: 100%;
+            height: 0;
+            border-bottom: 1.5px solid #000000;
+        }
+
+        .sticker-line+.sticker-line {
+            margin-top: 20px;
+        }
+
+        /* แผงปรับขนาดเฉพาะใบ */
+        .individual-controls {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #121721;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            color: #8b949e;
+            flex-wrap: wrap;
+        }
+
+        .ind-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .ind-group input[type=range] {
+            flex: 1;
+            min-width: 30px;
+            accent-color: #388bfd;
+            cursor: pointer;
+        }
+
+        /* ==========================================
+           PRINT STYLES
+        ========================================== */
+        @page {
+            size: A4 portrait;
+            margin: var(--page-padding, 5mm);
+        }
+
+        @media print {
+
+            html,
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+            }
+
+            .sidebar,
+            .topbar,
+            .card-box,
+            .slider-panel,
+            .preview-header,
+            .page-title,
+            .individual-controls {
+                display: none !important;
+            }
+
+            .main-wrapper,
+            .content-area {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                display: block !important;
+                overflow: visible !important;
+            }
+
+            .sticker-sheet {
+                background: transparent !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: var(--sticker-gap-v, 2mm) 4mm !important;
+                width: 100% !important;
+                overflow: visible !important;
+            }
+
+            .sticker-card-wrapper {
+                background: transparent !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .sticker-item {
+                border: 1.5px solid #000000 !important;
+                border-radius: 6px !important;
+                padding: 4px 8px !important;
+                width: var(--item-w, var(--sticker-width-mm, 95mm)) !important;
+                height: var(--item-h, var(--sticker-height-mm, 24.5mm)) !important;
+                box-sizing: border-box !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .sticker-qr {
+                width: var(--item-qr, var(--qr-size-mm, 17mm)) !important;
+                height: var(--item-qr, var(--qr-size-mm, 17mm)) !important;
+            }
+
+            .sticker-code {
+                font-size: 0.7rem !important;
+                font-weight: 300 !important;
+                color: #000000 !important;
+            }
+
+            .sticker-line {
+                border-bottom: 1.5px solid #000000 !important;
+            }
+
+            .sticker-line+.sticker-line {
+                margin-top: 20px !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar Menu -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-boxes-stacked" style="color: #388bfd;"></i> Asset Console <span
+                class="version">v3.4</span>
+        </div>
+
+        <div class="nav-group-label">NAVIGATION</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-chart-pie"></i> แดชบอร์ด
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-list.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-list-check"></i> รายการทรัพย์สินทั้งหมด
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-detail.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="print-qr.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="borrow-return.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-right-left"></i> ระบบยืม - คืน
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="maintenance.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="audit.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)
+                    </div>
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-group-label">MANAGEMENT</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="account.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-id-card"></i> บัญชีของฉัน
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="settings.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="backup.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-database"></i> สำรองฐานข้อมูล
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div>
+                <a href="dashboard.html" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
+                </a>
+            </div>
+            <div class="user-info" style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-theme-toggle" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+                <div class="user-avatar" id="avatarIcon">A</div>
+                <span id="userName" style="color: #f0f6fc; font-size: 0.9rem;">Admin User</span>
+                <button class="btn-logout" onclick="logout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            <h1 class="page-title">
+                <i class="fa-solid fa-print"></i> พิมพ์สติกเกอร์ QR Code (2 คอลัมน์)
+            </h1>
+
+            <!-- Filter Controls -->
+            <div class="card-box">
+                <div class="radio-group">
+                    <label class="radio-item">
+                        <input type="radio" name="printType" value="batch" checked onclick="toggleMode()"> 1.
+                        พิมพ์เป็นชุด (หมวด A001-Z999)
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="printType" value="custom" onclick="toggleMode()"> 2. พิมพ์ระบุรหัสเอง
+                    </label>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group" id="groupPrefix">
+                        <label>เริ่มจากหมวดอักษร</label>
+                        <select class="form-control" id="prefixSelect" onchange="generatePreview()">
+                            <!-- สร้างรายการ A - Z -->
+                            <script>
+                                for (let i = 65; i <= 90; i++) {
+                                    let char = String.fromCharCode(i);
+                                    document.write(`<option value="${char}">หมวด ${char}</option>`);
+                                }
+                            </script>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="groupStart">
+                        <label>เริ่มลำดับที่ (1 - 999)</label>
+                        <input type="number" class="form-control" id="startNum" value="1" min="1" max="999"
+                            oninput="debounceGeneratePreview()">
+                    </div>
+
+                    <div class="form-group" id="groupCount">
+                        <label>จำนวนป้ายที่ต้องการพิมพ์</label>
+                        <input type="number" class="form-control" id="printCount" value="20" min="1" max="26000"
+                            oninput="debounceGeneratePreview()">
+                    </div>
+
+                    <div class="form-group" id="groupCustomCode" style="display: none; grid-column: span 3;">
+                        <label>ระบุรหัสที่ต้องการพิมพ์ (คั่นด้วยเครื่องหมายจุลภาค , )</label>
+                        <input type="text" class="form-control" id="customCodes" placeholder="เช่น A001, A002, B001"
+                            oninput="debounceGeneratePreview()">
+                    </div>
+
+                    <button class="btn-print" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> พิมพ์ป้าย (<span id="btnCountLabel">20</span> ป้าย)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Global Range Slider Panel -->
+            <div class="slider-panel">
+                <div
+                    style="font-size: 0.95rem; font-weight: 500; color: #f0f6fc; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+                    <span><i class="fa-solid fa-sliders" style="color: #388bfd;"></i> ปรับแต่งระยะรวมทั้งหมด (Global
+                        Adjuster)</span>
+                    <button type="button"
+                        style="background: none; border: 1px solid #30363d; color: #8b949e; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;"
+                        onclick="resetSliders()">รีเซ็ตค่าทั้งหมด</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #8b949e;">
+                            ความกว้างป้าย (mm): <span id="valWidth"
+                                style="color: #58a6ff; font-weight: 600;">95.0</span>
+                        </div>
+                        <input type="range" id="sliderWidth" min="40" max="95" step="1" value="95"
+                            oninput="updateGlobalLayout()">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #8b949e;">
+                            ความสูงป้าย (mm): <span id="valHeight" style="color: #58a6ff; font-weight: 600;">24.5</span>
+                        </div>
+                        <input type="range" id="sliderHeight" min="15" max="40" step="0.5" value="24.5"
+                            oninput="updateGlobalLayout()">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #8b949e;">
+                            ระยะห่างแนวตั้ง (mm): <span id="valGapV"
+                                style="color: #58a6ff; font-weight: 600;">2.0</span>
+                        </div>
+                        <input type="range" id="sliderGapV" min="0" max="10" step="0.5" value="2.0"
+                            oninput="updateGlobalLayout()">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #8b949e;">
+                            ขนาด QR Code (mm): <span id="valQR" style="color: #58a6ff; font-weight: 600;">17.0</span>
+                        </div>
+                        <input type="range" id="sliderQR" min="10" max="25" step="0.5" value="17.0"
+                            oninput="updateGlobalLayout()">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #8b949e;">
+                            ขอบกระดาษ (mm): <span id="valPadding" style="color: #58a6ff; font-weight: 600;">5.0</span>
+                        </div>
+                        <input type="range" id="sliderPadding" min="0" max="15" step="0.5" value="5.0"
+                            oninput="updateGlobalLayout()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Sheet -->
+            <div class="preview-header">
+                <div class="preview-title">
+                    <i class="fa-solid fa-eye"></i> ตัวอย่างก่อนพิมพ์ (Live Preview)
+                </div>
+                <div style="font-size: 0.85rem; color: #8b949e;">
+                    ทั้งหมด <span id="totalPreviewCount">20</span> รายการ
+                </div>
+            </div>
+
+            <div class="sticker-sheet" id="previewContainer">
+                <!-- Dynamic Stickers Area -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function updateGlobalLayout() {
+            const w = document.getElementById('sliderWidth').value;
+            const h = document.getElementById('sliderHeight').value;
+            const gapV = document.getElementById('sliderGapV').value;
+            const qr = document.getElementById('sliderQR').value;
+            const pad = document.getElementById('sliderPadding').value;
+
+            document.getElementById('valWidth').innerText = w;
+            document.getElementById('valHeight').innerText = h;
+            document.getElementById('valGapV').innerText = gapV;
+            document.getElementById('valQR').innerText = qr;
+            document.getElementById('valPadding').innerText = pad;
+
+            const root = document.documentElement;
+            root.style.setProperty('--sticker-width-mm', `${w}mm`);
+            root.style.setProperty('--sticker-height-mm', `${h}mm`);
+            root.style.setProperty('--sticker-gap-v', `${gapV}mm`);
+            root.style.setProperty('--qr-size-mm', `${qr}mm`);
+            root.style.setProperty('--page-padding', `${pad}mm`);
+
+            localStorage.setItem('qr_print_config', JSON.stringify({ w, h, gapV, qr, pad }));
+        }
+
+        function updateIndividualSticker(index) {
+            const wrapper = document.getElementById(`sticker-wrap-${index}`);
+            const wVal = document.getElementById(`ind-w-${index}`).value;
+            const hVal = document.getElementById(`ind-h-${index}`).value;
+            const qrVal = document.getElementById(`ind-qr-${index}`).value;
+
+            document.getElementById(`ind-w-val-${index}`).innerText = wVal;
+            document.getElementById(`ind-h-val-${index}`).innerText = hVal;
+            document.getElementById(`ind-qr-val-${index}`).innerText = qrVal;
+
+            wrapper.style.setProperty('--item-w', `${wVal}mm`);
+            wrapper.style.setProperty('--item-h', `${hVal}mm`);
+            wrapper.style.setProperty('--item-qr', `${qrVal}mm`);
+        }
+
+        function resetSliders() {
+            document.getElementById('sliderWidth').value = 95;
+            document.getElementById('sliderHeight').value = 24.5;
+            document.getElementById('sliderGapV').value = 2.0;
+            document.getElementById('sliderQR').value = 17.0;
+            document.getElementById('sliderPadding').value = 5.0;
+            updateGlobalLayout();
+            generatePreview();
+        }
+
+        function loadSavedConfig() {
+            const saved = localStorage.getItem('qr_print_config');
+            if (saved) {
+                try {
+                    const cfg = JSON.parse(saved);
+                    document.getElementById('sliderWidth').value = cfg.w || 95;
+                    document.getElementById('sliderHeight').value = cfg.h || 24.5;
+                    document.getElementById('sliderGapV').value = cfg.gapV || 2.0;
+                    document.getElementById('sliderQR').value = cfg.qr || 17.0;
+                    document.getElementById('sliderPadding').value = cfg.pad || 5.0;
+                } catch (e) { }
+            }
+            updateGlobalLayout();
+        }
+
+        // ── Duplicate Print Prevention & Debounce ──────────────────
+        let _registeredCodes = null;
+        let _previewSeq = 0;
+        let _debounceTimer = null;
+
+        function debounceGeneratePreview() {
+            clearTimeout(_debounceTimer);
+            _debounceTimer = setTimeout(() => generatePreview(), 250);
+        }
+
+        async function fetchRegisteredCodes(codesToCheck) {
+            try {
+                const r = await fetch(getApiUrl('/api/assets/check-existing'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ codes: codesToCheck })
+                });
+                if (!r.ok) return [];
+                const data = await r.json();
+                return data.existing || [];
+            } catch (e) {
+                console.warn('ไม่สามารถตรวจสอบรหัสซ้ำได้:', e);
+                return [];
+            }
+        }
+
+        async function generatePreview() {
+            const currentSeq = ++_previewSeq;
+            const printType = document.querySelector('input[name="printType"]:checked').value;
+            const container = document.getElementById('previewContainer');
+
+            // Remove old warning banner if any
+            const oldWarn = document.getElementById('duplicateWarnBanner');
+            if (oldWarn) oldWarn.remove();
+
+            let codesToPrint = [];
+            let skippedCodes = [];
+
+            if (printType === 'batch') {
+                const prefix = document.getElementById('prefixSelect').value || 'A';
+                const startNum = parseInt(document.getElementById('startNum').value) || 1;
+                const count = parseInt(document.getElementById('printCount').value) || 1;
+
+                try {
+                    // เรียก API ดึงรหัสที่ข้ามรหัสที่ถูกลงทะเบียนแล้ว และรันลำดับถัดไปเติมจนครบตามจำนวน count เป๊ะๆ
+                    const res = await fetch(getApiUrl(`/api/assets/available-codes?prefix=${encodeURIComponent(prefix)}&start=${startNum}&count=${count}`));
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.success && Array.isArray(data.codes)) {
+                            codesToPrint = data.codes;
+                            skippedCodes = data.skipped || [];
+                        }
+                    }
+                } catch (e) {
+                    console.warn('API available-codes error, using client fallback:', e);
+                }
+
+                // Client-side fallback เผื่อกรณี Network ขัดข้อง: วนลูปเติมจนครบตามจำนวน count เป๊ะๆ
+                if (codesToPrint.length === 0) {
+                    let currentPrefixCode = prefix.charCodeAt(0);
+                    let currentNum = startNum;
+                    let safety = 0;
+                    const needed = count;
+                    const candidates = [];
+                    while (candidates.length < needed + 50 && safety < 26000) {
+                        safety++;
+                        if (currentNum > 999) {
+                            currentNum = 1;
+                            currentPrefixCode++;
+                            if (currentPrefixCode > 90) currentPrefixCode = 65;
+                        }
+                        candidates.push(`${String.fromCharCode(currentPrefixCode)}${String(currentNum).padStart(3, '0')}`);
+                        currentNum++;
+                    }
+                    const existingInDB = await fetchRegisteredCodes(candidates);
+                    skippedCodes = existingInDB;
+                    codesToPrint = candidates.filter(c => !existingInDB.includes(c)).slice(0, count);
+                }
+            } else {
+                const customVal = document.getElementById('customCodes').value;
+                let allCodes = [];
+                if (customVal.trim() !== '') {
+                    allCodes = customVal.split(',').map(item => item.trim().toUpperCase()).filter(item => item !== '');
+                }
+                if (allCodes.length > 0) {
+                    const existingInDB = await fetchRegisteredCodes(allCodes);
+                    if (existingInDB.length > 0) {
+                        skippedCodes = existingInDB;
+                    }
+                    // ในโหมดกำหนดรหัสเอง ให้พิมพ์ครบตามรหัสที่ผู้ใช้ระบุ ไม่ตัดยอดทิ้ง
+                    codesToPrint = allCodes;
+                }
+            }
+
+            // ถ้ามีคำขอที่ใหม่กว่า ให้ข้ามเพื่อป้องกัน race condition
+            if (currentSeq !== _previewSeq) return;
+
+            container.innerHTML = '';
+
+            // ซ่อน/ยกเลิก Mockup warning banner ทั้งหมดตามข้อกำหนด ให้แสดงเฉพาะตารางพิมพ์รหัสตามจำนวนที่ระบุ
+            // รหัสที่ลงทะเบียนแล้วถูกข้ามเงียบๆ และรันลำดับถัดไปเติมจนครบถ้วนเรียบร้อยแล้ว
+
+            document.getElementById('btnCountLabel').innerText = codesToPrint.length;
+            document.getElementById('totalPreviewCount').innerText = codesToPrint.length;
+
+            const globalW = document.getElementById('sliderWidth').value;
+            const globalH = document.getElementById('sliderHeight').value;
+            const globalQR = document.getElementById('sliderQR').value;
+
+            codesToPrint.forEach((code, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'sticker-card-wrapper';
+                wrapper.id = `sticker-wrap-${idx}`;
+
+                wrapper.innerHTML = `
+                    <div class="sticker-item">
+                        <div class="sticker-qr" id="qrcode-${idx}"></div>
+                        <div class="sticker-info">
+                            <div class="sticker-code">${code}</div>
+                            <div class="sticker-line"></div>
+                            <div class="sticker-line"></div>
+                        </div>
+                    </div>
+                    <div class="individual-controls">
+                        <div class="ind-group">
+                            <span>กว้าง: <b id="ind-w-val-${idx}">${globalW}</b></span>
+                            <input type="range" id="ind-w-${idx}" min="40" max="95" step="1" value="${globalW}" oninput="updateIndividualSticker(${idx})">
+                        </div>
+                        <div class="ind-group">
+                            <span>สูง: <b id="ind-h-val-${idx}">${globalH}</b></span>
+                            <input type="range" id="ind-h-${idx}" min="15" max="40" step="0.5" value="${globalH}" oninput="updateIndividualSticker(${idx})">
+                        </div>
+                        <div class="ind-group">
+                            <span>QR: <b id="ind-qr-val-${idx}">${globalQR}</b></span>
+                            <input type="range" id="ind-qr-${idx}" min="10" max="25" step="0.5" value="${globalQR}" oninput="updateIndividualSticker(${idx})">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(wrapper);
+
+                new QRCode(document.getElementById(`qrcode-${idx}`), {
+                    text: `${location.protocol}//${location.host}/asset-detail.html?id=${code}`,
+                    width: 128,
+                    height: 128,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            });
+        }
+
+        function toggleMode() {
+            const printType = document.querySelector('input[name="printType"]:checked').value;
+            const groupPrefix = document.getElementById('groupPrefix');
+            const groupStart = document.getElementById('groupStart');
+            const groupCount = document.getElementById('groupCount');
+            const groupCustomCode = document.getElementById('groupCustomCode');
+
+            if (printType === 'batch') {
+                groupPrefix.style.display = 'block';
+                groupStart.style.display = 'block';
+                groupCount.style.display = 'block';
+                groupCustomCode.style.display = 'none';
+            } else {
+                groupPrefix.style.display = 'none';
+                groupStart.style.display = 'none';
+                groupCount.style.display = 'none';
+                groupCustomCode.style.display = 'block';
+            }
+            generatePreview();
+        }
+
+        async function logout() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                try { await fetch(getApiUrl('/api/logout'), { method:'POST', headers:{'Authorization':`Bearer ${token}`} }); } catch(e){}
+            }
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            window.location.href = 'index.html';
+        }
+
+        window.onload = function () {
+            // Auth guard
+            if (!localStorage.getItem('auth_token')) {
+                window.location.href = 'index.html';
+                return;
+            }
+            try {
+                const user = JSON.parse(localStorage.getItem('auth_user') || '{}');
+                if (user.username || user.name) {
+                    const name = user.name || user.username;
+                    document.getElementById('userName').innerText = name;
+                    document.getElementById('avatarIcon').innerText = name.charAt(0).toUpperCase();
+                }
+            } catch(e) {}
+
+            loadSavedConfig();
+            generatePreview();
+        };
+
+    </script>
+</body>
+
+</html>

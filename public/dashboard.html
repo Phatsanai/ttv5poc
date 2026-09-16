@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Console - ภาพรวมระบบและสถานะทรัพย์สิน</title>
+    <!-- Prompt Font & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Universal Theme Manager & API Config -->
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <script src="config.js"></script>
+
+    <style>
+        /* =========================================================
+           CSS VARIABLES (THEME CONFIGURATION)
+           ========================================================= */
+        :root {
+            /* Dark Theme (Default) */
+            --bg-main: #0b0f19;
+            --bg-card: #111827;
+            --bg-sidebar: #0e131f;
+            --bg-hover: #1f2937;
+            --border-color: #1f2937;
+            --text-title: #f9fafb;
+            --text-body: #9ca3af;
+            --text-muted: #6b7280;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-cyan: #06b6d4;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        body.light-mode {
+            /* Light Theme */
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-sidebar: #ffffff;
+            --bg-hover: #f1f5f9;
+            --border-color: #e2e8f0;
+            --text-title: #0f172a;
+            --text-body: #475569;
+            --text-muted: #94a3b8;
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Prompt', sans-serif;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-body);
+            display: flex;
+            min-height: 100vh;
+            font-size: 0.9rem;
+        }
+
+        /* =========================================================
+           SIDEBAR STYLES
+           ========================================================= */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .brand-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-title);
+        }
+
+        .brand-logo i {
+            color: var(--accent-blue);
+            font-size: 1.4rem;
+        }
+
+        .version-tag {
+            font-size: 0.7rem;
+            background-color: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .nav-section {
+            padding: 16px 0;
+        }
+
+        .nav-label {
+            padding: 0 24px 8px 24px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            color: var(--text-body);
+            text-decoration: none;
+            font-size: 0.88rem;
+        }
+
+        .nav-item a:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-title);
+        }
+
+        .nav-item.active a {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+            border-left: 3px solid var(--accent-blue);
+            font-weight: 500;
+        }
+
+        .nav-link-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge-count {
+            background-color: var(--bg-hover);
+            color: var(--text-body);
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .badge-count.danger {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-green);
+            margin-right: 6px;
+        }
+
+        /* =========================================================
+           MAIN WRAPPER & TOPBAR
+           ========================================================= */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+
+        .search-box {
+            position: relative;
+            width: 380px;
+        }
+
+        .search-box input {
+            width: 100%;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px 8px 36px;
+            color: var(--text-title);
+            font-size: 0.85rem;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-theme-toggle {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-body);
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-theme-toggle:hover {
+            color: var(--text-title);
+            background-color: var(--bg-hover);
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-left: 16px;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: var(--accent-blue);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        /* =========================================================
+           CONTENT AREA & STAT CARDS
+           ========================================================= */
+        .content-area {
+            padding: 24px 32px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .page-title h2 {
+            font-size: 1.3rem;
+            color: var(--text-title);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-title p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .filter-selectors {
+            display: flex;
+            gap: 12px;
+        }
+
+        .select-control {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-title);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        /* Stat Cards Grid (5 Columns) */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+        }
+
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-title);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-footer {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Color Variations for Stat Cards */
+        .icon-blue {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .icon-green {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .icon-orange {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-orange);
+        }
+
+        .icon-red {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        .icon-cyan {
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--accent-cyan);
+        }
+
+        /* =========================================================
+           CHARTS SECTION
+           ========================================================= */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-title);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Mock Progress Bar Chart */
+        .progress-group {
+            margin-bottom: 12px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+
+        .progress-bar-bg {
+            height: 8px;
+            background-color: var(--bg-main);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        /* Mock Bar Chart */
+        .bar-chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 140px;
+            padding-top: 20px;
+            gap: 12px;
+        }
+
+        .bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .bar-pair {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .bar {
+            width: 12px;
+            border-radius: 3px 3px 0 0;
+        }
+
+        .bar-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* =========================================================
+           DATA TABLE SECTION
+           ========================================================= */
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .tab-switcher {
+            display: flex;
+            gap: 8px;
+            background-color: var(--bg-main);
+            padding: 4px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            color: var(--text-body);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background-color: var(--bg-card);
+            color: var(--text-title);
+            font-weight: 500;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        .data-table th {
+            padding: 12px 16px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-body);
+        }
+
+        .data-table tr:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .asset-code {
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .status-badge.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-orange);
+        }
+
+        .status-badge.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        .btn-action {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-body);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .btn-action:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-title);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================================================
+         1. SIDEBAR NAVIGATION
+         ========================================================= -->
+    <aside class="sidebar">
+        <div class="brand-header">
+            <div class="brand-logo">
+                <i class="fa-solid fa-boxes-stacked"></i> Asset Console
+            </div>
+            <span class="version-tag">v3.4</span>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">NAVIGATION</div>
+            <ul class="nav-menu">
+                <li class="nav-item active">
+                    <a href="dashboard.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="print-qr.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="asset-list.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-list"></i> รายการทรัพย์สินทั้งหมด</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="asset-detail.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="borrow-return.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</span>
+                        <span class="badge-count danger" id="badgeBorrowed">—</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="maintenance.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</span>
+                        <span class="badge-count" id="badgeMaintenance">—</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="audit.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">MANAGEMENT</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="account.html"><span class="nav-link-content"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="settings.html"><span class="nav-link-content"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="backup.html"><span class="nav-link-content"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</span></a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-footer">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <div style="width:32px;height:32px;background:rgba(59,130,246,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent-blue);font-size:0.85rem;"><i class="fa-solid fa-user"></i></div>
+                <div>
+                    <div style="font-weight:500;color:var(--text-title);font-size:0.82rem;" id="sidebarUserName">Admin</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);" id="sidebarUserRole">ผู้ดูแลระบบ</div>
+                </div>
+            </div>
+            <button onclick="handleLogout()" style="width:100%;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);padding:7px;border-radius:6px;cursor:pointer;font-size:0.82rem;display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Prompt',sans-serif;">
+                <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+            </button>
+        </div>
+    </aside>
+
+    <!-- =========================================================
+         2. MAIN CONTENT WRAPPER
+         ========================================================= -->
+    <div class="main-wrapper">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="ค้นหาอุปกรณ์, Serial Number, ชื่อพนักงาน...">
+            </div>
+
+            <div class="topbar-actions">
+                <!-- Theme Toggle Button -->
+                <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+
+                <a href="asset-list.html" class="btn-primary">
+                    <i class="fa-solid fa-plus"></i> เพิ่มอุปกรณ์ใหม่
+                </a>
+
+                <div class="user-profile">
+                    <div class="avatar" id="topbarAvatar">A</div>
+                    <div>
+                        <div style="font-weight: 500; color: var(--text-title); font-size: 0.85rem;" id="topbarUserName">Admin User</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);" id="topbarUserRole">Administrator</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT AREA -->
+        <main class="content-area">
+
+            <!-- PAGE HEADER -->
+            <div class="page-header">
+                <div class="page-title">
+                    <h2>ภาพรวมระบบและสถานะทรัพย์สิน <span
+                            style="font-size: 0.75rem; background: rgba(16,185,129,0.15); color: var(--accent-green); padding: 2px 8px; border-radius: 4px; font-weight: 400;">Real-time
+                            Metrics</span></h2>
+                    <p>ข้อมูลสถิติทรัพย์สิน อุปกรณ์ส่งซ่อม และการยืมคืนแบบเรียลไทม์</p>
+                </div>
+                <div class="filter-selectors">
+                    <select class="select-control">
+                        <option>สำนักงานใหญ่ (HQ)</option>
+                        <option>สาขาบางนา</option>
+                    </select>
+                    <select class="select-control">
+                        <option>ไตรมาส 3 / 2569</option>
+                        <option>ไตรมาส 2 / 2569</option>
+                    </select>
+                    <button class="btn-action" style="padding: 6px 12px;"><i class="fa-solid fa-download"></i>
+                        ส่งออกรายงาน</button>
+                </div>
+            </div>
+
+            <!-- STAT CARDS (5 COLUMNS) -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>ทรัพย์สินทั้งหมด</span>
+                        <div class="stat-icon icon-blue"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    </div>
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-footer"><i class="fa-solid fa-database" style="color:var(--accent-blue)"></i> ข้อมูลจริงในระบบ</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>ใช้งานปกติ & พร้อมใช้</span>
+                        <div class="stat-icon icon-green"><i class="fa-solid fa-circle-check"></i></div>
+                    </div>
+                    <div class="stat-value" id="statActive">0</div>
+                    <div class="stat-footer" style="color:var(--accent-green)"><i class="fa-solid fa-check"></i> สถานะปกติ</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>ส่งซ่อม / ชำรุด</span>
+                        <div class="stat-icon icon-orange"><i class="fa-solid fa-wrench"></i></div>
+                    </div>
+                    <div class="stat-value" id="statMaintenance">0</div>
+                    <div class="stat-footer" style="color:var(--accent-orange)"><i class="fa-solid fa-screwdriver-wrench"></i> ในระบบซ่อม</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>ยืมออกใช้งาน</span>
+                        <div class="stat-icon icon-red"><i class="fa-solid fa-right-left"></i></div>
+                    </div>
+                    <div class="stat-value" id="statBorrowed" style="color: var(--accent-red)">0</div>
+                    <div class="stat-footer" style="color: var(--accent-red)"><i class="fa-solid fa-hand-holding"></i> มีผู้ยืมอยู่</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>รอบตรวจนับสต็อก</span>
+                        <div class="stat-icon icon-cyan"><i class="fa-solid fa-clipboard-check"></i></div>
+                    </div>
+                    <div class="stat-value" id="statAudits">0</div>
+                    <div class="stat-footer"><a href="audit.html" style="color: var(--accent-cyan); text-decoration: none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> ไปยังหน้าตรวจนับ</a></div>
+                </div>
+            </div>
+
+            <!-- CHARTS SECTION -->
+            <div class="charts-grid">
+                <!-- Dynamic Category Distribution -->
+                <div class="card-box">
+                    <div class="card-title">
+                        <span><i class="fa-solid fa-chart-pie" style="color:var(--accent-blue); margin-right:6px;"></i> สัดส่วนทรัพย์สินตามหมวดหมู่</span>
+                        <span id="categorySummaryLabel" style="font-size: 0.75rem; color: var(--text-muted)">จากฐานข้อมูลจริง</span>
+                    </div>
+
+                    <div id="categoryChartContainer" style="display:flex; flex-direction:column; gap:12px; min-height:160px; justify-content:center;">
+                        <div style="text-align:center; padding:24px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดหมวดหมู่...</div>
+                    </div>
+                </div>
+
+                <!-- Dynamic 6-Month Trends -->
+                <div class="card-box">
+                    <div class="card-title">
+                        <span><i class="fa-solid fa-chart-column" style="color:var(--accent-green); margin-right:6px;"></i> แนวโน้มการยืม-คืน & แจ้งซ่อม (ย้อนหลัง 6 เดือน)</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted)"><i class="fa-solid fa-circle"
+                                style="color:var(--accent-blue)"></i> ยืม-คืน <i class="fa-solid fa-circle"
+                                style="color:var(--accent-orange)"></i> แจ้งซ่อม</span>
+                    </div>
+
+                    <div class="bar-chart-container" id="monthlyTrendsContainer" style="min-height:160px;">
+                        <div style="width:100%; text-align:center; padding:24px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูลแนวโน้ม...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLE SECTION -->
+            <div class="card-box">
+                <div class="table-toolbar">
+                    <div class="tab-switcher" id="dashboardTabSwitcher">
+                        <button class="tab-btn active" onclick="setDashboardTab('ALL')">ทั้งหมด (<span id="tabCntAll">0</span>)</button>
+                        <button class="tab-btn" onclick="setDashboardTab('active')">ใช้งานปกติ (<span id="tabCntActive">0</span>)</button>
+                        <button class="tab-btn" onclick="setDashboardTab('borrowed')">ถูกยืม (<span id="tabCntBorrowed">0</span>)</button>
+                        <button class="tab-btn" onclick="setDashboardTab('maintenance')">ส่งซ่อม (<span id="tabCntMaintenance">0</span>)</button>
+                    </div>
+
+                    <div style="display: flex; gap: 8px;">
+                        <a href="print-qr.html" class="btn-action"><i class="fa-solid fa-qrcode"></i> พิมพ์ QR ด่วน</a>
+                        <a href="asset-list.html" class="btn-primary" style="padding: 6px 12px;"><i
+                                class="fa-solid fa-plus"></i> จัดการทรัพย์สิน</a>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>รหัสทรัพย์สิน</th>
+                                <th>ชื่ออุปกรณ์ / Serial Number</th>
+                                <th>หมวดหมู่ / แผนก</th>
+                                <th>ผู้ครอบครอง</th>
+                                <th>วันที่ลงทะเบียน</th>
+                                <th>สถานะ</th>
+                                <th style="text-align:center;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentAssetsBody">
+                            <tr>
+                                <td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted);">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูลจากฐานข้อมูล...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- =========================================================
+         3. SCRIPTS & AUTH
+         ========================================================= -->
+    <script>
+        // ── Theme: จัดการโดย theme.js กลางใน <head> (window.toggleTheme) ──
+
+        // ── Auth Guard & State ────────────────────────────────────
+        let cachedRecentAssets = [];
+        let activeTabStatus = 'ALL';
+
+        function requireAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) { window.location.href = 'index.html'; return null; }
+            return token;
+        }
+
+        function getCurrentUser() {
+            try {
+                return JSON.parse(localStorage.getItem('auth_user') || '{}');
+            } catch(e) {
+                return {};
+            }
+        }
+
+        async function handleLogout() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                try { await fetch(getApiUrl('/api/logout'), { method:'POST', headers:{'Authorization':`Bearer ${token}`} }); } catch(e) {}
+            }
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            window.location.href = 'index.html';
+        }
+
+        // ── Load Stats from API ────────────────────────────────────
+        async function loadDashboardStats() {
+            try {
+                const r = await fetch(getApiUrl('/api/stats'));
+                if (!r.ok) return;
+                const { data } = await r.json();
+
+                // Update stat cards with REAL counts
+                const byId = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val !== undefined ? val : 0; };
+                byId('statTotal',       data.totalAssets   || 0);
+                byId('statActive',      data.activeAssets  || 0);
+                byId('statBorrowed',    data.borrowed      || 0);
+                byId('statMaintenance', data.maintenance   || 0);
+                byId('statAudits',      data.totalAudits    || 0);
+
+                // Update tab counters
+                byId('tabCntAll',         data.totalAssets  || 0);
+                byId('tabCntActive',      data.activeAssets || 0);
+                byId('tabCntBorrowed',    data.borrowed     || 0);
+                byId('tabCntMaintenance', data.maintenance  || 0);
+
+                // Update sidebar badges
+                const bBorrowed = document.getElementById('badgeBorrowed');
+                if (bBorrowed) bBorrowed.textContent = data.borrowed || 0;
+                const bMaint = document.getElementById('badgeMaintenance');
+                if (bMaint) bMaint.textContent = data.maintenance || 0;
+
+                // Render Dynamic Category Breakdown
+                renderCategoryChart(data.categoryStats || [], data.totalAssets || 0);
+
+                // Render Dynamic 6-Month Trends
+                renderMonthlyTrends(data.monthlyTrends || []);
+
+                // Cache and render recent assets table
+                cachedRecentAssets = data.recentAssets || [];
+                renderFilteredRecentTable();
+
+            } catch(e) {
+                console.warn('ไม่สามารถโหลด Dashboard Stats:', e);
+            }
+        }
+
+        function renderCategoryChart(categories, total) {
+            const container = document.getElementById('categoryChartContainer');
+            if (!container) return;
+
+            if (!categories || categories.length === 0 || total === 0) {
+                const summaryEl = document.getElementById('categorySummaryLabel');
+                if (summaryEl) summaryEl.textContent = '0 หมวดหมู่';
+                container.innerHTML = `<div style="text-align:center; padding:28px; color:var(--text-muted);"><i class="fa-regular fa-folder-open" style="font-size:1.5rem; margin-bottom:8px; display:block;"></i>ยังไม่มีการจัดหมวดหมู่ทรัพย์สิน</div>`;
+                return;
+            }
+
+            const colors = [
+                'var(--accent-blue)',
+                'var(--accent-green)',
+                'var(--accent-orange)',
+                '#06b6d4',
+                '#a855f7',
+                '#ec4899'
+            ];
+
+            const summaryEl = document.getElementById('categorySummaryLabel');
+            if (summaryEl) summaryEl.textContent = `${categories.length} หมวดหมู่`;
+
+            container.innerHTML = categories.map((cat, idx) => {
+                const percent = Math.min(100, Math.round((cat.cnt / total) * 100));
+                const color = colors[idx % colors.length];
+                return `
+                    <div class="progress-group">
+                        <div class="progress-info" style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
+                            <span style="font-weight:500; color:var(--text-title);">${escHtml(cat.category)}</span>
+                            <span style="color:var(--text-muted); font-size:0.8rem;">${cat.cnt} รายการ (${percent}%)</span>
+                        </div>
+                        <div class="progress-bar-bg" style="height:8px; background:rgba(120,120,120,0.15); border-radius:4px; overflow:hidden;">
+                            <div class="progress-bar-fill" style="width:${percent}%; height:100%; background-color:${color}; border-radius:4px; transition:width 0.4s ease;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderMonthlyTrends(trends) {
+            const container = document.getElementById('monthlyTrendsContainer');
+            if (!container) return;
+
+            if (!trends || trends.length === 0) {
+                container.innerHTML = `<div style="width:100%; text-align:center; padding:28px; color:var(--text-muted);">ไม่มีข้อมูลแนวโน้ม</div>`;
+                return;
+            }
+
+            let maxVal = 1;
+            trends.forEach(t => {
+                if (t.borrows > maxVal) maxVal = t.borrows;
+                if (t.maintenance > maxVal) maxVal = t.maintenance;
+            });
+
+            container.innerHTML = trends.map(t => {
+                const bH = t.borrows > 0 ? Math.max(8, Math.round((t.borrows / maxVal) * 85)) : 4;
+                const mH = t.maintenance > 0 ? Math.max(8, Math.round((t.maintenance / maxVal) * 85)) : 4;
+                return `
+                    <div class="bar-group" style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
+                        <div class="bar-pair" style="display:flex; align-items:flex-end; gap:4px; width:100%; height:100%; justify-content:center;">
+                            <div class="bar" style="width:14px; height:${bH}%; background-color:var(--accent-blue); border-radius:3px 3px 0 0;" title="ยืม: ${t.borrows} รายการ"></div>
+                            <div class="bar" style="width:14px; height:${mH}%; background-color:var(--accent-orange); border-radius:3px 3px 0 0;" title="แจ้งซ่อม: ${t.maintenance} รายการ"></div>
+                        </div>
+                        <span class="bar-label" style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">${t.month}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setDashboardTab(status) {
+            activeTabStatus = status;
+            const switcher = document.getElementById('dashboardTabSwitcher');
+            if (switcher) {
+                switcher.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            }
+            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+            renderFilteredRecentTable();
+        }
+
+        function renderFilteredRecentTable() {
+            const tbody = document.getElementById('recentAssetsBody');
+            if (!tbody) return;
+
+            const user = getCurrentUser();
+            const canEdit = ['admin', 'editor'].includes(user.role);
+            const canDelete = user.role === 'admin';
+
+            let list = cachedRecentAssets;
+            if (activeTabStatus !== 'ALL') {
+                list = list.filter(a => a.status === activeTabStatus);
+            }
+
+            if (list.length === 0) {
+                const msg = cachedRecentAssets.length === 0
+                    ? '<i class="fa-solid fa-boxes-stacked" style="font-size:1.6rem; margin-bottom:10px; display:block; opacity:0.5;"></i>ยังไม่มีข้อมูลทรัพย์สินในระบบ (สามารถเพิ่มได้ที่ปุ่ม "จัดการทรัพย์สิน" ด้านบน)'
+                    : 'ไม่มีรายการทรัพย์สินในสถานะนี้';
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:36px; color:var(--text-muted);">${msg}</td></tr>`;
+                return;
+            }
+
+            const statusMap = {
+                active:      { label:'ใช้งานปกติ',   cls:'status-active',   icon:'fa-circle' },
+                borrowed:    { label:'ถูกยืมออก',    cls:'status-borrowed', icon:'fa-right-left' },
+                maintenance: { label:'ส่งซ่อม',      cls:'status-repair',   icon:'fa-wrench' },
+                disposed:    { label:'ตัดจำหน่าย',  cls:'status-repair',   icon:'fa-ban' },
+            };
+
+            tbody.innerHTML = list.map(a => {
+                const st = statusMap[a.status] || statusMap.active;
+                let actions = '<div style="display:flex; gap:6px; justify-content:center;">';
+                actions += `<a href="asset-detail.html?id=${encodeURIComponent(a.asset_code)}" class="btn-action" title="ดูรายละเอียด"><i class="fa-regular fa-eye"></i> ดู</a>`;
+                
+                if (canEdit) {
+                    actions += `<a href="asset-detail.html?id=${encodeURIComponent(a.asset_code)}&edit=1" class="btn-action" title="แก้ไขข้อมูล"><i class="fa-regular fa-pen-to-square"></i> แก้ไข</a>`;
+                }
+
+                actions += `<a href="print-qr.html?code=${encodeURIComponent(a.asset_code)}" class="btn-action" title="พิมพ์ QR Code"><i class="fa-solid fa-qrcode"></i> พิมพ์</a>`;
+
+                if (canDelete) {
+                    actions += `<button class="btn-action" style="color:#ef4444; border-color:#fca5a5;" onclick="deleteAssetFromDashboard('${escHtml(a.asset_code)}')" title="ลบทรัพย์สิน"><i class="fa-regular fa-trash-can"></i></button>`;
+                }
+                actions += '</div>';
+
+                return `<tr>
+                    <td><a href="asset-detail.html?id=${encodeURIComponent(a.asset_code)}" class="asset-code">${escHtml(a.asset_code)}</a></td>
+                    <td>
+                        <div style="font-weight:600; color:var(--text-title);">${escHtml(a.name)}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">SN: ${escHtml(a.serial_number||'—')}</div>
+                    </td>
+                    <td>${escHtml(a.category || a.department || '—')}</td>
+                    <td>${escHtml(a.holder || '—')}</td>
+                    <td>${a.received_date || '—'}</td>
+                    <td><span class="status-badge ${st.cls}"><i class="fa-solid ${st.icon}" style="font-size:0.6rem;"></i> ${st.label}</span></td>
+                    <td style="text-align:center;">${actions}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function deleteAssetFromDashboard(code) {
+            const user = getCurrentUser();
+            if (user.role !== 'admin') {
+                alert('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถลบทรัพย์สินได้');
+                return;
+            }
+            if (!confirm(`คุณต้องการลบทรัพย์สินรหัส "${code}" ออกจากระบบจริงหรือไม่?`)) return;
+
+            const token = requireAuth();
+            try {
+                const r = await fetch(getApiUrl(`/api/assets/${encodeURIComponent(code)}`), {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'ลบไม่สำเร็จ');
+
+                alert('ลบทรัพย์สินเรียบร้อยแล้ว');
+                loadDashboardStats();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        function escHtml(s) {
+            return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        // ── Init ──────────────────────────────────────────────────
+        window.onload = async function () {
+            // Apply theme
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('themeIcon').className = 'fa-solid fa-sun';
+            }
+
+            // Auth guard
+            const token = requireAuth();
+            if (!token) return;
+
+            // Load user info
+            try {
+                const userStr = localStorage.getItem('auth_user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    const nameEls = ['topbarUserName','sidebarUserName'];
+                    const roleEls = ['topbarUserRole','sidebarUserRole'];
+                    nameEls.forEach(id => { const el=document.getElementById(id); if(el) el.textContent = user.name || user.username; });
+                    roleEls.forEach(id => { const el=document.getElementById(id); if(el) el.textContent = user.role==='admin'?'ผู้ดูแลระบบ (Admin)': (user.role==='editor'?'ผู้แก้ไข (Editor)':'ผู้เข้าชม (Viewer)'); });
+                    const av = document.getElementById('topbarAvatar');
+                    if (av) av.textContent = (user.name||user.username||'A').charAt(0).toUpperCase();
+                }
+            } catch(e) {}
+
+            // Load stats from SQLite
+            await loadDashboardStats();
+        };
+    </script>
+</body>
+
+</html>

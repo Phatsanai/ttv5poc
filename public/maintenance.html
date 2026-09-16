@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Console - แจ้งซ่อม & บำรุงรักษา</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Universal Theme Manager & API Config -->
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <script src="config.js"></script>
+    <script src="html5-qrcode.min.js"></script>
+    <script src="scanner-modal.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        body {
+            background-color: #0b0e14;
+            color: #c9d1d9;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background-color: #121721;
+            border-right: 1px solid #1e2638;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            padding: 0 24px 20px 24px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #1e2638;
+        }
+
+        .brand span.version {
+            font-size: 0.75rem;
+            background: #1f293d;
+            color: #388bfd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 400;
+        }
+
+        .nav-group-label {
+            padding: 20px 24px 8px 24px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #6e7681;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            color: #8b949e;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item a:hover {
+            color: #f0f6fc;
+            background-color: #161b26;
+        }
+
+        .nav-item.active a {
+            color: #58a6ff;
+            background-color: #172338;
+            border-left: 3px solid #388bfd;
+            font-weight: 500;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .badge-neutral {
+            background-color: #21262d;
+            color: #8b949e;
+        }
+
+        .badge-danger {
+            background-color: #3d1d24;
+            color: #ff7b72;
+        }
+
+        .badge-warning {
+            background-color: #382400;
+            color: #d29922;
+        }
+
+        .badge-success {
+            background-color: #11381e;
+            color: #3fb950;
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: #121721;
+            border-bottom: 1px solid #1e2638;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+
+        .btn-back {
+            background-color: #1c2333;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            transition: background 0.2s;
+        }
+
+        .btn-back:hover {
+            background-color: #273147;
+            color: #ffffff;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #1f6feb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: #f85149;
+            cursor: pointer;
+            margin-left: 12px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-logout:hover {
+            background-color: rgba(248, 81, 73, 0.1);
+        }
+
+        .content-area {
+            padding: 32px;
+            flex: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 1.35rem;
+            color: #f0f6fc;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-add {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background-color: #2ea043;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: #121721;
+            border: 1px solid #1e2638;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .stat-info h4 {
+            font-size: 0.8rem;
+            color: #8b949e;
+            font-weight: 400;
+        }
+
+        .stat-info div {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+
+        /* Data Table */
+        .card-box {
+            background-color: #121721;
+            border: 1px solid #1e2638;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: #161b26;
+            color: #8b949e;
+            padding: 12px 16px;
+            font-weight: 500;
+            border-bottom: 1px solid #1e2638;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #1e2638;
+            color: #c9d1d9;
+        }
+
+        tr:hover td {
+            background-color: #161c28;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #58a6ff;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .action-btn:hover {
+            background-color: rgba(56, 139, 253, 0.15);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: #121721;
+            border: 1px solid #1e2638;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            padding: 24px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #f0f6fc;
+            font-size: 1.1rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #8b949e;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: #0b0e14;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: #f0f6fc;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            background-color: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar Menu -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-boxes-stacked" style="color: #388bfd;"></i> Asset Console <span
+                class="version">v3.4</span>
+        </div>
+
+        <div class="nav-group-label">NAVIGATION</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-chart-pie"></i> แดชบอร์ด
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-list.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-list-check"></i> รายการทรัพย์สินทั้งหมด
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-detail.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="print-qr.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="borrow-return.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-right-left"></i> ระบบยืม - คืน
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="maintenance.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="audit.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)
+                    </div>
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-group-label">MANAGEMENT</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="account.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-id-card"></i> บัญชีของฉัน
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="settings.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="backup.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-database"></i> สำรองฐานข้อมูล
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div>
+                <a href="dashboard.html" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
+                </a>
+            </div>
+            <div class="user-info" style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-theme-toggle" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+                <div class="user-avatar">A</div>
+                <span style="color: #f0f6fc; font-size: 0.9rem;">Admin User</span>
+                <button class="btn-logout" onclick="logout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา
+                </h1>
+                <button class="btn-add" onclick="openModal()">
+                    <i class="fa-solid fa-plus"></i> แจ้งซ่อมใหม่
+                </button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(210, 153, 34, 0.15); color: #d29922;">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>รอดำเนินการ</h4>
+                        <div id="statPendingCount">0 รายการ</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(56, 139, 253, 0.15); color: #58a6ff;">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>กำลังซ่อมแซม</h4>
+                        <div id="statRepairingCount">0 รายการ</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(63, 185, 80, 0.15); color: #3fb950;">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>เสร็จสิ้นแล้ว</h4>
+                        <div id="statCompletedCount">0 รายการ</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="card-box">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>รหัสแจ้งซ่อม</th>
+                                <th>รหัสทรัพย์สิน</th>
+                                <th>ชื่อรายการ</th>
+                                <th>อาการ / ปัญหา</th>
+                                <th>ผู้รับผิดชอบ / ช่าง</th>
+                                <th>วันที่แจ้ง</th>
+                                <th>สถานะ</th>
+                                <th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="maintenanceTableBody">
+                            <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูลแจ้งซ่อมจากฐานข้อมูล...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Form -->
+    <div class="modal" id="repairModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-wrench"></i> ฟอร์มแจ้งซ่อมทรัพย์สิน</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form onsubmit="handleSubmit(event)">
+                <div class="form-group">
+                    <label>รหัสทรัพย์สิน (Asset Tag) *</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" class="form-control" id="repairAssetCode" placeholder="เช่น A001, A002" required style="flex:1;">
+                        <button type="button" class="btn-add" style="padding:0 14px; white-space:nowrap; background:#2563eb;" onclick="scanAssetForMaintenance()" title="เปิดกล้องสแกน QR เพื่อระบุรหัสทรัพย์สิน">
+                            <i class="fa-solid fa-camera"></i> สแกน
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>ชื่อผู้แจ้งซ่อม / ช่างผู้รับผิดชอบ *</label>
+                    <input type="text" class="form-control" id="repairTechnician" placeholder="ระบุชื่อ-นามสกุล" required>
+                </div>
+                <div class="form-group">
+                    <label>ประเภทการซ่อมบำรุง</label>
+                    <select class="form-control" id="repairType">
+                        <option value="repair">ส่งซ่อมทั่วไป (Repair)</option>
+                        <option value="preventive">บำรุงรักษาเชิงป้องกัน (PM)</option>
+                        <option value="upgrade">อัปเกรด / ปรับปรุง (Upgrade)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>รายละเอียดอาการ / ปัญหาที่พบ *</label>
+                    <textarea class="form-control" id="repairDesc" rows="3" placeholder="อธิบายอาการเสียพอสังเขป..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
+                    <button type="submit" class="btn-add">บันทึกแจ้งซ่อม</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let maintenanceList = [];
+
+        function getCurrentUser() {
+            try {
+                return JSON.parse(localStorage.getItem('auth_user') || '{}');
+            } catch(e) {
+                return {};
+            }
+        }
+
+        function requireAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) { window.location.href = 'index.html'; return null; }
+            return token;
+        }
+
+        async function logout() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                try { await fetch(getApiUrl('/api/logout'), { method:'POST', headers:{'Authorization':`Bearer ${token}`} }); } catch(e){}
+            }
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            window.location.href = 'index.html';
+        }
+
+        function openModal() {
+            const user = getCurrentUser();
+            if (!['admin', 'editor'].includes(user.role)) {
+                alert('สิทธิ์ไม่เพียงพอ: ต้องเป็น Admin หรือ Editor เท่านั้นจึงจะแจ้งซ่อมได้');
+                return;
+            }
+            document.getElementById('repairAssetCode').value = '';
+            document.getElementById('repairTechnician').value = user.name || '';
+            document.getElementById('repairDesc').value = '';
+            document.getElementById('repairModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('repairModal').style.display = 'none';
+        }
+
+        function scanAssetForMaintenance() {
+            if (typeof openCameraScanner !== 'function') {
+                alert('โมดูลกล้องยังไม่พร้อมใช้งาน กรุณารอสักครู่');
+                return;
+            }
+            openCameraScanner((code) => {
+                document.getElementById('repairAssetCode').value = code;
+            });
+        }
+
+        async function loadMaintenanceFromAPI() {
+            const token = requireAuth();
+            if (!token) return;
+
+            try {
+                const res = await fetch(getApiUrl('/api/maintenance'), {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    maintenanceList = data.data || [];
+                    renderTable(maintenanceList);
+                    updateStats();
+                }
+            } catch(err) {
+                console.warn('loadMaintenance error:', err);
+            }
+        }
+
+        function updateStats() {
+            const pending = maintenanceList.filter(m => m.status === 'pending').length;
+            const inProgress = maintenanceList.filter(m => m.status === 'in_progress' || m.status === 'repairing').length;
+            const completed = maintenanceList.filter(m => m.status === 'completed').length;
+
+            const elP = document.getElementById('statPendingCount');
+            const elI = document.getElementById('statRepairingCount');
+            const elC = document.getElementById('statCompletedCount');
+
+            if (elP) elP.innerText = `${pending} รายการ`;
+            if (elI) elI.innerText = `${inProgress} รายการ`;
+            if (elC) elC.innerText = `${completed} รายการ`;
+        }
+
+        function renderTable(list) {
+            const tbody = document.getElementById('maintenanceTableBody');
+            if (!tbody) return;
+
+            const currentUser = getCurrentUser();
+            const userRole = currentUser.role || 'viewer';
+            const canEdit = ['admin', 'editor'].includes(userRole);
+            const canDelete = userRole === 'admin';
+
+            // ซ่อนปุ่มแจ้งซ่อมใหม่สำหรับ Viewer
+            const addBtn = document.querySelector('.btn-add[onclick="openModal()"]');
+            if (addBtn) addBtn.style.display = canEdit ? 'inline-flex' : 'none';
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--text-muted);"><i class="fa-solid fa-wrench" style="font-size:1.6rem; margin-bottom:10px; display:block; opacity:0.5;"></i>ยังไม่มีรายการแจ้งซ่อมในระบบ (กดปุ่ม "แจ้งซ่อมใหม่" เพื่อบันทึกงานซ่อม)</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(item => {
+                let statusBadge = '';
+                if (item.status === 'completed') {
+                    statusBadge = `<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> ซ่อมเสร็จสิ้น</span>`;
+                } else if (item.status === 'in_progress') {
+                    statusBadge = `<span class="badge" style="background: rgba(37,99,235,0.15); color: #2563eb;"><i class="fa-solid fa-screwdriver-wrench"></i> กำลังซ่อมแซม</span>`;
+                } else {
+                    statusBadge = `<span class="badge badge-warning"><i class="fa-solid fa-clock"></i> รอดำเนินการ</span>`;
+                }
+
+                let actions = '<div style="display:flex; gap:6px; align-items:center;">';
+                actions += `<a href="asset-detail.html?id=${encodeURIComponent(item.asset_code)}" class="action-btn" style="text-decoration:none;" title="ดูข้อมูลทรัพย์สิน"><i class="fa-regular fa-eye"></i> ดู</a>`;
+                actions += `<a href="print-qr.html?code=${encodeURIComponent(item.asset_code)}" class="action-btn" style="text-decoration:none;" title="พิมพ์ป้าย QR Code"><i class="fa-solid fa-qrcode"></i> พิมพ์</a>`;
+
+                if (item.status !== 'completed' && canEdit) {
+                    actions += `<button class="action-btn" onclick="completeRepair(${item.id})" title="บันทึกว่าซ่อมเสร็จสิ้นแล้ว" style="color:#16a34a; border-color:#86efac;"><i class="fa-solid fa-check"></i> เสร็จสิ้น</button>`;
+                }
+
+                if (canDelete) {
+                    actions += `<button class="action-btn" onclick="deleteMaintenance(${item.id})" title="ลบรายการแจ้งซ่อม" style="color:#ef4444; border-color:#fca5a5;"><i class="fa-regular fa-trash-can"></i></button>`;
+                }
+
+                actions += '</div>';
+
+                return `<tr>
+                    <td style="font-weight:600; color:var(--accent-blue);">#MNT-${String(item.id).padStart(4, '0')}</td>
+                    <td><a href="asset-detail.html?id=${encodeURIComponent(item.asset_code)}" style="color:var(--accent-blue); text-decoration:none; font-weight:600;">${item.asset_code}</a></td>
+                    <td style="font-weight:500;">${item.asset_name || '-'}</td>
+                    <td>${item.description || '-'}</td>
+                    <td>${item.technician || '-'}</td>
+                    <td>${item.start_date || '-'}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actions}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function completeRepair(id) {
+            const user = getCurrentUser();
+            if (!['admin', 'editor'].includes(user.role)) {
+                alert('สิทธิ์ไม่เพียงพอ: ต้องเป็น Admin หรือ Editor เท่านั้น');
+                return;
+            }
+            if (!confirm('ยืนยันว่าการซ่อมบำรุงทรัพย์สินนี้เสร็จสิ้นแล้ว?\nสถานะของอุปกรณ์จะถูกปรับกลับเป็น "ใช้งานปกติ" ในระบบทันที')) return;
+
+            const token = requireAuth();
+            try {
+                const r = await fetch(getApiUrl(`/api/maintenance/${id}/complete`), {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'เกิดข้อผิดพลาด');
+                alert('บันทึกการซ่อมเสร็จสิ้นแล้ว!');
+                loadMaintenanceFromAPI();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        async function deleteMaintenance(id) {
+            const user = getCurrentUser();
+            if (user.role !== 'admin') {
+                alert('สิทธิ์ไม่เพียงพอ: เฉพาะ Admin เท่านั้นจึงจะลบรายการแจ้งซ่อมได้');
+                return;
+            }
+            if (!confirm(`ยืนยันการลบรายการแจ้งซ่อม #${id} ออกจากฐานข้อมูลจริงหรือไม่?`)) return;
+
+            const token = requireAuth();
+            try {
+                const r = await fetch(getApiUrl(`/api/maintenance/${id}`), {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'ลบไม่สำเร็จ');
+                alert('ลบรายการแจ้งซ่อมเรียบร้อยแล้ว');
+                loadMaintenanceFromAPI();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const token = requireAuth();
+            if (!token) return;
+
+            const assetCode   = document.getElementById('repairAssetCode').value.trim();
+            const technician  = document.getElementById('repairTechnician').value.trim();
+            const type        = document.getElementById('repairType').value;
+            const description = document.getElementById('repairDesc').value.trim();
+
+            if (!assetCode || !description) {
+                alert('กรุณากรอกรหัสอุปกรณ์และรายละเอียดปัญหาให้ครบถ้วน');
+                return;
+            }
+
+            try {
+                const r = await fetch(getApiUrl('/api/maintenance'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        asset_code:  assetCode,
+                        description: description,
+                        technician:  technician,
+                        type:        type,
+                        start_date:  new Date().toISOString().slice(0, 10)
+                    })
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'บันทึกไม่สำเร็จ');
+                alert('บันทึกรายการแจ้งซ่อมเข้าสู่ระบบเรียบร้อยแล้ว!');
+                closeModal();
+                loadMaintenanceFromAPI();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        // Init
+        window.addEventListener('DOMContentLoaded', function() {
+            requireAuth();
+            const user = getCurrentUser();
+            const userSpan = document.querySelector('.user-info span');
+            if (userSpan && user.name) userSpan.textContent = `${user.name} (${user.role || 'viewer'})`;
+
+            loadMaintenanceFromAPI();
+        });
+    </script>
+</body>
+
+</html>

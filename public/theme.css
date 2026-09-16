@@ -1,0 +1,634 @@
+/* ============================================================
+   Asset Console Enterprise Edition
+   Universal Theme Styles (Dark / Light Mode)
+   Production Ready & High Accessibility Contrast
+   ============================================================ */
+
+/* ── Light Mode Color Variables ─────────────────────────────── */
+html.light-theme,
+html.light-mode,
+body.light-theme,
+body.light-mode,
+[data-theme="light"] {
+    --bg-main: #f8fafc;
+    --bg-body: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-sidebar: #ffffff;
+    --bg-topbar: #ffffff;
+    --bg-hover: #f1f5f9;
+    --bg-input: #ffffff;
+    --border-color: #cbd5e1;
+    --border-subtle: #e2e8f0;
+    --text-title: #0f172a;
+    --text-primary: #0f172a;
+    --text-body: #334155;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --text-main: #0f172a;
+    --text-bright: #0f172a;
+    --input-bg: #ffffff;
+    --hover-bg: #f1f5f9;
+    --accent-blue: #2563eb;
+    --accent-green: #16a34a;
+    --accent-orange: #d97706;
+    --accent-red: #dc2626;
+    --btn-back-bg: #f1f5f9;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --color-scheme: light;
+    color-scheme: light;
+}
+
+/* ── Universal Theme Toggle Button Style ───────────────────── */
+.btn-theme-toggle,
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #c9d1d9;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    outline: none;
+    flex-shrink: 0;
+}
+
+.btn-theme-toggle:hover,
+.theme-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #58a6ff;
+    border-color: #388bfd;
+    transform: translateY(-1px);
+}
+
+.theme-toggle-btn i,
+.btn-theme-toggle i {
+    transition: transform 0.25s ease, color 0.2s ease;
+}
+
+.theme-toggle-btn:hover i,
+.btn-theme-toggle:hover i {
+    transform: rotate(15deg);
+}
+
+/* Toggle button in Light Mode */
+html.light-theme .btn-theme-toggle,
+html.light-theme .theme-toggle-btn,
+body.light-mode .btn-theme-toggle,
+body.light-mode .theme-toggle-btn {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
+}
+
+html.light-theme .btn-theme-toggle:hover,
+html.light-theme .theme-toggle-btn:hover,
+body.light-mode .btn-theme-toggle:hover,
+body.light-mode .theme-toggle-btn:hover {
+    background-color: #e2e8f0;
+    color: #2563eb;
+    border-color: #2563eb;
+}
+
+/* ── Light Mode Core & Layout Overrides ───────────────────── */
+html.light-theme body,
+body.light-mode {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+html.light-theme .main-wrapper,
+body.light-mode .main-wrapper,
+html.light-theme .content-area,
+body.light-mode .content-area,
+html.light-theme .content-container,
+body.light-mode .content-container {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+/* Sidebar */
+html.light-theme .sidebar,
+body.light-mode .sidebar {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+html.light-theme .brand,
+body.light-mode .brand,
+html.light-theme .brand-header,
+body.light-mode .brand-header {
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+html.light-theme .brand-logo,
+body.light-mode .brand-logo {
+    color: #0f172a !important;
+}
+
+html.light-theme .brand span.version,
+body.light-mode .brand span.version {
+    background-color: rgba(37, 99, 235, 0.1) !important;
+    color: #2563eb !important;
+}
+
+html.light-theme .nav-group-label,
+body.light-mode .nav-group-label {
+    color: #64748b !important;
+    font-weight: 600;
+}
+
+html.light-theme .nav-item a,
+body.light-mode .nav-item a {
+    color: #475569 !important;
+}
+
+html.light-theme .nav-item a:hover,
+body.light-mode .nav-item a:hover {
+    background-color: #f1f5f9 !important;
+    color: #2563eb !important;
+}
+
+html.light-theme .nav-item.active a,
+body.light-mode .nav-item.active a {
+    background-color: #eff6ff !important;
+    color: #2563eb !important;
+    border-left-color: #2563eb !important;
+    font-weight: 600;
+}
+
+/* Topbar */
+html.light-theme .topbar,
+body.light-mode .topbar {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+html.light-theme .btn-back,
+body.light-mode .btn-back {
+    background-color: #f1f5f9 !important;
+    color: #2563eb !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 500;
+}
+
+html.light-theme .btn-back:hover,
+body.light-mode .btn-back:hover {
+    background-color: #e2e8f0 !important;
+    color: #1d4ed8 !important;
+}
+
+html.light-theme .user-info span,
+body.light-mode .user-info span,
+html.light-theme .user-profile span,
+body.light-mode .user-profile span,
+html.light-theme .user-name,
+body.light-mode .user-name {
+    color: #0f172a !important;
+    font-weight: 500;
+}
+
+html.light-theme .btn-logout,
+body.light-mode .btn-logout {
+    color: #64748b !important;
+}
+
+html.light-theme .btn-logout:hover,
+body.light-mode .btn-logout:hover {
+    color: #dc2626 !important;
+    background-color: #fee2e2 !important;
+}
+
+/* Headings & Texts */
+html.light-theme .page-title,
+body.light-mode .page-title,
+html.light-theme .card-title,
+body.light-mode .card-title,
+html.light-theme .card-header h2,
+body.light-mode .card-header h2,
+html.light-theme .profile-details h3,
+body.light-mode .profile-details h3 {
+    color: #0f172a !important;
+    font-weight: 700;
+}
+
+html.light-theme .profile-details .username,
+body.light-mode .profile-details .username {
+    color: #64748b !important;
+}
+
+/* Cards, Panels & Stats Containers */
+html.light-theme .card-box,
+body.light-mode .card-box,
+html.light-theme .card,
+body.light-mode .card,
+html.light-theme .stat-card,
+body.light-mode .stat-card,
+html.light-theme .slider-panel,
+body.light-mode .slider-panel,
+html.light-theme .audit-card,
+body.light-mode .audit-card,
+html.light-theme .modal-content,
+body.light-mode .modal-content,
+html.light-theme .modal-container,
+body.light-mode .modal-container {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Stat Cards Text */
+html.light-theme .stat-info h4,
+body.light-mode .stat-info h4,
+html.light-theme .stat-info h3,
+body.light-mode .stat-info h3,
+html.light-theme .stat-label,
+body.light-mode .stat-label {
+    color: #64748b !important;
+    font-weight: 500 !important;
+}
+
+html.light-theme .stat-info div,
+body.light-mode .stat-info div,
+html.light-theme .stat-info .value,
+body.light-mode .stat-info .value,
+html.light-theme .stat-value,
+body.light-mode .stat-value {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
+/* Form Controls & Filter Bars */
+html.light-theme .filter-bar,
+body.light-mode .filter-bar,
+html.light-theme .filter-grid,
+body.light-mode .filter-grid {
+    color: #0f172a !important;
+}
+
+html.light-theme .form-control,
+body.light-mode .form-control,
+html.light-theme .search-input,
+body.light-mode .search-input,
+html.light-theme .filter-select,
+body.light-mode .filter-select,
+html.light-theme input[type="text"],
+body.light-mode input[type="text"],
+html.light-theme input[type="number"],
+body.light-mode input[type="number"],
+html.light-theme input[type="date"],
+body.light-mode input[type="date"],
+html.light-theme select,
+body.light-mode select,
+html.light-theme textarea,
+body.light-mode textarea {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+html.light-theme .form-control:focus,
+body.light-mode .form-control:focus,
+html.light-theme .search-input:focus,
+body.light-mode .search-input:focus,
+html.light-theme .filter-select:focus,
+body.light-mode .filter-select:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+html.light-theme input::placeholder,
+body.light-mode input::placeholder,
+html.light-theme textarea::placeholder,
+body.light-mode textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+html.light-theme label,
+body.light-mode label,
+html.light-theme .form-group label,
+body.light-mode .form-group label {
+    color: #334155 !important;
+    font-weight: 500 !important;
+}
+
+/* Tables */
+html.light-theme table,
+body.light-mode table,
+html.light-theme .table,
+body.light-mode .table,
+html.light-theme .custom-table,
+body.light-mode .custom-table {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+}
+
+html.light-theme table th,
+body.light-mode table th,
+html.light-theme .table th,
+body.light-mode .table th,
+html.light-theme .custom-table th,
+body.light-mode .custom-table th {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    font-weight: 600 !important;
+}
+
+html.light-theme table td,
+body.light-mode table td,
+html.light-theme .table td,
+body.light-mode .table td,
+html.light-theme .custom-table td,
+body.light-mode .custom-table td {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+html.light-theme table tbody tr:hover td,
+body.light-mode table tbody tr:hover td,
+html.light-theme .table tbody tr:hover td,
+body.light-mode .table tbody tr:hover td,
+html.light-theme .custom-table tr:hover td,
+body.light-mode .custom-table tr:hover td {
+    background-color: #f1f5f9 !important;
+}
+
+html.light-theme .asset-name,
+body.light-mode .asset-name {
+    color: #0f172a !important;
+    font-weight: 600 !important;
+}
+
+html.light-theme .asset-sn,
+body.light-mode .asset-sn {
+    color: #64748b !important;
+}
+
+html.light-theme .asset-code,
+body.light-mode .asset-code {
+    color: #2563eb !important;
+    font-weight: 600 !important;
+}
+
+/* Buttons & Actions in Light Mode */
+html.light-theme .btn-action,
+body.light-mode .btn-action,
+html.light-theme .action-btn,
+body.light-mode .action-btn,
+html.light-theme .btn-action-return,
+body.light-mode .btn-action-return,
+html.light-theme .btn-action-extend,
+body.light-mode .btn-action-extend,
+html.light-theme .btn-preset,
+body.light-mode .btn-preset,
+html.light-theme .btn-cancel,
+body.light-mode .btn-cancel {
+    background-color: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+    font-weight: 500;
+}
+
+html.light-theme .btn-action:hover,
+body.light-mode .btn-action:hover,
+html.light-theme .action-btn:hover,
+body.light-mode .action-btn:hover,
+html.light-theme .btn-action-return:hover,
+body.light-mode .btn-action-return:hover,
+html.light-theme .btn-action-extend:hover,
+body.light-mode .btn-action-extend:hover,
+html.light-theme .btn-preset:hover,
+body.light-mode .btn-preset:hover {
+    background-color: #e2e8f0 !important;
+    color: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+html.light-theme .btn-cancel:hover,
+body.light-mode .btn-cancel:hover {
+    background-color: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+/* Badges & Pills in Light Mode */
+html.light-theme .badge-neutral,
+body.light-mode .badge-neutral {
+    background-color: #e2e8f0 !important;
+    color: #334155 !important;
+    font-weight: 600;
+}
+
+html.light-theme .badge-danger,
+body.light-mode .badge-danger {
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
+    font-weight: 600;
+}
+
+html.light-theme .badge-warning,
+body.light-mode .badge-warning {
+    background-color: #fef3c7 !important;
+    color: #b45309 !important;
+    font-weight: 600;
+}
+
+html.light-theme .badge-success,
+body.light-mode .badge-success {
+    background-color: #dcfce7 !important;
+    color: #15803d !important;
+    font-weight: 600;
+}
+
+/* Tabs */
+html.light-theme .tabs-header,
+body.light-mode .tabs-header {
+    border-color: #e2e8f0 !important;
+}
+
+html.light-theme .tab-btn,
+body.light-mode .tab-btn {
+    background-color: #f1f5f9 !important;
+    color: #64748b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+html.light-theme .tab-btn:hover,
+body.light-mode .tab-btn:hover {
+    background-color: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+html.light-theme .tab-btn.active,
+body.light-mode .tab-btn.active {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+}
+
+/* OAuth Items */
+html.light-theme .oauth-item,
+body.light-mode .oauth-item {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+html.light-theme .oauth-name,
+body.light-mode .oauth-name {
+    color: #0f172a !important;
+    font-weight: 500;
+}
+
+/* Modals */
+html.light-theme .modal-header,
+body.light-mode .modal-header,
+html.light-theme .modal-footer,
+body.light-mode .modal-footer {
+    border-color: #e2e8f0 !important;
+}
+
+html.light-theme .modal-header h3,
+body.light-mode .modal-header h3,
+html.light-theme .modal-title,
+body.light-mode .modal-title {
+    color: #0f172a !important;
+}
+
+html.light-theme .close-btn,
+body.light-mode .close-btn,
+html.light-theme .btn-close-modal,
+body.light-mode .btn-close-modal {
+    color: #64748b !important;
+}
+
+html.light-theme .close-btn:hover,
+body.light-mode .close-btn:hover,
+html.light-theme .btn-close-modal:hover,
+body.light-mode .btn-close-modal:hover {
+    color: #0f172a !important;
+}
+
+/* Print-QR Specific Styles in Light Mode */
+html.light-theme .preview-header,
+body.light-mode .preview-header {
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+html.light-theme .preview-title,
+body.light-mode .preview-title {
+    color: #0f172a !important;
+}
+
+html.light-theme .sticker-card-wrapper,
+body.light-mode .sticker-card-wrapper {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+html.light-theme .individual-controls,
+body.light-mode .individual-controls {
+    background-color: #f8fafc !important;
+    border-top: 1px solid #e2e8f0 !important;
+    color: #475569 !important;
+}
+
+html.light-theme .ind-group span,
+body.light-mode .ind-group span {
+    color: #475569 !important;
+}
+
+html.light-theme .ind-group span b,
+body.light-mode .ind-group span b {
+    color: #2563eb !important;
+}
+
+/* Data Table & Dashboard Specifics in Light Mode */
+html.light-theme .data-table,
+body.light-mode .data-table {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+}
+
+html.light-theme .data-table th,
+body.light-mode .data-table th {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    font-weight: 600 !important;
+}
+
+html.light-theme .data-table td,
+body.light-mode .data-table td {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+html.light-theme .data-table tr:hover td,
+body.light-mode .data-table tr:hover td {
+    background-color: #f1f5f9 !important;
+}
+
+html.light-theme .tab-switcher,
+body.light-mode .tab-switcher {
+    background-color: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+html.light-theme .select-control,
+body.light-mode .select-control {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+html.light-theme .search-box input,
+body.light-mode .search-box input {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+html.light-theme .search-box input::placeholder,
+body.light-mode .search-box input::placeholder {
+    color: #94a3b8 !important;
+}
+
+html.light-theme .page-title h2,
+body.light-mode .page-title h2 {
+    color: #0f172a !important;
+}
+
+html.light-theme .page-title p,
+body.light-mode .page-title p {
+    color: #64748b !important;
+}
+
+html.light-theme .progress-info span,
+body.light-mode .progress-info span {
+    color: #334155 !important;
+}
+
+html.light-theme .bar-label,
+body.light-mode .bar-label {
+    color: #475569 !important;
+    font-weight: 500 !important;
+}
+
+/* Smooth transition for theme toggle */
+body, .sidebar, .topbar, .card-box, .stat-card, .slider-panel, .form-control {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+

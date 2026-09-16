@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Console - รายการทรัพย์สินทั้งหมด</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Universal Theme Manager & API Config -->
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <script src="config.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        body {
+            background-color: #0b0e14;
+            color: #c9d1d9;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: #121721;
+            border-right: 1px solid #1e2638;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            padding: 0 24px 20px 24px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #1e2638;
+        }
+
+        .brand span.version {
+            font-size: 0.75rem;
+            background: #1f293d;
+            color: #388bfd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 400;
+        }
+
+        .nav-group-label {
+            padding: 20px 24px 8px 24px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #6e7681;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            color: #8b949e;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item a:hover {
+            color: #f0f6fc;
+            background-color: #161b26;
+        }
+
+        .nav-item.active a {
+            color: #58a6ff;
+            background-color: #172338;
+            border-left: 3px solid #388bfd;
+            font-weight: 500;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .badge-neutral {
+            background-color: #21262d;
+            color: #8b949e;
+        }
+
+        .badge-danger {
+            background-color: #3d1d24;
+            color: #ff7b72;
+        }
+
+        .badge-success {
+            background-color: #11381e;
+            color: #3fb950;
+        }
+
+        .badge-warning {
+            background-color: #382400;
+            color: #d29922;
+        }
+
+        /* Main Wrapper */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: #121721;
+            border-bottom: 1px solid #1e2638;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+
+        .btn-back {
+            background-color: #1c2333;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            transition: background 0.2s;
+        }
+
+        .btn-back:hover {
+            background-color: #273147;
+            color: #ffffff;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #1f6feb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .content-area {
+            padding: 32px;
+            flex: 1;
+        }
+
+        /* Header & Actions */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 1.35rem;
+            color: #f0f6fc;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-primary {
+            background-color: #1f6feb;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #388bfd;
+        }
+
+        /* Card Container */
+        .card-box {
+            background-color: #121721;
+            border: 1px solid #1e2638;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        /* Search & Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 240px;
+            background-color: #0b0e14;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 9px 14px;
+            color: #f0f6fc;
+            font-size: 0.9rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .filter-select {
+            background-color: #0b0e14;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 9px 14px;
+            color: #c9d1d9;
+            font-size: 0.9rem;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        /* Table */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: #161b26;
+            color: #8b949e;
+            padding: 12px 16px;
+            font-weight: 500;
+            border-bottom: 1px solid #1e2638;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #1e2638;
+            color: #c9d1d9;
+        }
+
+        tr:hover td {
+            background-color: #161c28;
+        }
+
+        .asset-code {
+            color: #58a6ff;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .asset-code:hover {
+            text-decoration: underline;
+        }
+
+        .asset-name {
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+
+        .asset-sn {
+            font-size: 0.8rem;
+            color: #8b949e;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            background: none;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background-color: #21262d;
+            color: #58a6ff;
+            border-color: #58a6ff;
+        }
+
+        /* Status Pills */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: rgba(63, 185, 80, 0.15);
+            color: #3fb950;
+        }
+
+        .status-repair {
+            background-color: rgba(210, 153, 34, 0.15);
+            color: #d29922;
+        }
+
+        .status-borrowed {
+            background-color: rgba(88, 166, 255, 0.15);
+            color: #58a6ff;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: #121721;
+            border: 1px solid #1e2638;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 520px;
+            padding: 24px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #f0f6fc;
+            font-size: 1.1rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #8b949e;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: #0b0e14;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: #f0f6fc;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-cancel {
+            background-color: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-boxes-stacked" style="color: #388bfd;"></i> Asset Console <span
+                class="version">v3.4</span>
+        </div>
+
+        <div class="nav-group-label">NAVIGATION</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-chart-pie"></i> แดชบอร์ด
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="asset-list.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-list-check"></i> รายการทรัพย์สินทั้งหมด
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-detail.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="print-qr.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="borrow-return.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-right-left"></i> ระบบยืม - คืน
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="maintenance.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="audit.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)
+                    </div>
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-group-label">MANAGEMENT</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="account.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-id-card"></i> บัญชีของฉัน
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="settings.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="backup.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-database"></i> สำรองฐานข้อมูล
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div>
+                <a href="dashboard.html" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
+                </a>
+            </div>
+            <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-theme-toggle" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+                <div class="user-info">
+                    <div class="user-avatar">A</div>
+                    <span style="color: #f0f6fc; font-size: 0.9rem;">Admin User</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fa-solid fa-boxes-stacked"></i> ทรัพย์สินทั้งหมดในระบบ
+                </h1>
+                <button class="btn-primary" onclick="openAddModal()">
+                    <i class="fa-solid fa-plus"></i> เพิ่มอุปกรณ์ใหม่
+                </button>
+            </div>
+
+            <!-- Card Box -->
+            <div class="card-box">
+                <!-- Search & Filters -->
+                <div class="filter-bar">
+                    <input type="text" class="search-input"
+                        placeholder="ค้นหาตามรหัสทรัพย์สิน, ชื่ออุปกรณ์, หรือ S/N...">
+                    <select class="filter-select">
+                        <option value="">หมวดหมู่ทั้งหมด</option>
+                        <option value="ไอที / ออกแบบ">ไอที / ออกแบบ</option>
+                        <option value="ไอที / อุปกรณ์ต่อพ่วง">ไอที / อุปกรณ์ต่อพ่วง</option>
+                        <option value="เครื่องใช้สำนักงาน">เครื่องใช้สำนักงาน</option>
+                    </select>
+                    <select class="filter-select" id="statusFilter" onchange="loadAssets(document.querySelector('.search-input').value, this.value)">
+                        <option value="">สถานะทั้งหมด</option>
+                        <option value="active">ใช้งานปกติ</option>
+                        <option value="maintenance">ส่งซ่อม</option>
+                        <option value="borrowed">ถูกยืม</option>
+                        <option value="disposed">ตัดจำหน่าย</option>
+                    </select>
+                </div>
+
+                <!-- Table -->
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>รหัสทรัพย์สิน</th>
+                                <th>ชื่ออุปกรณ์ / S/N</th>
+                                <th>หมวดหมู่</th>
+                                <th>ผู้ครอบครอง</th>
+                                <th>วันที่รับเข้า</th>
+                                <th>สถานะ</th>
+                                <th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assetsTableBody">
+                            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูลทรัพย์สินจากฐานข้อมูล...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal เพิ่มอุปกรณ์ใหม่ -->
+    <div class="modal" id="addAssetModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-plus-circle"></i> เพิ่มอุปกรณ์ใหม่</h3>
+                <button class="close-btn" onclick="closeModal('addAssetModal')">&times;</button>
+            </div>
+            <form onsubmit="handleAddSubmit(event)">
+                <div class="form-group">
+                    <label>รหัสทรัพย์สิน</label>
+                    <input type="text" class="form-control" id="add-code" placeholder="เช่น A005" required>
+                </div>
+                <div class="form-group">
+                    <label>ชื่ออุปกรณ์ / รุ่น</label>
+                    <input type="text" class="form-control" placeholder="เช่น Lenovo ThinkPad X1" required>
+                </div>
+                <div class="form-group">
+                    <label>Serial Number (S/N)</label>
+                    <input type="text" class="form-control" placeholder="เช่น SN-XXXXXXXX">
+                </div>
+                <div class="form-group">
+                    <label>หมวดหมู่</label>
+                    <select class="form-control" required>
+                        <option value="">-- เลือกหมวดหมู่ --</option>
+                        <option value="ไอที / ออกแบบ">ไอที / ออกแบบ</option>
+                        <option value="ไอที / อุปกรณ์ต่อพ่วง">ไอที / อุปกรณ์ต่อพ่วง</option>
+                        <option value="ไอที / พกพา">ไอที / พกพา</option>
+                        <option value="เครื่องใช้สำนักงาน">เครื่องใช้สำนักงาน</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>ผู้ครอบครอง / แผนก</label>
+                    <input type="text" class="form-control" placeholder="ระบุชื่อผู้ใช้งาน">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal('addAssetModal')">ยกเลิก</button>
+                    <button type="submit" class="btn-primary">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal แก้ไขอุปกรณ์ -->
+    <div class="modal" id="editAssetModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-regular fa-pen-to-square"></i> แก้ไขข้อมูลอุปกรณ์</h3>
+                <button class="close-btn" onclick="closeModal('editAssetModal')">&times;</button>
+            </div>
+            <form onsubmit="handleEditSubmit(event)">
+                <div class="form-group">
+                    <label>รหัสทรัพย์สิน</label>
+                    <input type="text" class="form-control" id="edit-code" readonly
+                        style="opacity: 0.6; cursor: not-allowed;">
+                </div>
+                <div class="form-group">
+                    <label>ชื่ออุปกรณ์ / รุ่น</label>
+                    <input type="text" class="form-control" id="edit-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Serial Number (S/N)</label>
+                    <input type="text" class="form-control" id="edit-sn">
+                </div>
+                <div class="form-group">
+                    <label>หมวดหมู่</label>
+                    <input type="text" class="form-control" id="edit-category" required>
+                </div>
+                <div class="form-group">
+                    <label>ผู้ครอบครอง</label>
+                    <input type="text" class="form-control" id="edit-owner">
+                </div>
+                <div class="form-group">
+                    <label>สถานะ</label>
+                    <select class="form-control" id="edit-status">
+                        <option value="ใช้งานปกติ">ใช้งานปกติ</option>
+                        <option value="ส่งซ่อม">ส่งซ่อม</option>
+                        <option value="ถูกยืม">ถูกยืม</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal('editAssetModal')">ยกเลิก</button>
+                    <button type="submit" class="btn-primary">อัปเดตข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ── Auth Guard ────────────────────────────────────────────
+        function requireAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) { window.location.href = 'index.html'; return null; }
+            return token;
+        }
+
+        async function handleLogout() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                try { await fetch(getApiUrl('/api/logout'), { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } }); } catch (e) {}
+            }
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            window.location.href = 'index.html';
+        }
+
+        // ── Load Assets from API ──────────────────────────────────
+        let currentPage = 1;
+        const PAGE_LIMIT = 50;
+
+        async function loadAssets(search = '', status = '', page = 1) {
+            const token = requireAuth();
+            if (!token) return;
+
+            const params = new URLSearchParams({ page, limit: PAGE_LIMIT });
+            if (search) params.set('search', search);
+            if (status) params.set('status', status);
+
+            try {
+                const r = await fetch(getApiUrl(`/api/assets?${params}`), {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message);
+
+                renderTable(data.data);
+                updatePagination(data.total, data.page, data.limit);
+            } catch (err) {
+                console.error('loadAssets error:', err);
+            }
+        }
+
+        function getCurrentUser() {
+            try {
+                return JSON.parse(localStorage.getItem('auth_user') || '{}');
+            } catch(e) {
+                return {};
+            }
+        }
+
+        function renderTable(assets) {
+            const tbody = document.getElementById('assetsTableBody');
+            if (!tbody) return;
+
+            const currentUser = getCurrentUser();
+            const userRole = currentUser.role || 'viewer';
+            const canEdit = ['admin', 'editor'].includes(userRole);
+            const canDelete = userRole === 'admin';
+
+            // ซ่อนปุ่มเพิ่มอุปกรณ์ถ้าเป็น Viewer
+            const addBtn = document.querySelector('.btn-primary[onclick="openAddModal()"]');
+            if (addBtn) {
+                addBtn.style.display = canEdit ? 'inline-flex' : 'none';
+            }
+
+            const statusMap = {
+                active:      { label: 'ใช้งานปกติ',   cls: 'status-active', icon: 'fa-circle' },
+                borrowed:    { label: 'ถูกยืมออก',    cls: 'status-borrowed', icon: 'fa-right-left' },
+                maintenance: { label: 'ส่งซ่อม',      cls: 'status-repair', icon: 'fa-wrench' },
+                disposed:    { label: 'ตัดจำหน่าย',  cls: 'status-repair', icon: 'fa-ban'  },
+            };
+
+            if (assets.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fa-solid fa-boxes-stacked" style="font-size:1.8rem; margin-bottom:12px; display:block; opacity:0.5;"></i>ยังไม่มีรายการทรัพย์สินในระบบ (กดปุ่ม "เพิ่มอุปกรณ์ใหม่" เพื่อเริ่มต้นลงทะเบียน)</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = assets.map(a => {
+                const st = statusMap[a.status] || statusMap.active;
+                let actionHtml = `
+                    <a href="asset-detail.html?id=${escHtml(a.asset_code)}" class="btn-action" title="ดูข้อมูล">
+                        <i class="fa-regular fa-eye"></i> ดู
+                    </a>
+                    <a href="print-qr.html?code=${escHtml(a.asset_code)}" class="btn-action" title="พิมพ์ป้าย QR Code">
+                        <i class="fa-solid fa-qrcode"></i> พิมพ์ QR
+                    </a>
+                `;
+
+                if (canEdit) {
+                    actionHtml += `
+                        <button class="btn-action" title="แก้ไขข้อมูล" onclick="openEditModalFromData(${JSON.stringify(a).replace(/"/g,'&quot;')})">
+                            <i class="fa-regular fa-pen-to-square"></i> แก้ไข
+                        </button>
+                    `;
+                }
+
+                actionHtml += `
+                    <button class="btn-action" title="ลบข้อมูล" style="color:#ef4444; border-color:#fca5a5;" onclick="deleteAsset(${a.id}, '${escHtml(a.asset_code)}')">
+                        <i class="fa-regular fa-trash-can"></i> ลบ
+                    </button>
+                `;
+
+                return `<tr>
+                    <td><a href="asset-detail.html?id=${escHtml(a.asset_code)}" class="asset-code">${escHtml(a.asset_code)}</a></td>
+                    <td>
+                        <div class="asset-name">${escHtml(a.name)}</div>
+                        <div class="asset-sn">SN: ${escHtml(a.serial_number||'—')}</div>
+                    </td>
+                    <td>${escHtml(a.category||'—')}</td>
+                    <td>${escHtml(a.holder||'—')}</td>
+                    <td>${a.received_date||'—'}</td>
+                    <td><span class="status-pill ${st.cls}"><i class="fa-solid ${st.icon}" style="font-size:0.6rem;"></i> ${st.label}</span></td>
+                    <td>
+                        <div class="action-btns">
+                            ${actionHtml}
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function deleteAsset(id, code) {
+            const currentUser = getCurrentUser();
+            if (!currentUser || currentUser.role !== 'admin') {
+                if (!currentUser || !currentUser.username) {
+                    if (confirm('คุณต้องเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบ (Admin) ก่อนทำการลบข้อมูลทรัพย์สิน\n\nต้องการไปที่หน้าเข้าสู่ระบบทันทีหรือไม่?')) {
+                        window.location.href = `index.html?return_to=${encodeURIComponent(window.location.href)}`;
+                    }
+                } else {
+                    alert('สิทธิ์ไม่เพียงพอ: เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นจึงจะลบข้อมูลทรัพย์สินได้');
+                }
+                return;
+            }
+
+            const targetLabel = code ? `${code}` : `ID: ${id}`;
+            if (!confirm(`คุณต้องการลบทรัพย์สิน "${targetLabel}" (ID: ${id}) ออกจากระบบจริงหรือไม่?\n\nการดำเนินการนี้จะลบข้อมูลออกจากฐานข้อมูลทันทีและไม่สามารถเรียกคืนได้`)) {
+                return;
+            }
+
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (!token) {
+                alert('กรุณาเข้าสู่ระบบก่อนทำการลบ');
+                return;
+            }
+
+            try {
+                const r = await fetch(getApiUrl(`/api/assets/${encodeURIComponent(id)}`), {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'ลบไม่สำเร็จ');
+                alert(`ลบทรัพย์สิน "${targetLabel}" เรียบร้อยแล้ว`);
+                // อัปเดตตารางอัตโนมัติทันที
+                const searchVal = document.getElementById('searchInput')?.value?.trim() || '';
+                const statusVal = document.getElementById('statusFilter')?.value || '';
+                await loadAssets(searchVal, statusVal, currentPage);
+            } catch(err) {
+                alert('เกิดข้อผิดพลาดในการลบข้อมูล: ' + err.message);
+            }
+        }
+
+        function updatePagination(total, page, limit) {
+            const totalPages = Math.max(1, Math.ceil(total / limit));
+            const el = document.getElementById('paginationInfo');
+            if (el) el.textContent = total === 0 ? 'ทั้งหมด 0 รายการ' : `หน้า ${page} / ${totalPages} (ทั้งหมด ${total} รายการ)`;
+        }
+
+        function openAddModal() {
+            document.getElementById('addAssetModal').style.display = 'flex';
+        }
+
+        function openEditModal(code, name, sn, category, owner, status) {
+            document.getElementById('edit-code').value = code;
+            document.getElementById('edit-name').value = name;
+            document.getElementById('edit-sn').value = sn;
+            document.getElementById('edit-category').value = category;
+            document.getElementById('edit-owner').value = owner;
+            document.getElementById('edit-status').value = status;
+            document.getElementById('editAssetModal').style.display = 'flex';
+        }
+
+        function openEditModalFromData(asset) {
+            openEditModal(asset.asset_code, asset.name, asset.serial_number, asset.category, asset.holder, asset.status);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        async function handleAddSubmit(e) {
+            e.preventDefault();
+            const token = requireAuth();
+            if (!token) return;
+
+            const payload = {
+                asset_code:    document.getElementById('add-code')?.value.trim(),
+                name:          document.getElementById('add-name')?.value.trim(),
+                serial_number: document.getElementById('add-sn')?.value.trim(),
+                category:      document.getElementById('add-category')?.value,
+                holder:        document.getElementById('add-owner')?.value.trim(),
+                status:        'active',
+            };
+
+            if (!payload.asset_code || !payload.name) {
+                alert('กรุณากรอกรหัสทรัพย์สินและชื่ออุปกรณ์');
+                return;
+            }
+
+            try {
+                const r = await fetch(getApiUrl('/api/assets'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message);
+                alert('เพิ่มทรัพย์สินสำเร็จ!');
+                closeModal('addAssetModal');
+                loadAssets();
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        async function handleEditSubmit(e) {
+            e.preventDefault();
+            const token = requireAuth();
+            if (!token) return;
+
+            const code  = document.getElementById('edit-code').value;
+            const payload = {
+                name:          document.getElementById('edit-name').value.trim(),
+                serial_number: document.getElementById('edit-sn').value.trim(),
+                category:      document.getElementById('edit-category').value,
+                holder:        document.getElementById('edit-owner').value.trim(),
+                status:        document.getElementById('edit-status').value,
+            };
+
+            try {
+                const r = await fetch(getApiUrl(`/api/assets/${encodeURIComponent(code)}`), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message);
+                alert('อัปเดตข้อมูลสำเร็จ!');
+                closeModal('editAssetModal');
+                loadAssets();
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        function escHtml(s) {
+            return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ── Theme: จัดการโดย theme.js กลางใน <head> (window.toggleTheme) ──
+
+        // ── Search debounce ────────────────────────────────────────
+        let searchTimer;
+        function onSearchInput(val) {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => loadAssets(val), 400);
+        }
+
+        window.onload = async function () {
+
+            // Auth guard
+            const token = requireAuth();
+            if (!token) return;
+
+            // Show user info
+            try {
+                const userStr = localStorage.getItem('auth_user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    const el = document.getElementById('topbarUserName');
+                    if (el) el.textContent = user.name || user.username;
+                }
+            } catch(e) {}
+
+            // Load assets
+            await loadAssets();
+        };
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Console - ตรวจนับสต็อก (Audit)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Universal Theme Manager & API Config -->
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <script src="config.js"></script>
+    <script src="html5-qrcode.min.js"></script>
+    <script src="scanner-modal.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        body {
+            background-color: #0b0e14;
+            color: #c9d1d9;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background-color: #121721;
+            border-right: 1px solid #1e2638;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            padding: 0 24px 20px 24px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #1e2638;
+        }
+
+        .brand span.version {
+            font-size: 0.75rem;
+            background: #1f293d;
+            color: #388bfd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 400;
+        }
+
+        .nav-group-label {
+            padding: 20px 24px 8px 24px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #6e7681;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            color: #8b949e;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item a:hover {
+            color: #f0f6fc;
+            background-color: #161b26;
+        }
+
+        .nav-item.active a {
+            color: #58a6ff;
+            background-color: #172338;
+            border-left: 3px solid #388bfd;
+            font-weight: 500;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .badge-neutral {
+            background-color: #21262d;
+            color: #8b949e;
+        }
+
+        .badge-danger {
+            background-color: #3d1d24;
+            color: #ff7b72;
+        }
+
+        .badge-success {
+            background-color: #11381e;
+            color: #3fb950;
+        }
+
+        .badge-warning {
+            background-color: #382400;
+            color: #d29922;
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: #121721;
+            border-bottom: 1px solid #1e2638;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+
+        .btn-back {
+            background-color: #1c2333;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            transition: background 0.2s;
+        }
+
+        .btn-back:hover {
+            background-color: #273147;
+            color: #ffffff;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #1f6feb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: #f85149;
+            cursor: pointer;
+            margin-left: 12px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-logout:hover {
+            background-color: rgba(248, 81, 73, 0.1);
+        }
+
+        .content-area {
+            padding: 32px;
+            flex: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 1.35rem;
+            color: #f0f6fc;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-add {
+            background-color: #1f6feb;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background-color: #388bfd;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: #121721;
+            border: 1px solid #1e2638;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .stat-info h4 {
+            font-size: 0.8rem;
+            color: #8b949e;
+            font-weight: 400;
+        }
+
+        .stat-info div {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+
+        /* Table & Cards */
+        .card-box {
+            background-color: #121721;
+            border: 1px solid #1e2638;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: #161b26;
+            color: #8b949e;
+            padding: 12px 16px;
+            font-weight: 500;
+            border-bottom: 1px solid #1e2638;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #1e2638;
+            color: #c9d1d9;
+        }
+
+        tr:hover td {
+            background-color: #161c28;
+        }
+
+        .btn-action {
+            background: none;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-action:hover {
+            background-color: #21262d;
+            color: #58a6ff;
+            border-color: #58a6ff;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: #121721;
+            border: 1px solid #1e2638;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #f0f6fc;
+            font-size: 1.1rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #8b949e;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: #0b0e14;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: #f0f6fc;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            background-color: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar Menu -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-boxes-stacked" style="color: #388bfd;"></i> Asset Console <span
+                class="version">v3.4</span>
+        </div>
+
+        <div class="nav-group-label">NAVIGATION</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-chart-pie"></i> แดชบอร์ด
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-list.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-list-check"></i> รายการทรัพย์สินทั้งหมด
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-detail.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="print-qr.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="borrow-return.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-right-left"></i> ระบบยืม - คืน
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="maintenance.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="audit.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)
+                    </div>
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-group-label">MANAGEMENT</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="account.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-id-card"></i> บัญชีของฉัน
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="settings.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="backup.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-database"></i> สำรองฐานข้อมูล
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div>
+                <a href="dashboard.html" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
+                </a>
+            </div>
+            <div class="user-info" style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-theme-toggle" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+                <div class="user-avatar" id="topAvatar">A</div>
+                <span style="font-size: 0.9rem;" id="topUserName">Admin User</span>
+                <button class="btn-logout" onclick="logout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)
+                </h1>
+                <button class="btn-add" id="btnCreateAudit" onclick="openModal()">
+                    <i class="fa-solid fa-plus"></i> สร้างรอบตรวจนับใหม่
+                </button>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(56, 139, 253, 0.15); color: #58a6ff;">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>รอบตรวจนับทั้งหมด</h4>
+                        <div id="statTotalAudits">0 รอบ</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(210, 153, 34, 0.15); color: #d29922;">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>กำลังดำเนินการ</h4>
+                        <div id="statInProgress" style="color: #d29922;">0 รอบ</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(63, 185, 80, 0.15); color: #3fb950;">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>เสร็จสมบูรณ์แล้ว</h4>
+                        <div id="statCompleted" style="color: #3fb950;">0 รอบ</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(147, 51, 234, 0.15); color: #a855f7;">
+                        <i class="fa-solid fa-barcode"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>ชิ้นที่สแกนแล้ว</h4>
+                        <div id="statScannedItems" style="color: #a855f7;">0 ชิ้น</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="card-box">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>รหัสรอบตรวจ</th>
+                                <th>ชื่อรอบการตรวจนับ</th>
+                                <th>แผนก / พื้นที่</th>
+                                <th>ผู้รับผิดชอบ</th>
+                                <th>วันที่ตรวจ</th>
+                                <th>ความคืบหน้า</th>
+                                <th>สถานะ</th>
+                                <th style="text-align:center;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted);">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Create Audit Form -->
+    <div class="modal" id="auditModal">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-clipboard-check"></i> สร้างรอบตรวจนับสต็อกใหม่</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="createAuditForm" onsubmit="handleCreateAudit(event)">
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="display:block; margin-bottom:6px; font-weight:500;">ชื่อรอบการตรวจนับ *</label>
+                    <input type="text" id="auditTitle" class="form-control" placeholder="เช่น ตรวจนับประจำไตรมาส 4/2026" required>
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="display:block; margin-bottom:6px; font-weight:500;">แผนก / พื้นที่ที่ต้องการตรวจ</label>
+                    <input type="text" id="auditDept" class="form-control" placeholder="เช่น ทุกแผนก (สำนักงานใหญ่), แผนก IT" value="ทุกแผนก">
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="display:block; margin-bottom:6px; font-weight:500;">ผู้รับผิดชอบ</label>
+                    <input type="text" id="auditAuditor" class="form-control" placeholder="ระบุชื่อผู้ตรวจสอบ">
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="display:block; margin-bottom:6px; font-weight:500;">วันที่เริ่มตรวจนับ *</label>
+                    <input type="date" id="auditDate" class="form-control" required>
+                </div>
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label style="display:block; margin-bottom:6px; font-weight:500;">หมายเหตุเพิ่มเติม</label>
+                    <textarea id="auditNotes" class="form-control" rows="2" placeholder="รายละเอียดหรือเงื่อนไขเพิ่มเติม (ถ้ามี)"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
+                    <button type="submit" class="btn-add"><i class="fa-solid fa-check"></i> สร้างรอบตรวจนับ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Audit Detail & Scanning -->
+    <div class="modal" id="auditDetailModal">
+        <div class="modal-content" style="max-width: 780px; width: 95%;">
+            <div class="modal-header">
+                <div>
+                    <h3 id="detailModalTitle" style="display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-clipboard-check" style="color:var(--accent-blue);"></i>
+                        <span>รายละเอียดรอบตรวจนับ</span>
+                    </h3>
+                    <div id="detailModalSubtitle" style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;"></div>
+                </div>
+                <button class="close-btn" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div style="padding: 16px 0;">
+                <!-- Audit Progress Card -->
+                <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:16px; margin-bottom:18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div style="font-weight:600; font-size:1rem;" id="detailProgressText">สแกนแล้ว 0 จาก 0 รายการ (0%)</div>
+                        <div id="detailStatusBadge"></div>
+                    </div>
+                    <div style="width:100%; height:8px; background:rgba(120,120,120,0.2); border-radius:4px; overflow:hidden;">
+                        <div id="detailProgressBar" style="width:0%; height:100%; background:#2563eb; transition: width 0.4s ease;"></div>
+                    </div>
+                </div>
+
+                <!-- Scanner Actions -->
+                <div id="detailScanControls" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:18px; padding:14px; background:rgba(37,99,235,0.06); border:1px dashed var(--accent-blue); border-radius:8px;">
+                    <button type="button" class="btn-add" onclick="triggerCameraScanForCurrentAudit()" style="background:#2563eb; color:#fff;">
+                        <i class="fa-solid fa-camera"></i> เปิดกล้องสแกน QR / บาร์โค้ด
+                    </button>
+                    <div style="display:flex; gap:6px; flex:1; min-width:240px;">
+                        <input type="text" id="manualAssetCodeInput" class="form-control" placeholder="หรือพิมพ์รหัส เช่น A001 แล้วกด Enter" onkeydown="if(event.key==='Enter'){event.preventDefault();submitManualScan();}">
+                        <button type="button" class="btn-add" onclick="submitManualScan()" style="white-space:nowrap;">
+                            <i class="fa-solid fa-plus"></i> บันทึก
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scanned Items Table -->
+                <div style="font-weight:600; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                    <span><i class="fa-solid fa-list-check"></i> รายการทรัพย์สินที่ตรวจนับแล้วในรอบนี้</span>
+                    <span id="detailScannedCountBadge" style="font-size:0.85rem; color:var(--text-muted);">0 รายการ</span>
+                </div>
+                <div class="table-responsive" style="max-height: 280px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th>รหัสทรัพย์สิน</th>
+                                <th>ชื่ออุปกรณ์</th>
+                                <th>เวลาที่สแกน</th>
+                                <th>ผู้ตรวจนับ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditItemsTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">ยังไม่มีรายการที่สแกนในรอบนี้</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+                <div id="detailAdminActions">
+                    <!-- Complete and Delete buttons populated dynamically -->
+                </div>
+                <button type="button" class="btn-cancel" onclick="closeDetailModal()">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── Auth Guard & State ──────────────────────────────────────────
+        let currentAudits = [];
+        let activeAudit = null;
+
+        function requireAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) { window.location.href = 'index.html'; return null; }
+            return token;
+        }
+
+        function getCurrentUser() {
+            try {
+                return JSON.parse(localStorage.getItem('auth_user') || '{}');
+            } catch(e) {
+                return {};
+            }
+        }
+
+        async function logout() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                try { await fetch(getApiUrl('/api/logout'), { method:'POST', headers:{'Authorization':`Bearer ${token}`} }); } catch(e){}
+            }
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            window.location.href = 'index.html';
+        }
+
+        function openModal() {
+            const user = getCurrentUser();
+            if (user.role === 'viewer') {
+                alert('คุณไม่มีสิทธิ์สร้างรอบตรวจนับ (สิทธิ์ Viewer สำหรับดูข้อมูลเท่านั้น)');
+                return;
+            }
+            const dateInput = document.getElementById('auditDate');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = new Date().toISOString().slice(0, 10);
+            }
+            const auditorInput = document.getElementById('auditAuditor');
+            if (auditorInput && !auditorInput.value) {
+                auditorInput.value = user.name || '';
+            }
+            document.getElementById('auditModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('auditModal').style.display = 'none';
+        }
+
+        function closeDetailModal() {
+            document.getElementById('auditDetailModal').style.display = 'none';
+            activeAudit = null;
+        }
+
+        // ── API Operations ─────────────────────────────────────────────
+        async function loadAuditsFromAPI() {
+            const token = requireAuth();
+            if (!token) return;
+
+            try {
+                const r = await fetch(getApiUrl('/api/audits'), {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (r.status === 401) { logout(); return; }
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'โหลดข้อมูลตรวจนับไม่สำเร็จ');
+
+                currentAudits = data.data || [];
+                updateStats(currentAudits);
+                renderAudits(currentAudits);
+            } catch(err) {
+                console.error('Audit load error:', err);
+                const tbody = document.getElementById('auditTableBody');
+                if (tbody) {
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:#ef4444;">โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
+                }
+            }
+        }
+
+        function updateStats(list) {
+            const total = list.length;
+            const inProgress = list.filter(a => a.status === 'in_progress').length;
+            const completed = list.filter(a => a.status === 'completed').length;
+            const totalScanned = list.reduce((sum, a) => sum + (Number(a.scanned_items) || 0), 0);
+
+            const statTotalEl = document.getElementById('statTotalAudits');
+            const statInProgEl = document.getElementById('statInProgress');
+            const statCompEl = document.getElementById('statCompleted');
+            const statScannedEl = document.getElementById('statScannedItems');
+
+            if (statTotalEl) statTotalEl.textContent = `${total} รอบ`;
+            if (statInProgEl) statInProgEl.textContent = `${inProgress} รอบ`;
+            if (statCompEl) statCompEl.textContent = `${completed} รอบ`;
+            if (statScannedEl) statScannedEl.textContent = `${totalScanned} ชิ้น`;
+        }
+
+        function renderAudits(list) {
+            const user = getCurrentUser();
+            const canEdit = ['admin', 'editor'].includes(user.role);
+            const canDelete = user.role === 'admin';
+
+            const addBtn = document.getElementById('btnCreateAudit');
+            if (addBtn) addBtn.style.display = canEdit ? 'inline-flex' : 'none';
+
+            const tbody = document.getElementById('auditTableBody');
+            if (!tbody) return;
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--text-muted);"><i class="fa-regular fa-clipboard" style="font-size:1.6rem; margin-bottom:10px; display:block; opacity:0.6;"></i>ยังไม่มีรอบการตรวจนับสต็อกในระบบ (กดปุ่ม "สร้างรอบตรวจนับใหม่" เพื่อเริ่มต้น)</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(item => {
+                const total = Number(item.total_items) || 0;
+                const scanned = Number(item.scanned_items) || 0;
+                const percent = total > 0 ? Math.min(100, Math.round((scanned / total) * 100)) : (scanned > 0 ? 100 : 0);
+                const percentColor = percent === 100 ? '#3fb950' : (percent > 0 ? '#388bfd' : 'var(--text-muted)');
+
+                let statusBadge = '';
+                if (item.status === 'completed') {
+                    statusBadge = `<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> เสร็จสมบูรณ์</span>`;
+                } else {
+                    statusBadge = `<span class="badge badge-warning"><i class="fa-solid fa-clock"></i> กำลังดำเนินการ</span>`;
+                }
+
+                let actions = '<div style="display:flex; gap:6px; justify-content:center;">';
+                actions += `<button class="action-btn" onclick="openAuditDetail(${item.id})" title="ตรวจนับ / ดูรายละเอียด" style="color:var(--accent-blue); border-color:var(--accent-blue);"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับ</button>`;
+
+                if (item.status !== 'completed' && canEdit) {
+                    actions += `<button class="action-btn" onclick="quickScanForAudit(${item.id})" title="เปิดกล้องสแกนทันที" style="color:#16a34a; border-color:#86efac;"><i class="fa-solid fa-camera"></i> สแกน</button>`;
+                }
+
+                if (canDelete) {
+                    actions += `<button class="action-btn" onclick="deleteAudit(${item.id})" title="ลบรอบตรวจนับ" style="color:#ef4444; border-color:#fca5a5;"><i class="fa-regular fa-trash-can"></i></button>`;
+                }
+                actions += '</div>';
+
+                return `<tr>
+                    <td style="font-weight:600; color:var(--accent-blue);">${item.audit_code}</td>
+                    <td style="font-weight:600;">${item.title}</td>
+                    <td>${item.department || 'ทุกแผนก'}</td>
+                    <td>${item.auditor || '-'}</td>
+                    <td>${item.audit_date || '-'}</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-weight:700; color:${percentColor}; min-width:38px;">${percent}%</span>
+                            <span style="font-size:0.85rem; color:var(--text-muted);">(${scanned}/${total})</span>
+                        </div>
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td style="text-align:center;">${actions}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function handleCreateAudit(e) {
+            e.preventDefault();
+            const token = requireAuth();
+            if (!token) return;
+
+            const title = document.getElementById('auditTitle')?.value?.trim();
+            const department = document.getElementById('auditDept')?.value?.trim();
+            const auditor = document.getElementById('auditAuditor')?.value?.trim();
+            const audit_date = document.getElementById('auditDate')?.value;
+            const notes = document.getElementById('auditNotes')?.value?.trim();
+
+            if (!title || !audit_date) {
+                alert('กรุณากรอกชื่อรอบการตรวจนับและวันที่เริ่มตรวจนับ');
+                return;
+            }
+
+            try {
+                const r = await fetch(getApiUrl('/api/audits'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ title, department, auditor, audit_date, notes })
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'สร้างรอบตรวจนับไม่สำเร็จ');
+
+                alert(`สร้างรอบตรวจนับ ${data.data.audit_code} สำเร็จ!`);
+                closeModal();
+                document.getElementById('createAuditForm').reset();
+                loadAuditsFromAPI();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        async function openAuditDetail(id) {
+            const token = requireAuth();
+            if (!token) return;
+
+            try {
+                const r = await fetch(getApiUrl(`/api/audits/${id}`), {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'ไม่พบข้อมูลรอบตรวจนับ');
+
+                activeAudit = data.data;
+                renderDetailModalContent();
+                document.getElementById('auditDetailModal').style.display = 'flex';
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        function renderDetailModalContent() {
+            if (!activeAudit) return;
+            const user = getCurrentUser();
+            const canEdit = ['admin', 'editor'].includes(user.role);
+            const canDelete = user.role === 'admin';
+
+            document.getElementById('detailModalTitle').querySelector('span').textContent = `${activeAudit.title} (${activeAudit.audit_code})`;
+            document.getElementById('detailModalSubtitle').textContent = `ผู้ตรวจ: ${activeAudit.auditor || '-'} | พื้นที่: ${activeAudit.department || 'ทุกแผนก'} | วันที่: ${activeAudit.audit_date || '-'}`;
+
+            const total = Number(activeAudit.total_items) || 0;
+            const scanned = Number(activeAudit.scanned_items) || 0;
+            const percent = total > 0 ? Math.min(100, Math.round((scanned / total) * 100)) : (scanned > 0 ? 100 : 0);
+
+            document.getElementById('detailProgressText').textContent = `สแกนแล้ว ${scanned} จาก ${total} รายการ (${percent}%)`;
+            const progressBar = document.getElementById('detailProgressBar');
+            progressBar.style.width = `${percent}%`;
+            progressBar.style.background = percent === 100 ? '#16a34a' : '#2563eb';
+
+            const statusBadgeEl = document.getElementById('detailStatusBadge');
+            if (activeAudit.status === 'completed') {
+                statusBadgeEl.innerHTML = `<span class="badge badge-success"><i class="fa-solid fa-check"></i> เสร็จสมบูรณ์</span>`;
+            } else {
+                statusBadgeEl.innerHTML = `<span class="badge badge-warning"><i class="fa-solid fa-clock"></i> กำลังตรวจนับ</span>`;
+            }
+
+            // Controls visibility
+            const scanControls = document.getElementById('detailScanControls');
+            if (scanControls) {
+                scanControls.style.display = (activeAudit.status !== 'completed' && canEdit) ? 'flex' : 'none';
+            }
+
+            // Items table
+            const itemsTbody = document.getElementById('auditItemsTableBody');
+            const items = activeAudit.items || [];
+            document.getElementById('detailScannedCountBadge').textContent = `${items.length} รายการ`;
+
+            if (items.length === 0) {
+                itemsTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">ยังไม่มีรายการที่สแกนในรอบนี้</td></tr>`;
+            } else {
+                itemsTbody.innerHTML = items.map((it, idx) => `
+                    <tr>
+                        <td style="color:var(--text-muted);">${idx + 1}</td>
+                        <td style="font-weight:600;"><a href="asset-detail.html?id=${encodeURIComponent(it.asset_code)}" target="_blank" style="color:var(--accent-blue); text-decoration:none;">${it.asset_code}</a></td>
+                        <td>${it.asset_name || '-'}</td>
+                        <td style="font-size:0.85rem; color:var(--text-muted);">${it.scanned_at || '-'}</td>
+                        <td>${it.scanned_by || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Bottom Admin Actions
+            const adminActions = document.getElementById('detailAdminActions');
+            let actionButtons = '';
+            if (activeAudit.status !== 'completed' && canEdit) {
+                actionButtons += `<button type="button" class="btn-add" onclick="completeAudit(${activeAudit.id})" style="background:#16a34a; color:#fff; margin-right:8px;"><i class="fa-solid fa-check"></i> ปิดรอบตรวจนับ (เสร็จสิ้น)</button>`;
+            }
+            if (canDelete) {
+                actionButtons += `<button type="button" class="btn-cancel" onclick="deleteAudit(${activeAudit.id})" style="color:#ef4444; border-color:#fca5a5;"><i class="fa-regular fa-trash-can"></i> ลบรอบนี้</button>`;
+            }
+            adminActions.innerHTML = actionButtons;
+        }
+
+        async function submitAuditScan(auditId, assetCode) {
+            const token = requireAuth();
+            if (!token) return;
+
+            const cleanCode = String(assetCode || '').trim();
+            if (!cleanCode) {
+                alert('กรุณาระบุรหัสทรัพย์สิน');
+                return;
+            }
+
+            try {
+                const r = await fetch(getApiUrl(`/api/audits/${auditId}/scan`), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ asset_code: cleanCode })
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'บันทึกสแกนไม่สำเร็จ');
+
+                if (data.alreadyScanned) {
+                    alert(`⚠️ ${data.message}`);
+                } else {
+                    alert(`✅ ${data.message}`);
+                }
+
+                // Refresh active audit detail if open
+                if (activeAudit && activeAudit.id === auditId) {
+                    await openAuditDetail(auditId);
+                }
+                loadAuditsFromAPI();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        function triggerCameraScanForCurrentAudit() {
+            if (!activeAudit) return;
+            if (typeof openCameraScanner === 'function') {
+                openCameraScanner(async (code) => {
+                    await submitAuditScan(activeAudit.id, code);
+                });
+            } else {
+                alert('โมดูลกล้องยังไม่พร้อมใช้งาน');
+            }
+        }
+
+        function quickScanForAudit(auditId) {
+            if (typeof openCameraScanner === 'function') {
+                openCameraScanner(async (code) => {
+                    await submitAuditScan(auditId, code);
+                });
+            } else {
+                const manual = prompt('กรุณากรอกรหัสทรัพย์สินที่ต้องการสแกนตรวจนับ:');
+                if (manual) submitAuditScan(auditId, manual);
+            }
+        }
+
+        function submitManualScan() {
+            if (!activeAudit) return;
+            const input = document.getElementById('manualAssetCodeInput');
+            const val = input?.value?.trim();
+            if (val) {
+                submitAuditScan(activeAudit.id, val);
+                input.value = '';
+            }
+        }
+
+        async function completeAudit(id) {
+            const token = requireAuth();
+            if (!token) return;
+
+            if (!confirm('ยืนยันปิดรอบการตรวจนับนี้หรือไม่? ระบบจะบันทึกสถานะเป็นเสร็จสมบูรณ์')) return;
+
+            try {
+                const r = await fetch(getApiUrl(`/api/audits/${id}/complete`), {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'ปิดรอบตรวจนับไม่สำเร็จ');
+
+                alert('บันทึกปิดรอบการตรวจนับเรียบร้อยแล้ว');
+                if (activeAudit && activeAudit.id === id) {
+                    await openAuditDetail(id);
+                }
+                loadAuditsFromAPI();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        async function deleteAudit(id) {
+            const user = getCurrentUser();
+            if (user.role !== 'admin') {
+                alert('เฉพาะ Admin เท่านั้นที่สามารถลบรอบตรวจนับได้');
+                return;
+            }
+            if (!confirm('คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการลบรอบการตรวจนับนี้ ข้อมูลที่ตรวจนับในรอบนี้จะถูกลบถาวร?')) return;
+
+            const token = requireAuth();
+            if (!token) return;
+
+            try {
+                const r = await fetch(getApiUrl(`/api/audits/${id}`), {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'ลบไม่สำเร็จ');
+
+                alert('ลบรอบการตรวจนับเรียบร้อยแล้ว');
+                closeDetailModal();
+                loadAuditsFromAPI();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        // Init
+        window.addEventListener('DOMContentLoaded', function() {
+            requireAuth();
+            const user = getCurrentUser();
+            const userSpan = document.querySelector('.user-info span');
+            if (userSpan && user.name) {
+                userSpan.textContent = `${user.name} (${user.role || 'viewer'})`;
+            }
+            loadAuditsFromAPI();
+        });
+    </script>
+</body>
+
+</html>

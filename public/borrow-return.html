@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Console - ระบบยืม - คืน ทรัพย์สิน</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Universal Theme Manager & API Config -->
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <script src="config.js"></script>
+    <script src="html5-qrcode.min.js"></script>
+    <script src="scanner-modal.js"></script>
+
+    <style>
+        :root {
+            --bg-main: #0b0e14;
+            --bg-card: #121721;
+            --bg-border: #1e2638;
+            --bg-hover: #161b26;
+            --text-main: #c9d1d9;
+            --text-bright: #f0f6fc;
+            --text-muted: #8b949e;
+            --accent-blue: #388bfd;
+            --accent-green: #238636;
+            --accent-green-hover: #2ea043;
+            --accent-red: #da3633;
+            --accent-yellow: #d29922;
+            --accent-purple: #a371f7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--bg-border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .brand {
+            padding: 0 24px 20px 24px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--bg-border);
+        }
+
+        .brand span.version {
+            font-size: 0.75rem;
+            background: #1f293d;
+            color: var(--accent-blue);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 400;
+        }
+
+        .nav-group-label {
+            padding: 20px 24px 8px 24px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item a:hover {
+            color: var(--text-bright);
+            background-color: var(--bg-hover);
+        }
+
+        .nav-item.active a {
+            color: #58a6ff;
+            background-color: #172338;
+            border-left: 3px solid var(--accent-blue);
+            font-weight: 500;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .badge-neutral {
+            background-color: #21262d;
+            color: var(--text-muted);
+        }
+
+        .badge-danger {
+            background-color: #3d1d24;
+            color: #ff7b72;
+        }
+
+        /* Main Wrapper */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* Topbar */
+        .topbar {
+            height: 64px;
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--bg-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+
+        .btn-back {
+            background-color: #1c2333;
+            color: var(--text-main);
+            border: 1px solid #30363d;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            transition: background 0.2s;
+        }
+
+        .btn-back:hover {
+            background-color: #273147;
+            color: #ffffff;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #1f6feb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: #f85149;
+            cursor: pointer;
+            margin-left: 12px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-logout:hover {
+            background-color: rgba(248, 81, 73, 0.1);
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 32px;
+            flex: 1;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-title {
+            font-size: 1.35rem;
+            color: var(--text-bright);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-green);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-green-hover);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--bg-border);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-info h3 {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 400;
+        }
+
+        .stat-info .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .stat-card.active .stat-icon {
+            background: rgba(56, 139, 253, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .stat-card.overdue {
+            border-color: rgba(248, 81, 73, 0.4);
+            background: linear-gradient(135deg, #121721 0%, #201216 100%);
+        }
+
+        .stat-card.overdue .stat-icon {
+            background: rgba(248, 81, 73, 0.15);
+            color: #ff7b72;
+        }
+
+        .stat-card.returned .stat-icon {
+            background: rgba(35, 134, 54, 0.15);
+            color: #3fb950;
+        }
+
+        /* Filter & Table Card */
+        .card-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--bg-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: var(--bg-main);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: var(--text-bright);
+            font-size: 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.15);
+        }
+
+        /* Dark Theme Calendar Picker Custom Styling */
+        input[type="date"].custom-datepicker {
+            color-scheme: dark;
+            cursor: pointer;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8);
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 4px;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Table Styling */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .custom-table th {
+            background-color: #161b26;
+            color: var(--text-muted);
+            padding: 12px 16px;
+            font-weight: 500;
+            border-bottom: 1px solid var(--bg-border);
+            white-space: nowrap;
+        }
+
+        .custom-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--bg-border);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        .custom-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Status Pills */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 500;
+        }
+
+        .status-pill.status-borrowing {
+            background-color: rgba(56, 139, 253, 0.15);
+            color: #58a6ff;
+            border: 1px solid rgba(56, 139, 253, 0.3);
+        }
+
+        .status-pill.status-overdue {
+            background-color: rgba(248, 81, 73, 0.15);
+            color: #ff7b72;
+            border: 1px solid rgba(248, 81, 73, 0.3);
+        }
+
+        .status-pill.status-returned {
+            background-color: rgba(46, 160, 67, 0.15);
+            color: #3fb950;
+            border: 1px solid rgba(46, 160, 67, 0.3);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-action-return {
+            background-color: #1f293d;
+            color: #58a6ff;
+            border: 1px solid #30363d;
+        }
+
+        .btn-action-return:hover {
+            background-color: #238636;
+            color: #ffffff;
+            border-color: #2ea043;
+        }
+
+        .btn-action-extend {
+            background-color: #21262d;
+            color: var(--text-main);
+            border: 1px solid #30363d;
+        }
+
+        .btn-action-extend:hover {
+            background-color: #30363d;
+            color: var(--text-bright);
+        }
+
+        /* Modal Window Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-container {
+            background-color: var(--bg-card);
+            border: 1px solid var(--bg-border);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 580px;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
+            transform: translateY(-20px);
+            transition: transform 0.25s ease;
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--bg-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.15rem;
+            color: var(--text-bright);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-close-modal {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .btn-close-modal:hover {
+            color: var(--text-bright);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .modal-body {
+            padding: 24px;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .modal-grid .full-width {
+            grid-column: span 2;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--bg-border);
+            background-color: #0d1117;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-cancel {
+            background-color: #21262d;
+            color: var(--text-main);
+            border: 1px solid #30363d;
+            padding: 8px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-cancel:hover {
+            background-color: #30363d;
+            color: var(--text-bright);
+        }
+
+        /* Quick Preset Day Buttons */
+        .preset-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .btn-preset {
+            background-color: #1c2333;
+            color: #58a6ff;
+            border: 1px solid #30363d;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-preset:hover {
+            background-color: #238636;
+            color: #ffffff;
+            border-color: #2ea043;
+        }
+
+        /* Notification Toast */
+        .toast-notification {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: #1f293d;
+            border: 1px solid var(--accent-blue);
+            color: var(--text-bright);
+            padding: 14px 20px;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 2000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast-notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-boxes-stacked" style="color: #388bfd;"></i> Asset Console <span
+                class="version">v3.4</span>
+        </div>
+
+        <div class="nav-group-label">NAVIGATION</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-chart-pie"></i> แดชบอร์ด
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-list.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-list-check"></i> รายการทรัพย์สินทั้งหมด
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-detail.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="print-qr.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="borrow-return.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-right-left"></i> ระบบยืม - คืน
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="maintenance.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="audit.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)
+                    </div>
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-group-label">MANAGEMENT</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="account.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-id-card"></i> บัญชีของฉัน
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="settings.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้
+                    </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="backup.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-database"></i> สำรองฐานข้อมูล
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <div class="main-wrapper">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div>
+                <a href="dashboard.html" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
+                </a>
+            </div>
+            <div class="user-info" style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-theme-toggle" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+                <div class="user-avatar">A</div>
+                <span style="color: #f0f6fc; font-size: 0.9rem;">Admin User</span>
+                <button class="btn-logout" onclick="showToast('ออกจากระบบเรียบร้อยแล้ว', 'info')">
+                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <div class="header-section">
+                <h1 class="page-title">
+                    <i class="fa-solid fa-right-left" style="color: #388bfd;"></i> ระบบจัดการ ยืม - คืน ทรัพย์สิน
+                </h1>
+                <button class="btn-primary" onclick="openBorrowModal()">
+                    <i class="fa-solid fa-plus"></i> บันทึกการยืมใหม่
+                </button>
+            </div>
+
+            <!-- Stats KPI Cards -->
+            <div class="stats-grid">
+                <div class="stat-card active">
+                    <div class="stat-info">
+                        <h3>กำลังถูกยืมทั้งหมด</h3>
+                        <div class="value" id="statBorrowingCount">0</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-hand-holding"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card overdue">
+                    <div class="stat-info">
+                        <h3>เกินกำหนดส่งคืน</h3>
+                        <div class="value" style="color: #ff7b72;" id="statOverdueCount">0</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card returned">
+                    <div class="stat-info">
+                        <h3>รับคืนแล้วเดือนนี้</h3>
+                        <div class="value" id="statReturnedCount">0</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters & Search Controls -->
+            <div class="card-box">
+                <div class="filter-grid">
+                    <div class="form-group">
+                        <label>ค้นหารายการ / รหัส / ชื่อผู้ยืม</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="พิมพ์คำค้นหา..."
+                            oninput="applyFilters()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>สถานะการยืม</label>
+                        <select class="form-control" id="statusFilter" onchange="applyFilters()">
+                            <option value="ALL">ทั้งหมด</option>
+                            <option value="BORROWING">กำลังยืม</option>
+                            <option value="OVERDUE">เกินกำหนดคืน</option>
+                            <option value="RETURNED">คืนแล้ว</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>แผนก/ฝ่าย</label>
+                        <select class="form-control" id="deptFilter" onchange="applyFilters()">
+                            <option value="ALL">ทุกแผนก</option>
+                            <option value="IT">IT Support</option>
+                            <option value="Marketing">Marketing & Design</option>
+                            <option value="Operations">Operations</option>
+                            <option value="Finance">Finance & Accounting</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="table-responsive">
+                    <table class="custom-table" id="borrowTable">
+                        <thead>
+                            <tr>
+                                <th>รหัสยืม</th>
+                                <th>รหัสทรัพย์สิน</th>
+                                <th>รายการทรัพย์สิน</th>
+                                <th>ผู้ยืม</th>
+                                <th>แผนก/งาน</th>
+                                <th>วันที่ยืม</th>
+                                <th>กำหนดคืน</th>
+                                <th>สถานะ</th>
+                                <th style="text-align: right;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="borrowTableBody">
+                            <!-- Populated dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal: บันทึกการยืมใหม่ (New Borrowing Modal) -->
+    <div class="modal-overlay" id="borrowModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fa-solid fa-file-circle-plus" style="color: #388bfd;"></i> บันทึกการยืมทรัพย์สินใหม่
+                </h3>
+                <button class="btn-close-modal" onclick="closeModal('borrowModal')"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="borrowForm" onsubmit="handleSaveBorrow(event)">
+                    <div class="modal-grid">
+                        <div class="form-group full-width">
+                            <label>เลือกทรัพย์สินที่ต้องการยืม *</label>
+                            <div style="display:flex; gap:8px;">
+                                <select class="form-control" id="modalAssetSelect" required style="flex:1;">
+                                    <option value="">-- กำลังโหลดรายการทรัพย์สินจากฐานข้อมูล... --</option>
+                                </select>
+                                <button type="button" class="btn-primary" style="padding:0 14px; white-space:nowrap; background:#2563eb; color:white;" onclick="scanAssetForBorrow()" title="เปิดกล้องสแกน QR เพื่อเลือกอุปกรณ์">
+                                    <i class="fa-solid fa-camera"></i> สแกน
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>ชื่อผู้ยืม *</label>
+                            <input type="text" class="form-control" id="modalBorrowerName" placeholder="เช่น สมชาย ใจดี"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>แผนก/ฝ่าย *</label>
+                            <select class="form-control" id="modalDepartment" required>
+                                <option value="IT">IT Support</option>
+                                <option value="Marketing">Marketing & Design</option>
+                                <option value="Operations">Operations</option>
+                                <option value="Finance">Finance & Accounting</option>
+                            </select>
+                        </div>
+
+                        <!-- Dark Theme Date Picker Inputs with typing support & Pop-up Calendar -->
+                        <div class="form-group">
+                            <label>วันที่ยืม (พิมพ์เอง หรือ เลือกจากปฏิทิน) *</label>
+                            <input type="date" class="form-control custom-datepicker" id="modalBorrowDate" required
+                                onchange="autoCalculateReturnDate()">
+                            <div class="preset-container">
+                                <button type="button" class="btn-preset"
+                                    onclick="setTodayDate('modalBorrowDate')">วันนี้</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>กำหนดวันคืน (พิมพ์เอง หรือ เลือกจากปฏิทิน) *</label>
+                            <input type="date" class="form-control custom-datepicker" id="modalReturnDate" required>
+                            <div class="preset-container">
+                                <button type="button" class="btn-preset" onclick="addDaysToReturn(7)">+7 วัน</button>
+                                <button type="button" class="btn-preset" onclick="addDaysToReturn(15)">+15 วัน</button>
+                                <button type="button" class="btn-preset" onclick="addDaysToReturn(30)">+30 วัน</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>วัตถุประสงค์การยืม / หมายเหตุ</label>
+                            <textarea class="form-control" id="modalNote" rows="2"
+                                placeholder="ระบุเหตุผลในการยืม..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="margin: 24px -24px -24px -24px;">
+                        <button type="button" class="btn-cancel" onclick="closeModal('borrowModal')">ยกเลิก</button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-check"></i> ยืนยันการยืม
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: รับคืนทรัพย์สิน (Return Asset Modal) -->
+    <div class="modal-overlay" id="returnModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fa-solid fa-box-archive" style="color: #3fb950;"></i> รับคืนทรัพย์สิน
+                </h3>
+                <button class="btn-close-modal" onclick="closeModal('returnModal')"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="returnForm" onsubmit="handleConfirmReturn(event)">
+                    <input type="hidden" id="returnTxId">
+                    <div class="modal-grid">
+                        <div class="form-group full-width"
+                            style="background-color: #0d1117; padding: 14px; border-radius: 6px; border: 1px solid #21262d;">
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">รายการทรัพย์สินที่จะคืน:</div>
+                            <div style="font-size: 1rem; font-weight: 600; color: var(--text-bright); margin-top: 4px;"
+                                id="returnSummaryText">-</div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>วันที่คืนจริง *</label>
+                            <input type="date" class="form-control custom-datepicker" id="actualReturnDate" required>
+                            <div class="preset-container">
+                                <button type="button" class="btn-preset"
+                                    onclick="setTodayDate('actualReturnDate')">วันนี้</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>สภาพทรัพย์สินหลังยืม</label>
+                            <select class="form-control" id="returnCondition">
+                                <option value="ปกติ">ปกติ (ใช้งานได้ดี)</option>
+                                <option value="ชำรุดเล็กน้อย">ชำรุดเล็กน้อย (ส่งซ่อม)</option>
+                                <option value="สูญหาย">สูญหาย / เสียหายหนัก</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>หมายเหตุการรับคืน</label>
+                            <input type="text" class="form-control" id="returnRemark"
+                                placeholder="ระบุเพิ่มเติม (ถ้ามี)">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="margin: 24px -24px -24px -24px;">
+                        <button type="button" class="btn-cancel" onclick="closeModal('returnModal')">ยกเลิก</button>
+                        <button type="submit" class="btn-primary" style="background-color: var(--accent-green);">
+                            <i class="fa-solid fa-check-double"></i> บันทึกรับคืน
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Element -->
+    <div class="toast-notification" id="toast">
+        <i class="fa-solid fa-circle-check" id="toastIcon" style="color: #3fb950; font-size: 1.2rem;"></i>
+        <span id="toastMessage">บันทึกข้อมูลเรียบร้อยแล้ว</span>
+    </div>
+
+    <script>
+        let borrowRecords = [];
+        let allAssets = [];
+
+        function getCurrentUser() {
+            try {
+                return JSON.parse(localStorage.getItem('auth_user') || '{}');
+            } catch(e) {
+                return {};
+            }
+        }
+
+        function requireAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) { window.location.href = 'index.html'; return null; }
+            return token;
+        }
+
+        async function handleLogout() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                try { await fetch(getApiUrl('/api/logout'), { method:'POST', headers:{'Authorization':`Bearer ${token}`} }); } catch(e){}
+            }
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            window.location.href = 'index.html';
+        }
+
+        // ── Load Assets from SQLite for Borrow Dropdown ───────────
+        async function loadAssetsForBorrow() {
+            const token = requireAuth();
+            if (!token) return;
+            try {
+                const res = await fetch(getApiUrl('/api/assets?limit=200'), {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    allAssets = data.data || [];
+                    const select = document.getElementById('modalAssetSelect');
+                    if (!select) return;
+
+                    const available = allAssets.filter(a => a.status !== 'borrowed');
+                    if (available.length === 0) {
+                        select.innerHTML = '<option value="">-- ไม่มีอุปกรณ์ที่พร้อมให้ยืมในขณะนี้ --</option>';
+                    } else {
+                        select.innerHTML = '<option value="">-- เลือกอุปกรณ์ที่ต้องการยืม --</option>' +
+                            available.map(a => `<option value="${a.asset_code}">${a.asset_code} - ${a.name} (${a.department || a.category || 'ทั่วไป'})</option>`).join('');
+                    }
+                }
+            } catch(err) {
+                console.warn('loadAssetsForBorrow error:', err);
+            }
+        }
+
+        // ── Camera Scanner Integration ────────────────────────────
+        function scanAssetForBorrow() {
+            if (typeof openCameraScanner !== 'function') {
+                alert('โมดูลกล้องยังไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง');
+                return;
+            }
+            openCameraScanner((scannedCode) => {
+                const clean = String(scannedCode).trim().toUpperCase();
+                const select = document.getElementById('modalAssetSelect');
+                let found = false;
+                for (let opt of select.options) {
+                    if (opt.value.toUpperCase() === clean) {
+                        select.value = opt.value;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    const opt = document.createElement('option');
+                    opt.value = clean;
+                    opt.textContent = `${clean} (สแกนจากกล้อง)`;
+                    select.appendChild(opt);
+                    select.value = clean;
+                }
+                showToast(`สแกนรหัสอุปกรณ์ ${clean} สำเร็จ!`, 'success');
+            });
+        }
+
+        // ── Load Borrows from SQLite ──────────────────────────────
+        async function loadBorrowsFromAPI() {
+            const token = requireAuth();
+            if (!token) return;
+            try {
+                const r = await fetch(getApiUrl('/api/borrows'), { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await r.json();
+                if (r.ok && data.success) {
+                    const todayStr = getTodayString();
+                    borrowRecords = (data.data || []).map(b => {
+                        let st = 'BORROWING';
+                        if (b.status === 'returned') {
+                            st = 'RETURNED';
+                        } else if (b.due_date && b.due_date < todayStr) {
+                            st = 'OVERDUE';
+                        }
+                        return {
+                            id: b.id,
+                            displayId: `#BR-${String(b.id).padStart(4, '0')}`,
+                            assetId: b.asset_code,
+                            assetName: b.asset_name || b.asset_code,
+                            borrower: b.borrower,
+                            dept: b.department || '-',
+                            borrowDate: b.borrow_date,
+                            returnDate: b.due_date || '-',
+                            actualReturnDate: b.return_date,
+                            status: st,
+                            notes: b.notes || ''
+                        };
+                    });
+                    applyFilters();
+                }
+            } catch(err) {
+                console.warn('loadBorrows error:', err);
+            }
+        }
+
+        /**
+         * Dynamic Table Rendering with RBAC
+         */
+        function renderTable(dataToRender) {
+            const tbody = document.getElementById('borrowTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const currentUser = getCurrentUser();
+            const userRole = currentUser.role || 'viewer';
+            const canEdit = ['admin', 'editor'].includes(userRole);
+            const canDelete = userRole === 'admin';
+
+            // ซ่อนปุ่มยืมถ้าเป็น Viewer
+            const addBtn = document.querySelector('.btn-primary[onclick="openBorrowModal()"]');
+            if (addBtn) addBtn.style.display = canEdit ? 'inline-flex' : 'none';
+
+            if (dataToRender.length === 0) {
+                const msg = borrowRecords.length === 0
+                    ? '<i class="fa-solid fa-right-left" style="font-size:1.6rem; margin-bottom:10px; display:block; opacity:0.5;"></i>ยังไม่มีรายการยืม-คืนในระบบ (กดปุ่ม "บันทึกการยืมใหม่" เพื่อเริ่มต้น)'
+                    : 'ไม่พบข้อมูลการยืม-คืนตามเงื่อนไขที่เลือก';
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:36px; color:var(--text-muted);">${msg}</td></tr>`;
+                updateStatCounts();
+                return;
+            }
+
+            dataToRender.forEach(item => {
+                const tr = document.createElement('tr');
+
+                // Status Badge
+                let statusBadge = '';
+                if (item.status === 'BORROWING') {
+                    statusBadge = `<span class="status-pill status-borrowing"><i class="fa-solid fa-clock"></i> กำลังยืม</span>`;
+                } else if (item.status === 'OVERDUE') {
+                    statusBadge = `<span class="status-pill status-overdue"><i class="fa-solid fa-triangle-exclamation"></i> เกินกำหนด</span>`;
+                } else {
+                    statusBadge = `<span class="status-pill status-returned"><i class="fa-solid fa-circle-check"></i> คืนแล้ว</span>`;
+                }
+
+                // Action Buttons with RBAC
+                let actionBtns = '<div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">';
+                actionBtns += `
+                    <a href="asset-detail.html?id=${encodeURIComponent(item.assetId)}" class="btn-sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;" title="ดูข้อมูลทรัพย์สิน">
+                        <i class="fa-regular fa-eye"></i> ดู
+                    </a>
+                    <a href="print-qr.html?code=${encodeURIComponent(item.assetId)}" class="btn-sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;" title="พิมพ์ป้าย QR Code">
+                        <i class="fa-solid fa-qrcode"></i> พิมพ์
+                    </a>
+                `;
+
+                if (item.status !== 'RETURNED') {
+                    if (canEdit) {
+                        actionBtns += `
+                            <button class="btn-sm btn-action-return" onclick="openReturnModal(${item.id})">
+                                <i class="fa-solid fa-box-archive"></i> รับคืน
+                            </button>
+                            <button class="btn-sm btn-action-extend" onclick="extendPeriod(${item.id})" title="ขยายเวลา 7 วัน">
+                                <i class="fa-solid fa-calendar-plus"></i> +7 วัน
+                            </button>
+                        `;
+                    }
+                } else {
+                    actionBtns += `<span style="color:var(--text-muted); font-size:0.8rem; padding:4px 6px;">เสร็จสิ้น</span>`;
+                }
+
+                if (canDelete) {
+                    actionBtns += `
+                        <button class="btn-sm" style="color:#ef4444; border:1px solid #fca5a5; background:none; border-radius:4px; padding:4px 8px; cursor:pointer;" onclick="deleteBorrow(${item.id})" title="ลบรายการ">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    `;
+                }
+
+                actionBtns += '</div>';
+
+                tr.innerHTML = `
+                    <td style="font-weight:600; color:var(--accent-blue);">${item.displayId}</td>
+                    <td><a href="asset-detail.html?id=${encodeURIComponent(item.assetId)}" style="color:var(--accent-blue); text-decoration:none; font-weight:600;">${item.assetId}</a></td>
+                    <td style="font-weight:500;">${item.assetName}</td>
+                    <td>${item.borrower}</td>
+                    <td><span class="badge badge-neutral">${item.dept}</span></td>
+                    <td>${formatThaiDate(item.borrowDate)}</td>
+                    <td style="${item.status === 'OVERDUE' ? 'color:#ff7b72; font-weight:600;' : ''}">${formatThaiDate(item.returnDate)}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actionBtns}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            updateStatCounts();
+        }
+
+        function updateStatCounts() {
+            const borrowing = borrowRecords.filter(r => r.status === 'BORROWING').length;
+            const overdue = borrowRecords.filter(r => r.status === 'OVERDUE').length;
+            const returned = borrowRecords.filter(r => r.status === 'RETURNED').length;
+
+            const elBorrowing = document.getElementById('statBorrowingCount');
+            const elOverdue = document.getElementById('statOverdueCount');
+            const elReturned = document.getElementById('statReturnedCount');
+
+            if (elBorrowing) elBorrowing.innerText = borrowing;
+            if (elOverdue) elOverdue.innerText = overdue;
+            if (elReturned) elReturned.innerText = returned;
+        }
+
+        function applyFilters() {
+            const searchInput = document.getElementById('searchInput');
+            const statusFilter = document.getElementById('statusFilter');
+            const deptFilter = document.getElementById('deptFilter');
+
+            const search = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const status = statusFilter ? statusFilter.value : 'ALL';
+            const dept = deptFilter ? deptFilter.value : 'ALL';
+
+            const filtered = borrowRecords.filter(item => {
+                const matchesSearch = !search ||
+                    item.displayId.toLowerCase().includes(search) ||
+                    item.assetId.toLowerCase().includes(search) ||
+                    item.assetName.toLowerCase().includes(search) ||
+                    item.borrower.toLowerCase().includes(search);
+
+                const matchesStatus = (status === 'ALL') || (item.status === status);
+                const matchesDept = (dept === 'ALL') || (item.dept === dept);
+
+                return matchesSearch && matchesStatus && matchesDept;
+            });
+
+            renderTable(filtered);
+        }
+
+        function formatThaiDate(dateStr) {
+            if (!dateStr || dateStr === '-') return '-';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            const day = parts[2];
+            const monthNames = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const month = monthNames[parseInt(parts[1], 10) - 1];
+            const year = parseInt(parts[0], 10) + 543;
+            return `${day} ${month} ${year}`;
+        }
+
+        function getTodayString() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function setTodayDate(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) el.value = getTodayString();
+            if (elementId === 'modalBorrowDate') autoCalculateReturnDate();
+        }
+
+        function autoCalculateReturnDate() {
+            const borrowVal = document.getElementById('modalBorrowDate')?.value;
+            if (!borrowVal) return;
+            const date = new Date(borrowVal);
+            date.setDate(date.getDate() + 7);
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            const returnEl = document.getElementById('modalReturnDate');
+            if (returnEl) returnEl.value = `${yyyy}-${mm}-${dd}`;
+        }
+
+        function addDaysToReturn(days) {
+            const borrowVal = document.getElementById('modalBorrowDate')?.value || getTodayString();
+            const date = new Date(borrowVal);
+            date.setDate(date.getDate() + days);
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            const returnEl = document.getElementById('modalReturnDate');
+            if (returnEl) returnEl.value = `${yyyy}-${mm}-${dd}`;
+        }
+
+        function openBorrowModal() {
+            const user = getCurrentUser();
+            if (!['admin', 'editor'].includes(user.role)) {
+                alert('สิทธิ์ไม่เพียงพอ: ต้องเป็น Admin หรือ Editor เท่านั้นจึงจะบันทึกการยืมได้');
+                return;
+            }
+            document.getElementById('borrowForm').reset();
+            setTodayDate('modalBorrowDate');
+            loadAssetsForBorrow();
+            document.getElementById('borrowModal').classList.add('active');
+        }
+
+        function openReturnModal(id) {
+            const user = getCurrentUser();
+            if (!['admin', 'editor'].includes(user.role)) {
+                alert('สิทธิ์ไม่เพียงพอ: ต้องเป็น Admin หรือ Editor เท่านั้นจึงจะบันทึกรับคืนได้');
+                return;
+            }
+            const record = borrowRecords.find(r => r.id === id);
+            if (!record) return;
+
+            document.getElementById('returnTxId').value = record.id;
+            document.getElementById('returnSummaryText').innerText = `${record.displayId} - ${record.assetName} (${record.borrower})`;
+            setTodayDate('actualReturnDate');
+            document.getElementById('returnModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            const m = document.getElementById(modalId);
+            if (m) m.classList.remove('active');
+        }
+
+        // ── Real SQLite Submission: Create Borrow ─────────────────
+        async function handleSaveBorrow(e) {
+            e.preventDefault();
+            const token = requireAuth();
+            if (!token) return;
+
+            const assetCode = document.getElementById('modalAssetSelect').value.trim();
+            const borrower = document.getElementById('modalBorrowerName').value.trim();
+            const dept = document.getElementById('modalDepartment').value;
+            const borrowDate = document.getElementById('modalBorrowDate').value;
+            const returnDate = document.getElementById('modalReturnDate').value;
+            const notes = document.getElementById('modalNote')?.value.trim() || '';
+
+            if (!assetCode) {
+                alert('กรุณาเลือกอุปกรณ์ที่จะยืม');
+                return;
+            }
+
+            try {
+                const res = await fetch(getApiUrl('/api/borrows'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        asset_code: assetCode,
+                        borrower,
+                        department: dept,
+                        borrow_date: borrowDate,
+                        due_date: returnDate,
+                        notes
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message || 'บันทึกการยืมไม่สำเร็จ');
+
+                closeModal('borrowModal');
+                showToast(`บันทึกการยืมอุปกรณ์ ${assetCode} เรียบร้อยแล้ว`, 'success');
+                await loadBorrowsFromAPI();
+                await loadAssetsForBorrow();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        // ── Real SQLite Submission: Return Asset ──────────────────
+        async function handleConfirmReturn(e) {
+            e.preventDefault();
+            const token = requireAuth();
+            if (!token) return;
+
+            const txId = document.getElementById('returnTxId').value;
+            const returnDate = document.getElementById('actualReturnDate').value;
+            const condition = document.getElementById('returnCondition')?.value || '';
+            const remark = document.getElementById('returnRemark')?.value.trim() || '';
+
+            try {
+                const res = await fetch(getApiUrl(`/api/borrows/${txId}/return`), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        return_date: returnDate,
+                        condition,
+                        notes: remark
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message || 'บันทึกรับคืนไม่สำเร็จ');
+
+                closeModal('returnModal');
+                showToast(`บันทึกรับคืนอุปกรณ์เรียบร้อยแล้ว`, 'success');
+                await loadBorrowsFromAPI();
+                await loadAssetsForBorrow();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        // ── Real SQLite Submission: Extend 7 Days ────────────────
+        async function extendPeriod(id) {
+            const token = requireAuth();
+            if (!token) return;
+
+            try {
+                const res = await fetch(getApiUrl(`/api/borrows/${id}/extend`), {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message || 'ขยายเวลาไม่สำเร็จ');
+
+                showToast(data.message || 'ขยายเวลากำหนดคืนเพิ่ม 7 วันเรียบร้อยแล้ว', 'success');
+                await loadBorrowsFromAPI();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        // ── Real SQLite Submission: Delete Borrow Record ──────────
+        async function deleteBorrow(id) {
+            const user = getCurrentUser();
+            if (user.role !== 'admin') {
+                alert('สิทธิ์ไม่เพียงพอ: เฉพาะ Admin เท่านั้นจึงจะลบประวัติการยืมได้');
+                return;
+            }
+            if (!confirm(`ยืนยันการลบรายการยืมรหัส #${id} ออกจากฐานข้อมูลจริงหรือไม่?`)) return;
+
+            const token = requireAuth();
+            try {
+                const res = await fetch(getApiUrl(`/api/borrows/${id}`), {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message || 'ลบไม่สำเร็จ');
+
+                showToast(`ลบรายการยืมเรียบร้อยแล้ว`, 'success');
+                await loadBorrowsFromAPI();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            if (!toast || !toastMsg) return;
+            toastMsg.innerText = msg;
+            if (type === 'success') {
+                toastIcon.className = 'fa-solid fa-circle-check';
+                toastIcon.style.color = '#3fb950';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-info';
+                toastIcon.style.color = '#388bfd';
+            }
+
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        // Initialize Page
+        window.onload = async function () {
+            requireAuth();
+            const user = getCurrentUser();
+            const userSpan = document.querySelector('.user-info span');
+            if (userSpan && user.name) userSpan.textContent = `${user.name} (${user.role || 'viewer'})`;
+
+            await loadAssetsForBorrow();
+            await loadBorrowsFromAPI();
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Console - แก้ไข/เพิ่มอุปกรณ์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Universal Theme Manager -->
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <script src="config.js"></script>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #111827;
+            --bg-sidebar: #0e131f;
+            --bg-hover: #1f2937;
+            --border-color: #1f2937;
+            --text-title: #f9fafb;
+            --text-body: #9ca3af;
+            --text-muted: #6b7280;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        body.light-mode {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-sidebar: #ffffff;
+            --bg-hover: #f1f5f9;
+            --border-color: #e2e8f0;
+            --text-title: #0f172a;
+            --text-body: #475569;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Prompt', sans-serif;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-body);
+            display: flex;
+            min-height: 100vh;
+            font-size: 0.9rem;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .brand-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-title);
+        }
+
+        .brand-logo i {
+            color: var(--accent-blue);
+        }
+
+        .nav-section {
+            padding: 16px 0;
+        }
+
+        .nav-label {
+            padding: 0 24px 8px 24px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 24px;
+            color: var(--text-body);
+            text-decoration: none;
+            font-size: 0.88rem;
+        }
+
+        .nav-item a:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-title);
+        }
+
+        .nav-item.active a {
+            background-color: var(--bg-hover);
+            color: var(--accent-blue);
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+
+        .btn-back {
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-body);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .btn-back:hover {
+            color: var(--text-title);
+            background-color: var(--bg-hover);
+        }
+
+        .content-area {
+            padding: 24px 32px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .card-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+            max-width: 800px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-title);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: var(--text-title);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .btn-submit {
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-theme-toggle {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-body);
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .alert-box {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: none;
+            font-size: 0.9rem;
+        }
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid #ef4444;
+            color: #f87171;
+        }
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid #10b981;
+            color: #34d399;
+        }
+    </style>
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <div class="brand-header">
+            <div class="brand-logo"><i class="fa-solid fa-boxes-stacked"></i> Asset Console</div>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">NAVIGATION</div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="dashboard.html"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</a></li>
+                <li class="nav-item active"><a href="asset-list.html"><i class="fa-solid fa-list"></i> รายการทรัพย์สินทั้งหมด</a></li>
+                <li class="nav-item"><a href="asset-detail.html"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูลอุปกรณ์</a></li>
+                <li class="nav-item"><a href="print-qr.html"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</a></li>
+                <li class="nav-item"><a href="borrow-return.html"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</a></li>
+                <li class="nav-item"><a href="maintenance.html"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</a></li>
+                <li class="nav-item"><a href="audit.html"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">MANAGEMENT</div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="account.html"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</a></li>
+                <li class="nav-item"><a href="settings.html"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้</a></li>
+                <li class="nav-item"><a href="backup.html"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="topbar">
+            <button class="btn-back" onclick="goBack()">
+                <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
+            </button>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-theme-toggle" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
+                <button class="btn-back" onclick="logout()" style="color: #ef4444;"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div class="card-box">
+                <h2 id="formTitle" style="color: var(--text-title); margin-bottom: 20px;">
+                    <i class="fa-solid fa-pen-to-square"></i> แก้ไข / บันทึกข้อมูลอุปกรณ์
+                </h2>
+
+                <div id="alertMsg" class="alert-box"></div>
+
+                <form id="assetForm" onsubmit="handleFormSubmit(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>รหัสทรัพย์สิน (Asset Code) <span style="color: #ef4444;">*</span></label>
+                            <input type="text" id="assetCode" class="form-control" placeholder="เช่น A001" required>
+                        </div>
+                        <div class="form-group">
+                            <label>ชื่ออุปกรณ์ / รุ่น <span style="color: #ef4444;">*</span></label>
+                            <input type="text" id="assetName" class="form-control" placeholder="เช่น MacBook Pro 16 นิ้ว" required>
+                        </div>
+                        <div class="form-group">
+                            <label>หมวดหมู่ (Category)</label>
+                            <input type="text" id="assetCategory" class="form-control" placeholder="เช่น คอมพิวเตอร์, จอภาพ, เครื่องพิมพ์">
+                        </div>
+                        <div class="form-group">
+                            <label>Serial Number</label>
+                            <input type="text" id="assetSerial" class="form-control" placeholder="หมายเลขซีเรียลเครื่อง">
+                        </div>
+                        <div class="form-group">
+                            <label>ผู้ครอบครอง (Holder)</label>
+                            <input type="text" id="assetHolder" class="form-control" placeholder="ชื่อ-นามสกุล">
+                        </div>
+                        <div class="form-group">
+                            <label>แผนก / ฝ่าย (Department)</label>
+                            <input type="text" id="assetDept" class="form-control" placeholder="เช่น ไอที, บัญชี, การตลาด">
+                        </div>
+                        <div class="form-group">
+                            <label>สถานะ (Status)</label>
+                            <select id="assetStatus" class="form-control">
+                                <option value="active">พร้อมใช้งาน (Active)</option>
+                                <option value="in_use">กำลังใช้งาน (In Use)</option>
+                                <option value="maintenance">ส่งซ่อม (Maintenance)</option>
+                                <option value="retired">จำหน่ายออก (Retired)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>วันที่ได้รับ / จัดซื้อ (Received Date)</label>
+                            <input type="date" id="assetDate" class="form-control">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>หมายเหตุ / รายละเอียดเพิ่มเติม (Notes)</label>
+                            <textarea id="assetNotes" class="form-control" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px; display: flex; gap: 12px;">
+                        <button type="submit" id="btnSubmit" class="btn-submit">
+                            <i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล
+                        </button>
+                        <button type="button" class="btn-back" onclick="goBack()">ยกเลิก</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const assetParam = urlParams.get('id') || urlParams.get('code');
+        let currentAssetId = null;
+
+        function showAlert(msg, isError = false) {
+            const el = document.getElementById('alertMsg');
+            el.innerText = msg;
+            el.className = isError ? 'alert-box alert-error' : 'alert-box alert-success';
+            el.style.display = 'block';
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function goBack() {
+            if (document.referrer !== "") {
+                window.history.back();
+            } else {
+                window.location.href = 'asset-list.html';
+            }
+        }
+
+        async function loadAssetData() {
+            if (!assetParam) {
+                document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-plus-circle"></i> ลงทะเบียนอุปกรณ์ใหม่ (New Asset)';
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('auth_token');
+                const res = await fetch(getApiUrl('/api/assets/' + encodeURIComponent(assetParam)), {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                const result = await res.json();
+                if (result.success && result.data) {
+                    const a = result.data;
+                    currentAssetId = a.id;
+                    document.getElementById('assetCode').value = a.asset_code || '';
+                    document.getElementById('assetCode').readOnly = true;
+                    document.getElementById('assetName').value = a.name || '';
+                    document.getElementById('assetCategory').value = a.category || '';
+                    document.getElementById('assetSerial').value = a.serial_number || '';
+                    document.getElementById('assetHolder').value = a.holder || '';
+                    document.getElementById('assetDept').value = a.department || '';
+                    document.getElementById('assetStatus').value = a.status || 'active';
+                    document.getElementById('assetDate').value = a.received_date || '';
+                    document.getElementById('assetNotes').value = a.notes || '';
+                    document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> แก้ไขอุปกรณ์: ${a.asset_code} (${a.name})`;
+                } else {
+                    showAlert(result.message || 'ไม่พบข้อมูลทรัพย์สิน', true);
+                }
+            } catch (err) {
+                console.error('loadAssetData error:', err);
+                showAlert('ไม่สามารถดึงข้อมูลทรัพย์สินจากเซิร์ฟเวอร์ได้ (' + err.message + ')', true);
+            }
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const token = localStorage.getItem('auth_token');
+            const submitBtn = document.getElementById('btnSubmit');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+
+            const payload = {
+                asset_code: document.getElementById('assetCode').value.trim(),
+                name: document.getElementById('assetName').value.trim(),
+                category: document.getElementById('assetCategory').value.trim(),
+                serial_number: document.getElementById('assetSerial').value.trim(),
+                holder: document.getElementById('assetHolder').value.trim(),
+                department: document.getElementById('assetDept').value.trim(),
+                status: document.getElementById('assetStatus').value,
+                received_date: document.getElementById('assetDate').value,
+                notes: document.getElementById('assetNotes').value.trim()
+            };
+
+            try {
+                let url, method;
+                if (currentAssetId || assetParam) {
+                    url = getApiUrl('/api/assets/' + encodeURIComponent(currentAssetId || assetParam));
+                    method = 'PUT';
+                } else {
+                    url = getApiUrl('/api/assets');
+                    method = 'POST';
+                }
+
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: headers,
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showAlert('บันทึกข้อมูลเรียบร้อยแล้ว!', false);
+                    setTimeout(() => {
+                        window.location.href = 'asset-list.html';
+                    }, 1000);
+                } else {
+                    showAlert(data.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล', true);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล';
+                }
+            } catch (err) {
+                showAlert('การเชื่อมต่อเซิร์ฟเวอร์ขัดข้อง: ' + err.message, true);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล';
+            }
+        }
+
+        async function logout() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                try {
+                    await fetch(getApiUrl('/api/logout'), {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                } catch (e) {}
+            }
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            window.location.href = 'index.html';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+            loadAssetData();
+        });
+    </script>
+</body>
+
+</html>
