@@ -37,6 +37,15 @@ const crypto   = require('crypto');
   }
 })();
 
+// Process-level crash prevention safety nets
+process.on('uncaughtException', (err) => {
+  console.error('💥 Uncaught Exception caught to prevent server crash:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ Unhandled Promise Rejection caught at:', promise, 'reason:', reason);
+});
+
 const app  = express();
 const PORT = process.env.PORT || 8080;
 
@@ -87,16 +96,17 @@ const uploadMulter = multer({
     files: 10                   // accept up to 10 photos per upload
   },
   fileFilter: (_req, file, cb) => {
-    // Check mimetype and file extension for maximum mobile camera compatibility
+    // Check mimetype and file extension for maximum mobile camera and backup compatibility
     const mime = (file.mimetype || '').toLowerCase();
     const ext = path.extname(file.originalname || '').toLowerCase();
     const isImageMime = mime.startsWith('image/') || mime === 'application/octet-stream' || mime === 'binary/octet-stream';
     const isImageExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif', '.bmp', '.jfif', '.avif'].includes(ext);
+    const isBackupFile = ['.db', '.sqlite', '.sqlite3', '.json'].includes(ext) || mime === 'application/json' || mime.includes('sqlite');
 
-    if (isImageMime || isImageExt || !ext) {
+    if (isImageMime || isImageExt || isBackupFile || !ext) {
       cb(null, true);
     } else {
-      cb(null, false); // Gracefully reject non-images without unhandled Multer crash
+      cb(null, false); // Gracefully reject unsupported files without unhandled Multer crash
     }
   }
 });
@@ -131,7 +141,7 @@ async function processAndSaveImage(buffer, originalName) {
   }
 
   const rawExt = (path.extname(originalName || '').toLowerCase() || '').replace(/[^a-z0-9.]/gi, '');
-  const ext = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'].includes(rawExt) ? rawExt : '.jpg';
+  const ext = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.heic', '.heif', '.avif'].includes(rawExt) ? rawExt : '.jpg';
   const randomSuffix = crypto.randomBytes(4).toString('hex');
   const baseName = `asset-${Date.now()}-${randomSuffix}.jpg`;
   const destPath = path.join(UPLOADS_DIR, baseName);
@@ -140,9 +150,10 @@ async function processAndSaveImage(buffer, originalName) {
     if (!sharp) {
       throw new Error('Sharp library not available');
     }
-    await sharp(buffer)
+    await sharp(buffer, { failOnError: false })
       .rotate() // auto-rotate based on EXIF orientation (crucial for mobile cameras)
       .resize({ width: 800, withoutEnlargement: true }) // max width 800px
+      .toColorspace('srgb') // normalize mobile wide-gamut / Display P3 color profiles
       .toFormat('jpeg', { quality: 80, progressive: true })
       .toFile(destPath);
 
@@ -215,7 +226,7 @@ function initDatabase() {
 let db = initDatabase();
 
 // Safe execution helper with auto-retry on transient lock/disk I/O error
-function executeWithRetry(operationFn, maxRetries = 3) {
+async function executeWithRetry(operationFn, maxRetries = 3) {
   let attempt = 0;
   while (true) {
     try {
@@ -233,9 +244,8 @@ function executeWithRetry(operationFn, maxRetries = 3) {
 
       if (isTransient && attempt < maxRetries) {
         console.warn(`⚠️ SQLite transient error (${err.message}). Retrying attempt ${attempt}/${maxRetries}...`);
-        const waitMs = attempt * 200;
-        const start = Date.now();
-        while (Date.now() - start < waitMs) {} // synchronous yield
+        const waitMs = attempt * 150;
+        await new Promise(resolve => setTimeout(resolve, waitMs));
         continue;
       }
       throw err;
@@ -244,25 +254,19 @@ function executeWithRetry(operationFn, maxRetries = 3) {
 }
 
 // Sync helpers wrapped as Promises with auto-retry
-const dbRun = (sql, params = []) => {
-  return Promise.resolve().then(() => {
-    return executeWithRetry(() => {
-      const info = db.prepare(sql).run(params);
-      return { lastID: info.lastInsertRowid, changes: info.changes };
-    });
+const dbRun = async (sql, params = []) => {
+  return executeWithRetry(() => {
+    const info = db.prepare(sql).run(params);
+    return { lastID: info.lastInsertRowid, changes: info.changes };
   });
 };
 
-const dbGet = (sql, params = []) => {
-  return Promise.resolve().then(() => {
-    return executeWithRetry(() => db.prepare(sql).get(params));
-  });
+const dbGet = async (sql, params = []) => {
+  return executeWithRetry(() => db.prepare(sql).get(params));
 };
 
-const dbAll = (sql, params = []) => {
-  return Promise.resolve().then(() => {
-    return executeWithRetry(() => db.prepare(sql).all(params));
-  });
+const dbAll = async (sql, params = []) => {
+  return executeWithRetry(() => db.prepare(sql).all(params));
 };
 
 // Periodic WAL checkpoint (every 5 minutes) to keep WAL/SHM file size small and prevent disk write collisions
@@ -2236,6 +2240,19 @@ app.post('/api/backup/restore', uploadMiddleware, async (req, res) => {
       try {
         db.pragma('wal_checkpoint(TRUNCATE)');
         fs.copyFileSync(DB_PATH, backupPath);
+
+        // Keep maximum 3 safety copies to prevent disk exhaustion on persistent volumes
+        const dbDir = path.dirname(DB_PATH);
+        const baseDb = path.basename(DB_PATH);
+        const allBackups = fs.readdirSync(dbDir)
+          .filter(f => f.startsWith(`${baseDb}.bak-`))
+          .sort()
+          .reverse();
+        if (allBackups.length > 3) {
+          allBackups.slice(3).forEach(oldBak => {
+            try { fs.unlinkSync(path.join(dbDir, oldBak)); } catch (_) {}
+          });
+        }
       } catch (e) {
         console.warn('Backup safety copy notice:', e.message);
       }
@@ -2374,6 +2391,20 @@ app.get('/api/audit', async (req, res) => {
   } catch (err) {
     return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
   }
+});
+
+// ============================================================
+//  GLOBAL ERROR HANDLER (Prevents server crash & hides stack traces)
+// ============================================================
+app.use((err, _req, res, _next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ success: false, message: 'รูปแบบ JSON ไม่ถูกต้อง (Malformed JSON payload)' });
+  }
+  console.error('Unhandled server error:', err);
+  return res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์'
+  });
 });
 
 // ============================================================

@@ -234,6 +234,86 @@
         getAvailableSizes: function () { return VALID_SIZES.slice(); }
     };
 
+    // ── Mobile Responsive Sidebar Drawer Manager ────────────────
+    function initMobileSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar) return;
+
+        // Ensure backdrop exists
+        let backdrop = document.querySelector('.sidebar-backdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.className = 'sidebar-backdrop';
+            backdrop.setAttribute('aria-hidden', 'true');
+            document.body.appendChild(backdrop);
+        }
+
+        backdrop.addEventListener('click', closeMobileSidebar);
+
+        // Inject close button in sidebar header if not present
+        const brandHeader = sidebar.querySelector('.brand-header, .brand');
+        if (brandHeader && !sidebar.querySelector('.btn-sidebar-close')) {
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'btn-sidebar-close';
+            closeBtn.type = 'button';
+            closeBtn.setAttribute('aria-label', 'ปิดเมนู');
+            closeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            closeBtn.addEventListener('click', closeMobileSidebar);
+            brandHeader.appendChild(closeBtn);
+        }
+
+        // Find topbar and inject mobile toggle if not present
+        const topbar = document.querySelector('.topbar');
+        if (topbar && !topbar.querySelector('.btn-mobile-toggle')) {
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'btn-mobile-toggle';
+            toggleBtn.type = 'button';
+            toggleBtn.setAttribute('aria-label', 'เปิดเมนู');
+            toggleBtn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+            toggleBtn.addEventListener('click', toggleMobileSidebar);
+
+            // Put it at the beginning of topbar or inside topbar-left
+            const topbarLeft = topbar.querySelector('.topbar-left');
+            if (topbarLeft) {
+                topbarLeft.insertBefore(toggleBtn, topbarLeft.firstChild);
+            } else {
+                topbar.insertBefore(toggleBtn, topbar.firstChild);
+            }
+        }
+
+        // Close sidebar when clicking any nav-item link on mobile
+        sidebar.querySelectorAll('.nav-menu a, .nav-item a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    closeMobileSidebar();
+                }
+            });
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.body.classList.contains('sidebar-open')) {
+                closeMobileSidebar();
+            }
+        });
+    }
+
+    function toggleMobileSidebar() {
+        document.body.classList.toggle('sidebar-open');
+    }
+
+    function closeMobileSidebar() {
+        document.body.classList.remove('sidebar-open');
+    }
+
+    function openMobileSidebar() {
+        document.body.classList.add('sidebar-open');
+    }
+
+    window.toggleMobileSidebar = toggleMobileSidebar;
+    window.closeMobileSidebar = closeMobileSidebar;
+    window.openMobileSidebar = openMobileSidebar;
+
     // ── DOM Ready / Load Handler ────────────────────────────────
     function onReady() {
         const currentTheme = getSavedTheme();
@@ -241,6 +321,7 @@
         updateIcons(currentTheme);
 
         applyTypography(getSavedFont(), getSavedSize());
+        initMobileSidebar();
     }
 
     if (document.readyState === 'loading') {

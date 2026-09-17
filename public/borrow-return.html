@@ -630,6 +630,104 @@
             transform: translateY(0);
             opacity: 1;
         }
+
+        /* Mobile Responsive Media Queries */
+        @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .main-wrapper {
+                width: 100%;
+                max-width: 100vw;
+                min-width: 0;
+            }
+
+            .content-area {
+                padding: 14px 12px;
+                overflow-x: hidden;
+            }
+
+            .header-section {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+
+            .header-section .btn-primary {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 16px;
+            }
+
+            .stat-card {
+                padding: 14px;
+            }
+
+            .stat-info .value {
+                font-size: 1.4rem;
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .modal-container {
+                width: 95%;
+                max-width: 95%;
+            }
+
+            .modal-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .modal-grid .full-width {
+                grid-column: span 1;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+                gap: 8px;
+                padding: 14px;
+            }
+
+            .modal-footer button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .preset-container {
+                flex-wrap: wrap;
+            }
+
+            .table-responsive {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                min-width: 600px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title {
+                font-size: 1.15rem;
+            }
+        }
     </style>
 </head>
 

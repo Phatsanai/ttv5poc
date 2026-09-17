@@ -55,7 +55,9 @@
             align-items: center;
             justify-content: center;
             position: relative;
-            overflow: hidden;
+            padding: 24px 16px;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         /* Glow Background Effects */
@@ -115,22 +117,30 @@
         }
 
         .brand-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
             text-align: center;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
+            width: 100%;
         }
 
         .brand-icon {
-            width: 56px;
-            height: 56px;
+            width: 64px;
+            height: 64px;
             background: rgba(59, 130, 246, 0.12);
             color: var(--accent-blue);
-            border-radius: 12px;
-            display: inline-flex;
+            border-radius: 14px;
+            display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 12px;
-            border: 1px solid rgba(59, 130, 246, 0.2);
+            font-size: 1.85rem;
+            margin: 0;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
         }
 
         .brand-title {
@@ -138,12 +148,61 @@
             font-weight: 700;
             color: var(--text-title);
             letter-spacing: -0.5px;
+            line-height: 1.3;
+            margin: 0;
+            word-break: break-word;
         }
 
         .brand-subtitle {
             font-size: 0.85rem;
             color: var(--text-muted);
-            margin-top: 4px;
+            margin: 0;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 16px 12px;
+                align-items: flex-start;
+                padding-top: 60px;
+            }
+
+            .login-card {
+                padding: 24px 18px;
+                border-radius: 12px;
+                max-width: 100%;
+            }
+
+            .brand-header {
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            .brand-icon {
+                width: 54px;
+                height: 54px;
+                font-size: 1.6rem;
+            }
+
+            .brand-title {
+                font-size: 1.35rem;
+            }
+
+            .brand-subtitle {
+                font-size: 0.8rem;
+            }
+
+            .oauth-login-buttons {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
         }
 
         /* Form Controls */

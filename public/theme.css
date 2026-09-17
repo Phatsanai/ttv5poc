@@ -1531,4 +1531,524 @@ select.select-control {
     gap: 6px !important;
 }
 
+/* ============================================================
+   9. Universal Header & Brand Flexbox System
+   - Guarantees logo/icon never overlaps with title or version
+   ============================================================ */
+.brand,
+.brand-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 16px 20px !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+}
+
+.brand-logo,
+.brand > a,
+.brand-title-wrap {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    color: var(--text-title) !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+}
+
+.brand-icon,
+.brand-logo i,
+.brand > i {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+}
+
+.version-tag,
+.brand span.version {
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+    font-size: 0.72rem !important;
+}
+
+/* ── Mobile Sidebar Drawer & Backdrop ─────────────────────── */
+.btn-mobile-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background-color: var(--bg-hover, rgba(255, 255, 255, 0.08));
+    border: 1px solid var(--border-color, #2d3852);
+    color: var(--text-title, #f8fafc);
+    font-size: 1.1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.btn-mobile-toggle:hover {
+    background-color: var(--primary-light, rgba(37, 99, 235, 0.15));
+    border-color: var(--primary-color, #2563eb);
+    color: var(--primary-color, #2563eb);
+}
+
+.btn-sidebar-close {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color, #2d3852);
+    color: var(--text-muted, #808c9f);
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-left: auto;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.btn-sidebar-close:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 1050;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+body.sidebar-open .sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Light mode adjustments for mobile controls */
+html.light-theme .btn-mobile-toggle,
+body.light-mode .btn-mobile-toggle {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+html.light-theme .btn-sidebar-close,
+body.light-mode .btn-sidebar-close {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
+}
+
+/* ============================================================
+   10. Comprehensive Mobile Responsive System (max-width: 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+    /* ── Global Viewport Protection ─────────────────────────── */
+    html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+    }
+
+    body.sidebar-open {
+        overflow: hidden !important;
+    }
+
+    /* ── Mobile Sidebar (Drawer Mode) ───────────────────────── */
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        width: 280px !important;
+        max-width: 85vw !important;
+        z-index: 1100 !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: flex !important;
+    }
+
+    body.sidebar-open .sidebar {
+        transform: translateX(0) !important;
+    }
+
+    .btn-mobile-toggle {
+        display: inline-flex !important;
+    }
+
+    .btn-sidebar-close {
+        display: inline-flex !important;
+    }
+
+    /* ── Main Layout & Wrapper ──────────────────────────────── */
+    .main-wrapper {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+    }
+
+    .content-area,
+    .content-container {
+        padding: 14px 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+
+    /* ── Topbar Mobile Overhaul ─────────────────────────────── */
+    .topbar {
+        padding: 8px 12px !important;
+        min-height: 54px !important;
+        height: auto !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    .topbar-left {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        flex-shrink: 1 !important;
+        min-width: 0 !important;
+        max-width: calc(100% - 140px) !important;
+    }
+
+    .topbar-left .page-title,
+    .topbar-left span.page-title {
+        font-size: 0.95rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .topbar-left .btn-back {
+        padding: 6px 10px !important;
+        font-size: 0.78rem !important;
+        gap: 5px !important;
+    }
+
+    .topbar-right,
+    .topbar-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
+    }
+
+    .search-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        order: 10 !important;
+        margin-top: 4px !important;
+    }
+
+    .search-box input {
+        width: 100% !important;
+        padding: 8px 12px 8px 34px !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* User Profile Compact Mode on Mobile */
+    .user-profile {
+        padding-left: 6px !important;
+        gap: 6px !important;
+        border-left: none !important;
+    }
+
+    .user-profile > div:not(.avatar) {
+        display: none !important;
+    }
+
+    .avatar {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* ── Page Headers & Action Bars ─────────────────────────── */
+    .page-header,
+    .header-section {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .page-title {
+        font-size: 1.15rem !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    .page-title h1,
+    .page-title h2,
+    .page-header h1,
+    .page-header h2 {
+        font-size: 1.2rem !important;
+        line-height: 1.3 !important;
+    }
+
+    .page-title p,
+    .page-header p {
+        font-size: 0.78rem !important;
+    }
+
+    .filter-selectors,
+    .filter-bar,
+    .filter-grid {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+
+    .select-control,
+    .filter-select,
+    .search-input {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    /* Full width buttons in header on mobile */
+    .page-header .btn-primary,
+    .page-header .btn-secondary,
+    .page-header .btn-add,
+    .page-header .btn-action,
+    .header-section .btn-primary,
+    .header-section .btn-add {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 9px 14px !important;
+    }
+
+    /* ── Responsive Card & Stat Grids ───────────────────────── */
+    .stats-grid,
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .charts-grid,
+    .grid-2,
+    .detail-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+
+    .card-box,
+    .card {
+        padding: 14px !important;
+        margin-bottom: 14px !important;
+        border-radius: 8px !important;
+        max-width: 100% !important;
+    }
+
+    .card-title,
+    .card-header {
+        font-size: 0.95rem !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    .stat-card {
+        padding: 12px 14px !important;
+        min-height: auto !important;
+    }
+
+    .stat-header {
+        margin-bottom: 6px !important;
+    }
+
+    .stat-value,
+    .stat-num,
+    .stat-info .value {
+        font-size: 1.35rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .stat-title,
+    .stat-label {
+        font-size: 0.72rem !important;
+    }
+
+    /* ── Tables & Overflow Management ───────────────────────── */
+    .table-responsive {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: block !important;
+        margin-top: 10px !important;
+        border-radius: 8px !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    .table-responsive table,
+    .data-table,
+    table {
+        min-width: 600px !important;
+        width: 100% !important;
+        font-size: 0.82rem !important;
+    }
+
+    table th,
+    table td,
+    .data-table th,
+    .data-table td {
+        padding: 8px 10px !important;
+        white-space: nowrap !important;
+    }
+
+    .table-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    .tab-switcher {
+        width: 100% !important;
+        overflow-x: auto !important;
+        justify-content: flex-start !important;
+    }
+
+    .action-btns,
+    .table-actions {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+
+    /* ── Form Grids & Controls ──────────────────────────────── */
+    .form-grid,
+    .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .form-group.full-width {
+        grid-column: auto !important;
+    }
+
+    .form-control,
+    .form-select,
+    .form-input {
+        font-size: 0.9rem !important;
+    }
+
+    /* ── Modals & Dialogs ───────────────────────────────────── */
+    .modal-container,
+    .modal-box,
+    .modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        margin: 12px auto !important;
+        padding: 16px !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        border-radius: 12px !important;
+    }
+
+    .modal-header {
+        padding: 12px 14px !important;
+    }
+
+    .modal-body {
+        padding: 14px 0 !important;
+    }
+
+    .modal-footer {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .modal-footer button,
+    .modal-footer .btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* ── Navigation Tabs (Settings, etc.) ────────────────────── */
+    .tabs-header {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 4px !important;
+        scrollbar-width: none !important;
+    }
+
+    .tabs-header::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .tab-btn {
+        white-space: nowrap !important;
+        padding: 8px 14px !important;
+        font-size: 0.85rem !important;
+        flex-shrink: 0 !important;
+    }
+}
+
+/* ============================================================
+   11. Extra Small Screens (max-width: 480px)
+   ============================================================ */
+@media (max-width: 480px) {
+    .stats-grid,
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .btn-back span,
+    .topbar-left .btn-back span {
+        display: none !important;
+    }
+
+    .btn-back::after {
+        content: "กลับ";
+    }
+
+    .topbar-actions .btn-primary span,
+    .topbar-actions .btn-secondary span {
+        display: none !important;
+    }
+
+    .oauth-login-buttons {
+        grid-template-columns: 1fr !important;
+    }
+
+    .brand-title {
+        font-size: 1.35rem !important;
+    }
+
+    .brand-subtitle {
+        font-size: 0.8rem !important;
+    }
+}
+
 

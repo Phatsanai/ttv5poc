@@ -545,6 +545,53 @@
                 margin-top: 20px !important;
             }
         }
+
+        /* Mobile Responsive Media Queries */
+        @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .main-wrapper {
+                width: 100%;
+                max-width: 100vw;
+                min-width: 0;
+            }
+
+            .content-area {
+                padding: 14px 12px;
+                overflow-x: hidden;
+            }
+
+            .page-title {
+                font-size: 1.15rem;
+                margin-bottom: 16px;
+            }
+
+            .card-box {
+                padding: 14px;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr !important;
+                gap: 12px;
+            }
+
+            .btn-print {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .sticker-sheet {
+                grid-template-columns: 1fr !important;
+                padding: 8px;
+            }
+        }
     </style>
 </head>
 
