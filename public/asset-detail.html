@@ -76,17 +76,18 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
-            position: fixed;
+            position: sticky;
             top: 0;
-            left: 0;
-            bottom: 0;
-            z-index: 100;
-            transition: transform 0.3s ease;
+            height: 100vh;
+            overflow-y: auto;
+            transition: width 0.3s ease;
         }
 
         .sidebar.hidden {
-            transform: translateX(-100%);
-            display: none !important;
+            width: 0;
+            min-width: 0;
+            overflow: hidden;
+            border-right: none;
         }
 
         .brand-header {
@@ -228,12 +229,10 @@
             display: flex;
             flex-direction: column;
             min-width: 0;
-            margin-left: 260px;
-            transition: margin-left 0.3s ease;
         }
 
         .main-wrapper.no-sidebar {
-            margin-left: 0;
+            width: 100%;
         }
 
         .topbar {
