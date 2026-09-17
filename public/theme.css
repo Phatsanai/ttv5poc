@@ -481,10 +481,12 @@ body.light-mode .sidebar {
     box-shadow: 1px 0 3px rgba(0, 0, 0, 0.04) !important;
 }
 
-html.light-theme .brand,
-body.light-mode .brand,
-html.light-theme .brand-header,
-body.light-mode .brand-header {
+html.light-theme .sidebar .brand,
+body.light-mode .sidebar .brand,
+html.light-theme aside .brand-header,
+body.light-mode aside .brand-header,
+html.light-theme .sidebar .brand-header,
+body.light-mode .sidebar .brand-header {
     border-color: #e2e8f0 !important;
     color: #0f172a !important;
 }
@@ -1091,8 +1093,10 @@ aside.sidebar {
     transition: width 0.2s ease !important;
 }
 
-.brand,
-.brand-header {
+.sidebar .brand,
+.sidebar .brand-header,
+aside .brand,
+aside .brand-header {
     height: var(--topbar-height, 54px) !important;
     min-height: var(--topbar-height, 54px) !important;
     padding: 0 16px !important;
@@ -1535,8 +1539,10 @@ select.select-control {
    9. Universal Header & Brand Flexbox System
    - Guarantees logo/icon never overlaps with title or version
    ============================================================ */
-.brand,
-.brand-header {
+.sidebar .brand,
+.sidebar .brand-header,
+aside .brand,
+aside .brand-header {
     display: flex !important;
     align-items: center !important;
     gap: 12px !important;

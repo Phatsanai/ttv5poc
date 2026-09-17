@@ -116,27 +116,46 @@
             position: relative;
         }
 
+        /* Header Section */
+        .login-brand-header,
         .brand-header {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 12px;
             text-align: center;
             margin-bottom: 28px;
             width: 100%;
+            height: auto;
+            min-height: auto;
+            padding: 0;
+            border-bottom: none;
         }
 
-        .brand-icon {
-            width: 64px;
-            height: 64px;
-            background: rgba(59, 130, 246, 0.12);
-            color: var(--accent-blue);
-            border-radius: 14px;
+        /* 1. Flexbox Row for Logo Icon & "Asset Console" Title */
+        .brand-title-row {
             display: flex;
+            flex-direction: row;
             align-items: center;
             justify-content: center;
-            font-size: 1.85rem;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        /* 2. Logo Icon styling & explicit sizing to prevent any overlap */
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            min-height: 44px;
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent-blue);
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
             margin: 0;
             border: 1px solid rgba(59, 130, 246, 0.25);
             flex-shrink: 0;
@@ -144,21 +163,24 @@
         }
 
         .brand-title {
-            font-size: 1.5rem;
+            font-size: 1.65rem;
             font-weight: 700;
             color: var(--text-title);
             letter-spacing: -0.5px;
-            line-height: 1.3;
+            line-height: 1.2;
             margin: 0;
-            word-break: break-word;
+            white-space: nowrap;
         }
 
+        /* 3. Subtitle cleanly positioned on the next line below */
         .brand-subtitle {
             font-size: 0.85rem;
             color: var(--text-muted);
             margin: 0;
             line-height: 1.4;
             word-break: break-word;
+            text-align: center;
+            width: 100%;
         }
 
         @media (max-width: 480px) {
@@ -174,15 +196,23 @@
                 max-width: 100%;
             }
 
+            .login-brand-header,
             .brand-header {
-                gap: 10px;
                 margin-bottom: 20px;
             }
 
+            .brand-title-row {
+                gap: 10px;
+                margin-bottom: 6px;
+            }
+
             .brand-icon {
-                width: 54px;
-                height: 54px;
-                font-size: 1.6rem;
+                width: 38px;
+                height: 38px;
+                min-width: 38px;
+                min-height: 38px;
+                font-size: 1.25rem;
+                border-radius: 10px;
             }
 
             .brand-title {
@@ -190,7 +220,7 @@
             }
 
             .brand-subtitle {
-                font-size: 0.8rem;
+                font-size: 0.78rem;
             }
 
             .oauth-login-buttons {
@@ -415,11 +445,13 @@
 
     <!-- Login Container Box -->
     <div class="login-card">
-        <div class="brand-header">
-            <div class="brand-icon">
-                <i class="fa-solid fa-boxes-stacked"></i>
+        <div class="login-brand-header brand-header">
+            <div class="brand-title-row">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </div>
+                <h1 class="brand-title">Asset Console</h1>
             </div>
-            <h1 class="brand-title">Asset Console</h1>
             <p class="brand-subtitle">ระบบบริหารจัดการทรัพย์สินองค์กร Enterprise v3.4</p>
         </div>
 
