@@ -41,7 +41,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Prompt', sans-serif;
+            font-family: var(--font-family-base, 'Prompt', sans-serif);
             transition: background-color 0.2s, color 0.2s;
         }
 
@@ -278,6 +278,7 @@
                 <li class="nav-item"><a href="borrow-return.html"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</a></li>
                 <li class="nav-item"><a href="maintenance.html"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</a></li>
                 <li class="nav-item"><a href="audit.html"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</a></li>
+                <li class="nav-item"><a href="recycle-bin.html"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</a></li>
             </ul>
         </div>
         <div class="nav-section">
@@ -292,12 +293,16 @@
 
     <div class="main-wrapper">
         <header class="topbar">
-            <button class="btn-back" onclick="goBack()">
-                <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
-            </button>
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <button class="btn-theme-toggle" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
-                <button class="btn-back" onclick="logout()" style="color: #ef4444;"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
+            <a href="dashboard.html" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
+            </a>
+            <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-theme-toggle" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
+                <div class="user-info">
+                    <div class="user-avatar">A</div>
+                    <span id="topUserName" class="user-name-label">Admin User</span>
+                </div>
+                <button class="btn-logout" onclick="logout()" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
             </div>
         </header>
 
@@ -320,8 +325,20 @@
                             <input type="text" id="assetName" class="form-control" placeholder="เช่น MacBook Pro 16 นิ้ว" required>
                         </div>
                         <div class="form-group">
-                            <label>หมวดหมู่ (Category)</label>
-                            <input type="text" id="assetCategory" class="form-control" placeholder="เช่น คอมพิวเตอร์, จอภาพ, เครื่องพิมพ์">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <label style="margin-bottom:0;">หมวดหมู่ (Category)</label>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <button type="button" onclick="openQuickAddCatModal()" style="background:none; border:none; color:var(--accent-blue); font-size:0.82rem; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+                                        <i class="fa-solid fa-plus-circle"></i> + เพิ่มหมวดหมู่ใหม่
+                                    </button>
+                                    <a href="settings.html" style="font-size:0.75rem; color:var(--text-muted); text-decoration:none; display:inline-flex; align-items:center; gap:3px;" title="ไปที่หน้าจัดการหมวดหมู่">
+                                        <i class="fa-solid fa-gear"></i> จัดการ
+                                    </a>
+                                </div>
+                            </div>
+                            <select id="assetCategory" class="form-control">
+                                <option value="">-- เลือกหมวดหมู่ --</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>Serial Number</label>
@@ -352,6 +369,17 @@
                             <label>หมายเหตุ / รายละเอียดเพิ่มเติม (Notes)</label>
                             <textarea id="assetNotes" class="form-control" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea>
                         </div>
+                        <div class="form-group full-width">
+                            <label style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>รูปภาพทรัพย์สิน (Photos - สูงสุด 5 รูป)</span>
+                                <button type="button" onclick="triggerEditPhotoUpload()" style="background: none; border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                                    <i class="fa-solid fa-plus"></i> เพิ่มรูปภาพ
+                                </button>
+                            </label>
+                            <div id="photosContainer" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;">
+                                <!-- Photo thumbnails injected here -->
+                            </div>
+                        </div>
                     </div>
 
                     <div style="margin-top: 24px; display: flex; gap: 12px;">
@@ -365,10 +393,154 @@
         </main>
     </div>
 
+    <!-- Modal เลือกแหล่งรูปภาพ (Camera vs Gallery) -->
+    <div class="modal" id="editPhotoSourceModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; width: 90%; max-width: 420px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-title); font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-camera-rotate" style="color: var(--accent-blue);"></i> เลือกแหล่งที่มาของรูปภาพ
+                </h3>
+                <button type="button" onclick="closeEditPhotoSourceModal()" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer;">&times;</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                เลือกวิธีเพิ่มรูปภาพสำหรับอุปกรณ์นี้ (รองรับการบีบอัดภาพอัตโนมัติ)
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button type="button" onclick="chooseEditUploadSource('camera')" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-title); cursor: pointer; text-align: left; font-size: 0.95rem; font-weight: 500; transition: all 0.2s;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-title);">ถ่ายรูปจากกล้องโดยตรง</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">เปิดกล้องบนมือถือหรือเว็บแคมเพื่อถ่ายภาพทันที</div>
+                    </div>
+                </button>
+
+                <button type="button" onclick="chooseEditUploadSource('gallery')" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-title); cursor: pointer; text-align: left; font-size: 0.95rem; font-weight: 500; transition: all 0.2s;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: var(--accent-green); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                        <i class="fa-solid fa-images"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-title);">เลือกจากคลังภาพ / ไฟล์ในเครื่อง</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">เลือกภาพ JPG, PNG, WEBP จากอัลบั้มหรือโฟลเดอร์</div>
+                    </div>
+                </button>
+            </div>
+    <!-- Modal เพิ่มหมวดหมู่ด่วน (Quick Add Category) -->
+    <div class="modal" id="quickAddCatModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 10005; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; width: 90%; max-width: 420px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-title); font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-folder-plus" style="color: var(--accent-blue);"></i> เพิ่มหมวดหมู่ใหม่
+                </h3>
+                <button type="button" onclick="closeQuickAddCatModal()" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer;">&times;</button>
+            </div>
+            <form onsubmit="handleQuickAddCategory(event)">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label style="font-size: 0.85rem; color: var(--text-title); display: block; margin-bottom: 6px;">ชื่อหมวดหมู่ใหม่ <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="quickCatName" class="form-control" placeholder="เช่น Laptop, จอคอม, สาย HDMI, กล้อง" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 0.85rem; color: var(--text-title); display: block; margin-bottom: 6px;">คำอธิบายเพิ่มเติม (ไม่บังคับ)</label>
+                    <input type="text" id="quickCatDesc" class="form-control" placeholder="รายละเอียดหมวดหมู่นี้">
+                </div>
+                <div id="quickCatError" style="color:#ef4444; font-size:0.85rem; margin-bottom:12px; display:none;"></div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn-back" onclick="closeQuickAddCatModal()">ยกเลิก</button>
+                    <button type="submit" class="btn-submit" id="btnQuickCatSave">
+                        <i class="fa-solid fa-check"></i> บันทึกและเลือก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="editPhotoUploadInput" multiple accept="image/*" style="display:none" onchange="handleEditPhotoSelected(event)">
+    <input type="file" id="editPhotoCameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleEditPhotoSelected(event)">
+
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const assetParam = urlParams.get('id') || urlParams.get('code');
         let currentAssetId = null;
+        let photosList = [];
+
+        function goBack() {
+            window.location.href = 'dashboard.html';
+        }
+
+        function triggerEditPhotoUpload() {
+            if (photosList.length >= 5) {
+                showAlert('อัปโหลดรูปภาพได้สูงสุด 5 รูปต่ออุปกรณ์', true);
+                return;
+            }
+            document.getElementById('editPhotoSourceModal').style.display = 'flex';
+        }
+
+        function closeEditPhotoSourceModal() {
+            document.getElementById('editPhotoSourceModal').style.display = 'none';
+        }
+
+        function chooseEditUploadSource(source) {
+            closeEditPhotoSourceModal();
+            if (source === 'camera') {
+                document.getElementById('editPhotoCameraInput').click();
+            } else {
+                document.getElementById('editPhotoUploadInput').click();
+            }
+        }
+
+        async function handleEditPhotoSelected(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            const remaining = 5 - photosList.length;
+            const filesToUpload = Array.from(files).slice(0, remaining);
+            const formData = new FormData();
+            filesToUpload.forEach(f => formData.append('photos', f));
+
+            showAlert('กำลังบีบอัดและอัปโหลดรูปภาพ...', false);
+            try {
+                const token = localStorage.getItem('auth_token');
+                const res = await fetch(getApiUrl('/api/upload'), {
+                    method: 'POST',
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok && data.success && Array.isArray(data.urls)) {
+                    photosList = [...photosList, ...data.urls];
+                    renderPhotosList();
+                    showAlert(`อัปโหลดสำเร็จ ${data.urls.length} รูป (บีบอัดอัตโนมัติ)`, false);
+                } else {
+                    showAlert(data.message || 'อัปโหลดรูปภาพไม่สำเร็จ', true);
+                }
+            } catch (err) {
+                showAlert('อัปโหลดรูปภาพล้มเหลว: ' + err.message, true);
+            }
+            document.getElementById('editPhotoUploadInput').value = '';
+            document.getElementById('editPhotoCameraInput').value = '';
+        }
+
+        function removePhoto(index) {
+            photosList.splice(index, 1);
+            renderPhotosList();
+        }
+
+        function renderPhotosList() {
+            const container = document.getElementById('photosContainer');
+            if (!container) return;
+            if (photosList.length === 0) {
+                container.innerHTML = `<div style="font-size:0.85rem; color:var(--text-muted); font-style:italic;">ยังไม่มีรูปภาพ</div>`;
+                return;
+            }
+            container.innerHTML = photosList.map((p, idx) => `
+                <div style="position: relative; width: 70px; height: 70px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color);">
+                    <img src="${formatPhotoUrl(p)}" style="width: 100%; height: 100%; object-fit: cover;" alt="asset photo">
+                    <button type="button" onclick="removePhoto(${idx})" title="ลบรูปนี้" style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgba(239, 68, 68, 0.85); color: white; border: none; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+                </div>
+            `).join('');
+        }
 
         function showAlert(msg, isError = false) {
             const el = document.getElementById('alertMsg');
@@ -389,6 +561,7 @@
         async function loadAssetData() {
             if (!assetParam) {
                 document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-plus-circle"></i> ลงทะเบียนอุปกรณ์ใหม่ (New Asset)';
+                renderPhotosList();
                 return;
             }
 
@@ -404,13 +577,28 @@
                     document.getElementById('assetCode').value = a.asset_code || '';
                     document.getElementById('assetCode').readOnly = true;
                     document.getElementById('assetName').value = a.name || '';
-                    document.getElementById('assetCategory').value = a.category || '';
+                    
+                    const catSelect = document.getElementById('assetCategory');
+                    if (catSelect && a.category) {
+                        if (!Array.from(catSelect.options).some(o => o.value === a.category)) {
+                            const opt = document.createElement('option');
+                            opt.value = a.category;
+                            opt.textContent = a.category;
+                            catSelect.appendChild(opt);
+                        }
+                        catSelect.value = a.category;
+                    } else if (catSelect) {
+                        catSelect.value = '';
+                    }
+
                     document.getElementById('assetSerial').value = a.serial_number || '';
                     document.getElementById('assetHolder').value = a.holder || '';
                     document.getElementById('assetDept').value = a.department || '';
                     document.getElementById('assetStatus').value = a.status || 'active';
                     document.getElementById('assetDate').value = a.received_date || '';
                     document.getElementById('assetNotes').value = a.notes || '';
+                    photosList = Array.isArray(a.photos) ? [...a.photos] : (a.image ? [a.image] : []);
+                    renderPhotosList();
                     document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> แก้ไขอุปกรณ์: ${a.asset_code} (${a.name})`;
                 } else {
                     showAlert(result.message || 'ไม่พบข้อมูลทรัพย์สิน', true);
@@ -437,7 +625,9 @@
                 department: document.getElementById('assetDept').value.trim(),
                 status: document.getElementById('assetStatus').value,
                 received_date: document.getElementById('assetDate').value,
-                notes: document.getElementById('assetNotes').value.trim()
+                notes: document.getElementById('assetNotes').value.trim(),
+                photos: photosList,
+                image: photosList.length > 0 ? photosList[0] : ''
             };
 
             try {
@@ -492,13 +682,90 @@
             window.location.href = 'index.html';
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
+        function openQuickAddCatModal() {
+            document.getElementById('quickCatName').value = '';
+            document.getElementById('quickCatDesc').value = '';
+            document.getElementById('quickCatError').style.display = 'none';
+            document.getElementById('quickAddCatModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('quickCatName')?.focus(), 100);
+        }
+
+        function closeQuickAddCatModal() {
+            document.getElementById('quickAddCatModal').style.display = 'none';
+        }
+
+        async function handleQuickAddCategory(e) {
+            e.preventDefault();
+            const name = document.getElementById('quickCatName').value.trim();
+            const desc = document.getElementById('quickCatDesc').value.trim();
+            const errEl = document.getElementById('quickCatError');
+            const btn = document.getElementById('btnQuickCatSave');
+
+            if (!name) return;
+            errEl.style.display = 'none';
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+            try {
+                const res = await fetch(getApiUrl('/api/categories'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({ category_name: name, description: desc })
+                });
+                const json = await res.json();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> บันทึกและเลือก';
+
+                if (!json.success && res.status !== 409) {
+                    errEl.textContent = json.message || 'บันทึกไม่สำเร็จ';
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                await loadCategoriesList();
+                document.getElementById('assetCategory').value = name;
+                closeQuickAddCatModal();
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> บันทึกและเลือก';
+                errEl.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+                errEl.style.display = 'block';
+            }
+        }
+
+        async function loadCategoriesList() {
+            try {
+                const res = await fetch(getApiUrl('/api/categories'));
+                const json = await res.json();
+                if (json.success && Array.isArray(json.data)) {
+                    const sel = document.getElementById('assetCategory');
+                    if (sel) {
+                        const curVal = sel.value;
+                        let opts = '<option value="">-- เลือกหมวดหมู่ --</option>';
+                        json.data.forEach(c => {
+                            opts += `<option value="${c.category_name}">${c.category_name}</option>`;
+                        });
+                        sel.innerHTML = opts;
+                        if (curVal) sel.value = curVal;
+                    }
+                }
+            } catch (err) {
+                console.warn('loadCategoriesList error:', err.message);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('auth_token');
             if (!token) {
                 window.location.href = 'index.html';
                 return;
             }
-            loadAssetData();
+            await loadCategoriesList();
+            await loadAssetData();
         });
     </script>
 </body>

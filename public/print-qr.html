@@ -21,7 +21,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Kanit', sans-serif;
+            font-family: var(--font-family-base, 'Kanit', sans-serif);
         }
 
         body {
@@ -608,6 +608,13 @@
                     </div>
                 </a>
             </li>
+            <li class="nav-item">
+                <a href="recycle-bin.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)
+                    </div>
+                </a>
+            </li>
         </ul>
 
         <div class="nav-group-label">MANAGEMENT</div>
@@ -646,12 +653,14 @@
                     <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
                 </a>
             </div>
-            <div class="user-info" style="display: flex; align-items: center; gap: 12px;">
+            <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
                 <button class="btn-theme-toggle" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
                     <i class="fa-solid fa-moon" id="themeIcon"></i>
                 </button>
-                <div class="user-avatar" id="avatarIcon">A</div>
-                <span id="userName" style="color: #f0f6fc; font-size: 0.9rem;">Admin User</span>
+                <div class="user-info">
+                    <div class="user-avatar" id="avatarIcon">A</div>
+                    <span id="userName" style="color: #f0f6fc; font-size: 0.9rem;" class="user-name-label">Admin User</span>
+                </div>
                 <button class="btn-logout" onclick="logout()">
                     <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
                 </button>

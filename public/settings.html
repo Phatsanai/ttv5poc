@@ -48,7 +48,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Kanit', sans-serif;
+            font-family: var(--font-family-base, 'Kanit', sans-serif);
         }
 
         body {
@@ -406,6 +406,26 @@
             background-color: var(--hover-bg);
         }
 
+        .btn-chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 4px 12px;
+            border-radius: 14px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-chip:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            background: rgba(56, 139, 253, 0.12);
+        }
+
         /* Modal */
         .modal {
             display: none;
@@ -490,6 +510,143 @@
             border-radius: 6px;
             cursor: pointer;
         }
+
+        /* ── Typography Settings Tab Styles (Compact & Dense) ── */
+        .typography-section-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .typography-section-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .font-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .font-card {
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            padding: 9px 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+            user-select: none;
+        }
+
+        .font-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .font-card.active {
+            border-color: var(--accent-blue);
+            background: rgba(56, 139, 253, 0.08);
+            box-shadow: 0 0 0 1px var(--accent-blue);
+        }
+
+        .font-card-badge {
+            position: absolute;
+            top: 7px;
+            right: 7px;
+            font-size: 0.65rem;
+            padding: 1px 6px;
+            border-radius: 10px;
+            background: var(--accent-blue);
+            color: #fff;
+            display: none;
+            font-weight: 500;
+            line-height: 1.3;
+        }
+
+        .font-card.active .font-card-badge {
+            display: inline-block;
+        }
+
+        .font-card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .font-card-desc {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .font-card-sample {
+            font-size: 0.98rem;
+            color: var(--text-primary);
+            line-height: 1.25;
+            padding-top: 6px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .size-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .size-card {
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .size-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-1px);
+        }
+
+        .size-card.active {
+            border-color: var(--accent-blue);
+            background: rgba(56, 139, 253, 0.08);
+            box-shadow: 0 0 0 1px var(--accent-blue);
+        }
+
+        .size-card-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+        }
+
+        .size-card-val {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+
+        .preview-box {
+            margin-top: 14px;
+            padding: 14px 18px;
+            border-radius: 8px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
     </style>
 </head>
 
@@ -539,6 +696,11 @@
                     <div class="nav-item-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</div>
                 </a>
             </li>
+            <li class="nav-item">
+                <a href="recycle-bin.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</div>
+                </a>
+            </li>
         </ul>
 
         <div class="nav-group-label">MANAGEMENT</div>
@@ -571,13 +733,15 @@
                     <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
                 </a>
             </div>
-            <div class="user-info">
+            <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
                 <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()"
                     title="สลับ Dark/Light Mode">
                     <i class="fa-solid fa-moon" id="themeIcon"></i>
                 </button>
-                <div class="user-avatar" id="topbarAvatar">A</div>
-                <span style="font-size: 0.9rem;" id="topbarUserName">Admin User</span>
+                <div class="user-info">
+                    <div class="user-avatar" id="topbarAvatar">A</div>
+                    <span style="font-size: 0.9rem;" id="topbarUserName" class="user-name-label">Admin User</span>
+                </div>
                 <button class="btn-logout" onclick="handleLogout()">
                     <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
                 </button>
@@ -596,6 +760,10 @@
             <div class="tabs-header">
                 <button class="tab-btn active" onclick="switchTab('users')"><i class="fa-solid fa-users"></i>
                     จัดการผู้ใช้งาน (Users)</button>
+                <button class="tab-btn" onclick="switchTab('categories')"><i class="fa-solid fa-layer-group"></i>
+                    จัดการหมวดหมู่ (Categories) <span id="categoriesBadgeCount" class="badge badge-neutral" style="margin-left:6px;font-size:0.75rem;"></span></button>
+                <button class="tab-btn" onclick="switchTab('typography')"><i class="fa-solid fa-font"></i>
+                    รูปแบบตัวอักษร & ขนาด (Typography)</button>
                 <button class="tab-btn" onclick="switchTab('roles')"><i class="fa-solid fa-user-shield"></i>
                     กำหนดระดับสิทธิ์ (Role Permissions)</button>
                 <button class="tab-btn" onclick="switchTab('api')"><i class="fa-solid fa-network-wired"></i>
@@ -733,7 +901,245 @@
                 </div>
             </div>
 
+            <!-- Tab 4: Category Management -->
+            <div id="tab-categories" class="card-box" style="display: none;">
+                <div class="card-title">
+                    <span><i class="fa-solid fa-layer-group"></i> รายการหมวดหมู่ทรัพย์สินทั้งหมดในระบบ</span>
+                    <button class="btn-primary" onclick="openAddCategoryModal()" id="btnAddCategory">
+                        <i class="fa-solid fa-plus"></i> เพิ่มหมวดหมู่ใหม่
+                    </button>
+                </div>
+                <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:14px;">
+                    จัดการหมวดหมู่สำหรับจัดกลุ่มอุปกรณ์และทรัพย์สินได้ตามต้องการ โดยไม่มีการฟิกซ์หมวดหมู่ตายตัว คุณสามารถเพิ่มและลบหมวดหมู่ได้อิสระ
+                </p>
+
+                <!-- Quick suggestion chips -->
+                <div style="margin-bottom: 20px; padding: 12px 16px; border-radius: 8px; background: rgba(56,139,253,0.08); border: 1px solid rgba(56,139,253,0.2); display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <span style="font-size: 0.82rem; color: var(--text-primary); font-weight: 500;">
+                        <i class="fa-solid fa-lightbulb" style="color: var(--accent-blue);"></i> หมวดหมู่ยอดนิยม (คลิกเพื่อเพิ่มด่วน):
+                    </span>
+                    <button type="button" class="btn-chip" onclick="quickAddCategoryChip('Laptop')">+ Laptop</button>
+                    <button type="button" class="btn-chip" onclick="quickAddCategoryChip('จอคอม')">+ จอคอม</button>
+                    <button type="button" class="btn-chip" onclick="quickAddCategoryChip('สาย HDMI')">+ สาย HDMI</button>
+                    <button type="button" class="btn-chip" onclick="quickAddCategoryChip('กล้อง')">+ กล้อง</button>
+                    <button type="button" class="btn-chip" onclick="quickAddCategoryChip('ไมค์')">+ ไมค์</button>
+                    <button type="button" class="btn-chip" onclick="quickAddCategoryChip('หูฟัง')">+ หูฟัง</button>
+                    <button type="button" class="btn-chip" onclick="quickAddCategoryChip('แท็บเล็ต')">+ แท็บเล็ต</button>
+                </div>
+
+                <div id="categoriesLoading" style="text-align:center;padding:24px;color:var(--text-secondary);">
+                    <i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูลหมวดหมู่...
+                </div>
+                <div class="table-responsive" id="categoriesTableWrapper" style="display:none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th>ชื่อหมวดหมู่ (Category Name)</th>
+                                <th>คำอธิบาย</th>
+                                <th style="text-align:center;width:150px;">จำนวนทรัพย์สิน</th>
+                                <th style="width:170px;">สร้างเมื่อ</th>
+                                <th style="text-align:center;width:140px;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 5: Typography & Display Management -->
+            <div id="tab-typography" class="card-box" style="display: none;">
+                <div class="card-title">
+                    <span><i class="fa-solid fa-font"></i> รูปแบบตัวอักษร & ขนาดการแสดงผล (Typography & Scale)</span>
+                    <button type="button" class="btn-cancel" onclick="resetTypographyConfig()" style="font-size:0.85rem;">
+                        <i class="fa-solid fa-rotate-left"></i> รีเซ็ตเป็นค่าเริ่มต้น
+                    </button>
+                </div>
+                <p style="color:var(--text-secondary); font-size:0.8rem; margin-bottom:12px; line-height:1.4;">
+                    กำหนดฟอนต์หลักและขนาดตัวอักษรสำหรับใช้งานทั่วทั้งระบบ Asset Console ค่าที่เลือกจะถูกบันทึกในเบราว์เซอร์อัตโนมัติ และมีผลกับทุกหน้าจอ (Dashboard, รายการทรัพย์สิน, ข้อมูลผู้ใช้ ฯลฯ) ทันที
+                </p>
+
+                <!-- 1. Font Family Selection -->
+                <div class="typography-section-title">
+                    <i class="fa-solid fa-font" style="color:var(--accent-blue);"></i> 1. เลือกรูปแบบฟอนต์ (Font Family)
+                </div>
+                <div class="typography-section-subtitle">
+                    คลิกเพื่อเปลี่ยนฟอนต์ที่ใช้แสดงผลทั่วทั้งระบบ
+                </div>
+
+                <div class="font-cards-grid">
+                    <!-- Kanit -->
+                    <div class="font-card" id="fontCard-kanit" onclick="selectFontFamily('kanit')">
+                        <span class="font-card-badge"><i class="fa-solid fa-check"></i> กำลังใช้งาน</span>
+                        <div class="font-card-title" style="font-family:'Kanit',sans-serif;">Kanit (คณิต)</div>
+                        <div class="font-card-desc">ทันสมัย คมชัด แนะนำสำหรับแดชบอร์ดและระบบ Enterprise</div>
+                        <div class="font-card-sample" style="font-family:'Kanit',sans-serif;">
+                            กขค ABC 123 Asset Console
+                        </div>
+                    </div>
+
+                    <!-- Prompt -->
+                    <div class="font-card" id="fontCard-prompt" onclick="selectFontFamily('prompt')">
+                        <span class="font-card-badge"><i class="fa-solid fa-check"></i> กำลังใช้งาน</span>
+                        <div class="font-card-title" style="font-family:'Prompt',sans-serif;">Prompt (พร้อมท์)</div>
+                        <div class="font-card-desc">สไตล์มินิมอล สะอาดตา เส้นสายเรขาคณิตอ่านสบาย</div>
+                        <div class="font-card-sample" style="font-family:'Prompt',sans-serif;">
+                            กขค ABC 123 Asset Console
+                        </div>
+                    </div>
+
+                    <!-- Sarabun -->
+                    <div class="font-card" id="fontCard-sarabun" onclick="selectFontFamily('sarabun')">
+                        <span class="font-card-badge"><i class="fa-solid fa-check"></i> กำลังใช้งาน</span>
+                        <div class="font-card-title" style="font-family:'Sarabun',sans-serif;">Sarabun (สารบรรณ)</div>
+                        <div class="font-card-desc">มาตรฐานเอกสารทางการ เรียบร้อยและเป็นทางการ</div>
+                        <div class="font-card-sample" style="font-family:'Sarabun',sans-serif;">
+                            กขค ABC 123 Asset Console
+                        </div>
+                    </div>
+
+                    <!-- Inter -->
+                    <div class="font-card" id="fontCard-inter" onclick="selectFontFamily('inter')">
+                        <span class="font-card-badge"><i class="fa-solid fa-check"></i> กำลังใช้งาน</span>
+                        <div class="font-card-title" style="font-family:'Inter','Kanit',sans-serif;">Inter (อินเตอร์)</div>
+                        <div class="font-card-desc">ฟอนต์ UI สากลระดับโลก สวยงามคมชัดทุกจอ</div>
+                        <div class="font-card-sample" style="font-family:'Inter','Kanit',sans-serif;">
+                            กขค ABC 123 Asset Console
+                        </div>
+                    </div>
+
+                    <!-- Noto Sans Thai -->
+                    <div class="font-card" id="fontCard-noto" onclick="selectFontFamily('noto')">
+                        <span class="font-card-badge"><i class="fa-solid fa-check"></i> กำลังใช้งาน</span>
+                        <div class="font-card-title" style="font-family:'Noto Sans Thai',sans-serif;">Noto Sans Thai</div>
+                        <div class="font-card-desc">มาตรฐาน Google เรียบหรู คมชัด สบายตาทุกขนาด</div>
+                        <div class="font-card-sample" style="font-family:'Noto Sans Thai',sans-serif;">
+                            กขค ABC 123 Asset Console
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Font Size Scaling -->
+                <div class="typography-section-title" style="margin-top:10px;">
+                    <i class="fa-solid fa-text-height" style="color:var(--accent-blue);"></i> 2. ปรับขนาดตัวอักษรพื้นฐาน (Base Font Size)
+                </div>
+                <div class="typography-section-subtitle">
+                    ปรับสัดส่วนขนาดข้อความ ปุ่ม ตาราง และองค์ประกอบต่างๆ ให้เหมาะกับสายตาและขนาดหน้าจอ
+                </div>
+
+                <div class="size-buttons-grid">
+                    <div class="size-card" id="sizeCard-small" onclick="selectFontSize('small')">
+                        <div class="size-card-title"><i class="fa-solid fa-compress" style="font-size:0.85rem;margin-right:4px;"></i> เล็ก (Small)</div>
+                        <div class="size-card-val">ขนาด 13.5px (90%) - แสดงข้อมูลแน่นตา</div>
+                    </div>
+                    <div class="size-card" id="sizeCard-normal" onclick="selectFontSize('normal')">
+                        <div class="size-card-title"><i class="fa-solid fa-check-circle" style="font-size:0.85rem;margin-right:4px;color:var(--accent-blue);"></i> ปกติ (Default)</div>
+                        <div class="size-card-val">ขนาด 15px (100%) - แนะนำสำหรับทั่วไป</div>
+                    </div>
+                    <div class="size-card" id="sizeCard-large" onclick="selectFontSize('large')">
+                        <div class="size-card-title"><i class="fa-solid fa-expand" style="font-size:0.85rem;margin-right:4px;"></i> ใหญ่ (Large)</div>
+                        <div class="size-card-val">ขนาด 16.5px (110%) - อ่านง่าย ชัดเจน</div>
+                    </div>
+                    <div class="size-card" id="sizeCard-xlarge" onclick="selectFontSize('xlarge')">
+                        <div class="size-card-title"><i class="fa-solid fa-maximize" style="font-size:0.85rem;margin-right:4px;"></i> ใหญ่พิเศษ (XL)</div>
+                        <div class="size-card-val">ขนาด 18px (120%) - ตัวโต สบายตาสูงสุด</div>
+                    </div>
+                </div>
+
+                <!-- 3. Live Preview Sandbox -->
+                <div class="typography-section-title" style="margin-top:10px;">
+                    <i class="fa-solid fa-eye" style="color:var(--accent-blue);"></i> 3. ตัวอย่างการแสดงผลจริง (Live Preview)
+                </div>
+                <div class="typography-section-subtitle">
+                    ทดสอบการแสดงผลข้อความ ปุ่ม และฟอร์มตามฟอนต์และขนาดที่เลือกไว้ข้างต้น
+                </div>
+
+                <div class="preview-box" id="typographyPreviewBox">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+                        <h4 style="margin:0; font-size:0.95rem; color:var(--text-title); display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-laptop" style="color:var(--accent-blue);"></i> ตัวอย่างรายการ: MacBook Pro 16" (M3 Max)
+                        </h4>
+                        <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> พร้อมใช้งาน (Active)</span>
+                    </div>
+                    <p style="color:var(--text-body); font-size:0.82rem; margin-bottom:10px; line-height:1.5;">
+                        ระบบ Asset Console ได้อัปเดตฟอนต์และขนาดตัวอักษรให้ตอบสนองแบบยืดหยุ่น (Responsive Typography) ตัวหนังสือจะไม่ล้นทับซ้อน ปุ่มและตารางปรับขยายอย่างสมดุลทั่วทั้ง 13 หน้าจอ
+                    </p>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <button type="button" class="btn-primary" style="padding:5px 12px; font-size:0.8rem; min-height:30px;">
+                            <i class="fa-solid fa-download"></i> ดาวน์โหลดรายงาน
+                        </button>
+                        <button type="button" class="btn-secondary" style="padding:5px 12px; font-size:0.8rem; min-height:30px; background:var(--hover-bg); border:1px solid var(--border-color); color:var(--text-primary); border-radius:6px; cursor:pointer;">
+                            <i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อมูล
+                        </button>
+                        <input type="text" class="form-control" value="AST-2026-0042 (รหัสทรัพย์สิน)" style="max-width:210px; padding:4px 8px; font-size:0.8rem; min-height:30px;" readonly>
+                    </div>
+                </div>
+
+                <div id="typographyStatusNotice" style="margin-top:12px; font-size:0.82rem; color:#10b981; display:none; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-circle-check"></i> บันทึกรูปแบบตัวอักษรและขนาดเรียบร้อย มีผลบังคับใช้ทุกหน้าแล้ว!
+                </div>
+            </div>
+
         </main>
+    </div>
+
+    <!-- Modal เพิ่มหมวดหมู่ใหม่ -->
+    <div class="modal" id="addCategoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-folder-plus" style="color:var(--accent-blue);"></i> เพิ่มหมวดหมู่ใหม่</h3>
+                <button class="close-btn" onclick="closeModal('addCategoryModal')">&times;</button>
+            </div>
+            <form id="addCategoryForm" onsubmit="handleSaveCategory(event)">
+                <div class="form-group">
+                    <label>ชื่อหมวดหมู่ <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="newCategoryName" class="form-control" placeholder="เช่น คอมพิวเตอร์และโน้ตบุ๊ก, แท็บเล็ต" required>
+                </div>
+                <div class="form-group">
+                    <label>คำอธิบายเพิ่มเติม</label>
+                    <textarea id="newCategoryDesc" class="form-control" rows="3" placeholder="ระบุรายละเอียดหมวดหมู่นี้ (ถ้ามี)"></textarea>
+                </div>
+                <div id="addCategoryError" style="color:#ff7b72;font-size:0.85rem;margin-bottom:12px;display:none;"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal('addCategoryModal')">ยกเลิก</button>
+                    <button type="submit" class="btn-primary" id="btnSaveCategory">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกหมวดหมู่
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal แก้ไขหมวดหมู่ -->
+    <div class="modal" id="editCategoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen-to-square" style="color:var(--accent-blue);"></i> แก้ไขหมวดหมู่</h3>
+                <button class="close-btn" onclick="closeModal('editCategoryModal')">&times;</button>
+            </div>
+            <form id="editCategoryForm" onsubmit="handleUpdateCategory(event)">
+                <input type="hidden" id="editCategoryId">
+                <input type="hidden" id="editCategoryOrigName">
+                <div class="form-group">
+                    <label>ชื่อหมวดหมู่ <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="editCategoryName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>คำอธิบายเพิ่มเติม</label>
+                    <textarea id="editCategoryDesc" class="form-control" rows="3"></textarea>
+                </div>
+                <div id="editCategoryNotice" style="padding:10px;border-radius:6px;background:rgba(56,139,253,0.1);border:1px solid rgba(56,139,253,0.2);color:var(--accent-blue);font-size:0.82rem;margin-bottom:12px;display:none;">
+                    <i class="fa-solid fa-circle-info"></i> หากเปลี่ยนชื่อหมวดหมู่ ระบบจะอัปเดตชื่อหมวดหมู่ของทรัพย์สินที่เกี่ยวข้องให้อัตโนมัติ
+                </div>
+                <div id="editCategoryError" style="color:#ff7b72;font-size:0.85rem;margin-bottom:12px;display:none;"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal('editCategoryModal')">ยกเลิก</button>
+                    <button type="submit" class="btn-primary" id="btnUpdateCategory">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Modal เพิ่มผู้ใช้งานใหม่ -->
@@ -827,12 +1233,80 @@
         // ── Tabs ───────────────────────────────────────────────
         function switchTab(tabName) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('tab-users').style.display = tabName === 'users' ? 'block' : 'none';
-            document.getElementById('tab-roles').style.display = tabName === 'roles' ? 'block' : 'none';
-            document.getElementById('tab-api').style.display   = tabName === 'api'   ? 'block' : 'none';
+            document.getElementById('tab-users').style.display      = tabName === 'users'      ? 'block' : 'none';
+            document.getElementById('tab-categories').style.display = tabName === 'categories' ? 'block' : 'none';
+            document.getElementById('tab-typography').style.display = tabName === 'typography' ? 'block' : 'none';
+            document.getElementById('tab-roles').style.display      = tabName === 'roles'      ? 'block' : 'none';
+            document.getElementById('tab-api').style.display        = tabName === 'api'        ? 'block' : 'none';
             if (event && event.currentTarget) event.currentTarget.classList.add('active');
             if (tabName === 'api') initApiTab();
+            if (tabName === 'categories') loadCategories();
+            if (tabName === 'typography') initTypographyTab();
         }
+
+        // ── Typography & Display Configuration ──────────────────
+        function initTypographyTab() {
+            const currentFont = (window.getFontFamily ? window.getFontFamily() : (localStorage.getItem('app_font_family') || 'kanit')).toLowerCase();
+            const currentSize = (window.getFontSize ? window.getFontSize() : (localStorage.getItem('app_font_size') || 'normal')).toLowerCase();
+
+            document.querySelectorAll('.font-card').forEach(card => card.classList.remove('active'));
+            const activeFontCard = document.getElementById('fontCard-' + currentFont);
+            if (activeFontCard) activeFontCard.classList.add('active');
+
+            document.querySelectorAll('.size-card').forEach(card => card.classList.remove('active'));
+            const activeSizeCard = document.getElementById('sizeCard-' + currentSize);
+            if (activeSizeCard) activeSizeCard.classList.add('active');
+        }
+
+        function selectFontFamily(font) {
+            if (window.setFontFamily) {
+                window.setFontFamily(font);
+            } else {
+                localStorage.setItem('app_font_family', font);
+            }
+            initTypographyTab();
+            showTypographyNotice(`เปลี่ยนรูปแบบฟอนต์เป็น "${font.toUpperCase()}" เรียบร้อยแล้ว`);
+        }
+
+        function selectFontSize(size) {
+            if (window.setFontSize) {
+                window.setFontSize(size);
+            } else {
+                localStorage.setItem('app_font_size', size);
+            }
+            initTypographyTab();
+            const sizeLabel = { small: 'เล็ก (Small)', normal: 'ปกติ (Normal)', large: 'ใหญ่ (Large)', xlarge: 'ใหญ่พิเศษ (XL)' }[size] || size;
+            showTypographyNotice(`ปรับขนาดตัวอักษรเป็น "${sizeLabel}" เรียบร้อยแล้ว`);
+        }
+
+        function resetTypographyConfig() {
+            if (confirm('คุณต้องการรีเซ็ตรูปแบบและขนาดตัวอักษรกลับเป็นค่าเริ่มต้น (Kanit / Normal) หรือไม่?')) {
+                if (window.resetTypography) {
+                    window.resetTypography();
+                } else {
+                    localStorage.removeItem('app_font_family');
+                    localStorage.removeItem('app_font_size');
+                }
+                initTypographyTab();
+                showTypographyNotice('รีเซ็ตฟอนต์และขนาดตัวอักษรเป็นค่าเริ่มต้นเรียบร้อยแล้ว');
+            }
+        }
+
+        function showTypographyNotice(msg) {
+            const notice = document.getElementById('typographyStatusNotice');
+            if (notice) {
+                notice.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${msg || 'บันทึกรูปแบบตัวอักษรและขนาดเรียบร้อย มีผลบังคับใช้ทุกหน้าแล้ว!'}`;
+                notice.style.display = 'flex';
+                clearTimeout(window._typoNoticeTimer);
+                window._typoNoticeTimer = setTimeout(() => {
+                    notice.style.display = 'none';
+                }, 3500);
+            }
+        }
+
+        window.addEventListener('typographychange', () => {
+            initTypographyTab();
+        });
 
         // ── API Base URL Configuration ─────────────────────────
         function initApiTab() {
@@ -1066,11 +1540,258 @@
             }
         }
 
+        // ── Category Management ────────────────────────────────
+        let cachedCategories = [];
+
+        async function loadCategories() {
+            const loading = document.getElementById('categoriesLoading');
+            const wrapper = document.getElementById('categoriesTableWrapper');
+            if (loading) loading.style.display = 'block';
+            if (wrapper) wrapper.style.display = 'none';
+
+            try {
+                const res = await fetch(getApiUrl('/api/categories'));
+                const json = await res.json();
+                if (loading) loading.style.display = 'none';
+
+                if (!json.success) {
+                    if (loading) {
+                        loading.style.display = 'block';
+                        loading.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:#ff7b72;"></i> ${json.message || 'โหลดหมวดหมู่ไม่สำเร็จ'}`;
+                    }
+                    return;
+                }
+
+                cachedCategories = json.data || [];
+                const badge = document.getElementById('categoriesBadgeCount');
+                if (badge) {
+                    badge.textContent = cachedCategories.length;
+                    badge.style.display = 'inline-block';
+                }
+
+                renderCategoriesTable(cachedCategories);
+                if (wrapper) wrapper.style.display = 'block';
+            } catch (err) {
+                if (loading) {
+                    loading.style.display = 'block';
+                    loading.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:#ff7b72;"></i> เกิดข้อผิดพลาด: ${err.message}`;
+                }
+            }
+        }
+
+        function renderCategoriesTable(categories) {
+            const tbody = document.getElementById('categoriesTableBody');
+            if (!tbody) return;
+
+            if (!categories || categories.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:48px 20px;color:var(--text-secondary);">
+                            <i class="fa-solid fa-layer-group" style="font-size:2.5rem;margin-bottom:12px;opacity:0.3;display:block;"></i>
+                            <div style="font-weight:600;font-size:1.05rem;color:var(--text-primary);margin-bottom:6px;">ยังไม่มีหมวดหมู่ในระบบ</div>
+                            <div style="font-size:0.88rem;margin-bottom:18px;">คุณสามารถสร้างหมวดหมู่ที่ต้องการได้อย่างอิสระ เช่น Laptop, จอคอม, สาย HDMI</div>
+                            <button class="btn-primary" onclick="openAddCategoryModal()" style="margin:0 auto;display:inline-flex;">
+                                <i class="fa-solid fa-plus"></i> เพิ่มหมวดหมู่ใหม่
+                            </button>
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = categories.map((cat, idx) => {
+                const countBadge = cat.asset_count > 0
+                    ? `<span class="badge" style="background:rgba(56,139,253,0.15);color:var(--accent-blue);font-weight:600;"><i class="fa-solid fa-box"></i> ${cat.asset_count} รายการ</span>`
+                    : `<span class="badge badge-neutral" style="opacity:0.7;">0 รายการ</span>`;
+
+                const safeName = (cat.category_name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const safeDesc = (cat.description || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                return `
+                    <tr>
+                        <td style="color:var(--text-secondary);font-size:0.85rem;">${idx + 1}</td>
+                        <td>
+                            <div style="font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:8px;">
+                                <i class="fa-solid fa-tag" style="color:var(--accent-blue);font-size:0.85rem;"></i>
+                                <span>${cat.category_name}</span>
+                            </div>
+                        </td>
+                        <td style="color:var(--text-secondary);font-size:0.85rem;">${cat.description || '<em style="opacity:0.5;">- ไม่มีคำอธิบาย -</em>'}</td>
+                        <td style="text-align:center;">${countBadge}</td>
+                        <td style="color:var(--text-secondary);font-size:0.85rem;">${cat.created_at ? cat.created_at.slice(0, 16) : '-'}</td>
+                        <td style="text-align:center;">
+                            <div style="display:flex;gap:6px;justify-content:center;">
+                                <button class="btn-icon-only" onclick="openEditCategoryModal(${cat.id}, '${safeName}', '${safeDesc}', ${cat.asset_count})" title="แก้ไขหมวดหมู่">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="confirmDeleteCategory(${cat.id}, '${safeName}', ${cat.asset_count})" title="ลบหมวดหมู่" style="color:#ff7b72;">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openAddCategoryModal() {
+            document.getElementById('addCategoryForm').reset();
+            document.getElementById('addCategoryError').style.display = 'none';
+            document.getElementById('addCategoryModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('newCategoryName')?.focus(), 100);
+        }
+
+        async function handleSaveCategory(e) {
+            e.preventDefault();
+            const name = document.getElementById('newCategoryName').value.trim();
+            const desc = document.getElementById('newCategoryDesc').value.trim();
+            const errEl = document.getElementById('addCategoryError');
+            const btnEl = document.getElementById('btnSaveCategory');
+
+            errEl.style.display = 'none';
+            btnEl.disabled = true;
+            btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+
+            try {
+                const res = await fetch(getApiUrl('/api/categories'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${TOKEN}`
+                    },
+                    body: JSON.stringify({ category_name: name, description: desc })
+                });
+                const json = await res.json();
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกหมวดหมู่';
+
+                if (!json.success) {
+                    errEl.textContent = json.message || 'บันทึกไม่สำเร็จ';
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                closeModal('addCategoryModal');
+                loadCategories();
+            } catch (err) {
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกหมวดหมู่';
+                errEl.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ' + err.message;
+                errEl.style.display = 'block';
+            }
+        }
+
+        function openEditCategoryModal(id, name, desc, assetCount) {
+            document.getElementById('editCategoryId').value = id;
+            document.getElementById('editCategoryOrigName').value = name;
+            document.getElementById('editCategoryName').value = name;
+            document.getElementById('editCategoryDesc').value = desc || '';
+            document.getElementById('editCategoryError').style.display = 'none';
+
+            const noticeEl = document.getElementById('editCategoryNotice');
+            if (noticeEl) {
+                noticeEl.style.display = assetCount > 0 ? 'block' : 'none';
+                if (assetCount > 0) {
+                    noticeEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> ปัจจุบันมีทรัพย์สินในหมวดหมู่นี้ <strong>${assetCount} รายการ</strong> หากเปลี่ยนชื่อหมวดหมู่ ระบบจะอัปเดตข้อมูลทรัพย์สินทั้งหมดให้ตรงกันทันที`;
+                }
+            }
+
+            document.getElementById('editCategoryModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('editCategoryName')?.focus(), 100);
+        }
+
+        async function handleUpdateCategory(e) {
+            e.preventDefault();
+            const id = document.getElementById('editCategoryId').value;
+            const name = document.getElementById('editCategoryName').value.trim();
+            const desc = document.getElementById('editCategoryDesc').value.trim();
+            const errEl = document.getElementById('editCategoryError');
+            const btnEl = document.getElementById('btnUpdateCategory');
+
+            errEl.style.display = 'none';
+            btnEl.disabled = true;
+            btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปเดต...';
+
+            try {
+                const res = await fetch(getApiUrl(`/api/categories/${id}`), {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${TOKEN}`
+                    },
+                    body: JSON.stringify({ category_name: name, description: desc })
+                });
+                const json = await res.json();
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข';
+
+                if (!json.success) {
+                    errEl.textContent = json.message || 'แก้ไขไม่สำเร็จ';
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                closeModal('editCategoryModal');
+                loadCategories();
+            } catch (err) {
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข';
+                errEl.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ' + err.message;
+                errEl.style.display = 'block';
+            }
+        }
+
+        async function confirmDeleteCategory(id, name, assetCount) {
+            if (assetCount > 0) {
+                alert(`⚠️ ไม่สามารถลบหมวดหมู่ "${name}" ได้\n\nเนื่องจากยังมีทรัพย์สินอยู่ในหมวดหมู่นี้จำนวน ${assetCount} รายการ กรุณาย้ายหรือเปลี่ยนหมวดหมู่ของทรัพย์สินเหล่านั้นก่อน`);
+                return;
+            }
+
+            if (!confirm(`ยืนยันการลบหมวดหมู่ "${name}" ออกจากระบบหรือไม่?`)) return;
+
+            try {
+                const res = await fetch(getApiUrl(`/api/categories/${id}`), {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${TOKEN}` }
+                });
+                const json = await res.json();
+                if (!json.success) {
+                    alert('ลบไม่สำเร็จ: ' + json.message);
+                    return;
+                }
+                loadCategories();
+            } catch (err) {
+                alert('เกิดข้อผิดพลาดในการติดต่อเซิร์ฟเวอร์: ' + err.message);
+            }
+        }
+
+        async function quickAddCategoryChip(name) {
+            try {
+                const res = await fetch(getApiUrl('/api/categories'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${TOKEN}`
+                    },
+                    body: JSON.stringify({ category_name: name, description: '' })
+                });
+                const json = await res.json();
+                if (!json.success && res.status === 409) {
+                    alert(`หมวดหมู่ "${name}" มีอยู่ในระบบแล้ว`);
+                    return;
+                }
+                loadCategories();
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
         // ── Init ───────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             requireAuth();
             if (window.updateThemeIcons) window.updateThemeIcons();
+            initTypographyTab();
             loadUsers();
+            loadCategories();
         });
     </script>
 </body>

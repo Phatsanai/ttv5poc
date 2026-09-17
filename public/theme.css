@@ -1,8 +1,67 @@
 /* ============================================================
    Asset Console Enterprise Edition
-   Universal Theme Styles (Dark / Light Mode)
-   Production Ready & High Accessibility Contrast
+   Universal Theme Styles & Typography System
    ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap');
+
+/* ── Universal Theme & Color Variables ──────────────────────── */
+:root {
+    /* Global Typography System (Configurable & Persisted) */
+    --font-family-base: 'Kanit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-size-base: 15px;
+    --font-line-height: 1.5;
+
+    /* Modern Compact Layout Variables */
+    --sidebar-width: 240px;
+    --topbar-height: 54px;
+    --content-padding: 18px 24px;
+    --card-padding: 16px 20px;
+    --card-radius: 8px;
+    --stat-card-padding: 14px 16px;
+    --stat-val-size: 1.45rem;
+    --stat-lbl-size: 0.78rem;
+    --table-cell-padding: 8px 12px;
+    --control-height: 35px;
+
+    /* Primary Accent Color System (Customizable & Persisted) */
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: rgba(37, 99, 235, 0.15);
+    --primary-glow: rgba(37, 99, 235, 0.35);
+    --primary-rgb: 37, 99, 235;
+
+    /* Dark Mode Defaults */
+    --bg-main: #0b0e14;
+    --bg-body: #0b0e14;
+    --bg-card: #141b2a;
+    --bg-sidebar: #0f1422;
+    --bg-topbar: #101625;
+    --bg-hover: #1b2336;
+    --bg-input: #121824;
+    --border-color: #2d3852;
+    --border-card: #2e3b56;
+    --border-subtle: #242e44;
+    --text-title: #f8fafc;
+    --text-primary: #f8fafc;
+    --text-body: #cbd5e1;
+    --text-secondary: #94a3b8;
+    --text-muted: #808c9f;
+    --text-main: #e2e8f0;
+    --text-bright: #ffffff;
+    --stat-card-bg: #141b2a;
+    --stat-card-border: #2d3852;
+    --accent-blue: #388bfd;
+    --accent-green: #238636;
+    --accent-orange: #d29922;
+    --accent-red: #f85149;
+    --accent-cyan: #06b6d4;
+    --btn-back-bg: rgba(255, 255, 255, 0.08);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --color-scheme: dark;
+    color-scheme: dark;
+}
 
 /* ── Light Mode Color Variables ─────────────────────────────── */
 html.light-theme,
@@ -18,6 +77,7 @@ body.light-mode,
     --bg-hover: #f1f5f9;
     --bg-input: #ffffff;
     --border-color: #cbd5e1;
+    --border-card: #cbd5e1;
     --border-subtle: #e2e8f0;
     --text-title: #0f172a;
     --text-primary: #0f172a;
@@ -28,11 +88,14 @@ body.light-mode,
     --text-bright: #0f172a;
     --input-bg: #ffffff;
     --hover-bg: #f1f5f9;
+    --stat-card-bg: #ffffff;
+    --stat-card-border: #cbd5e1;
     --accent-blue: #2563eb;
     --accent-green: #16a34a;
     --accent-orange: #d97706;
     --accent-red: #dc2626;
-    --btn-back-bg: #f1f5f9;
+    --accent-cyan: #0891b2;
+    --btn-back-bg: #ffffff;
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     --color-scheme: light;
@@ -61,8 +124,8 @@ body.light-mode,
 .btn-theme-toggle:hover,
 .theme-toggle-btn:hover {
     background-color: rgba(255, 255, 255, 0.15);
-    color: #58a6ff;
-    border-color: #388bfd;
+    color: var(--primary-color, #388bfd);
+    border-color: var(--primary-color, #388bfd);
     transform: translateY(-1px);
 }
 
@@ -91,8 +154,306 @@ html.light-theme .theme-toggle-btn:hover,
 body.light-mode .btn-theme-toggle:hover,
 body.light-mode .theme-toggle-btn:hover {
     background-color: #e2e8f0;
-    color: #2563eb;
-    border-color: #2563eb;
+    color: var(--primary-color, #2563eb);
+    border-color: var(--primary-color, #2563eb);
+}
+
+/* ── Universal Enterprise Back to Dashboard Button ──────────── */
+.btn-back {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 7px 14px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 8px !important;
+    color: #e2e8f0 !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    white-space: nowrap !important;
+}
+
+.btn-back i {
+    font-size: 0.85rem !important;
+    transition: transform 0.2s ease !important;
+    color: var(--primary-color, #388bfd) !important;
+}
+
+.btn-back:hover {
+    background: var(--primary-light, rgba(37, 99, 235, 0.15)) !important;
+    border-color: var(--primary-color, #388bfd) !important;
+    color: #ffffff !important;
+    transform: translateX(-3px) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
+}
+
+.btn-back:hover i {
+    transform: translateX(-2px) !important;
+}
+
+html.light-theme .btn-back,
+body.light-mode .btn-back {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+html.light-theme .btn-back:hover,
+body.light-mode .btn-back:hover {
+    background: var(--primary-light, #eff6ff) !important;
+    border-color: var(--primary-color, #2563eb) !important;
+    color: var(--primary-color, #2563eb) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ── Universal Header Right Section & Flexbox Alignment ───── */
+.topbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    gap: 12px !important;
+    min-height: 64px !important;
+}
+
+.topbar-right,
+.topbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    flex-wrap: nowrap !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+}
+
+.user-info {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
+    flex-shrink: 0 !important;
+    padding: 3px 10px 3px 3px !important;
+    border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+html.light-theme .user-info,
+body.light-mode .user-info {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+
+.user-avatar,
+.avatar {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    background-color: var(--primary-color, #2563eb) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    flex-shrink: 0 !important;
+}
+
+/* User name text with width constraints and ellipsis */
+.user-info span,
+.user-name-label,
+#topUserName,
+#topbarUserName,
+#sidebarUserName {
+    display: inline-block !important;
+    max-width: 140px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: var(--text-title, #f8fafc) !important;
+    vertical-align: middle !important;
+    line-height: 1.2 !important;
+}
+
+html.light-theme .user-info span,
+html.light-theme .user-name-label,
+html.light-theme #topUserName,
+html.light-theme #topbarUserName,
+body.light-mode .user-info span,
+body.light-mode .user-name-label,
+body.light-mode #topUserName,
+body.light-mode #topbarUserName {
+    color: #0f172a !important;
+}
+
+/* Logout Button */
+.btn-logout {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.25) !important;
+    color: #f87171 !important;
+    padding: 7px 12px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    transition: all 0.2s ease !important;
+    margin: 0 !important;
+}
+
+.btn-logout:hover {
+    background: rgba(239, 68, 68, 0.22) !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+}
+
+html.light-theme .btn-logout,
+body.light-mode .btn-logout {
+    background: #fee2e2 !important;
+    border-color: #fecaca !important;
+    color: #dc2626 !important;
+}
+
+html.light-theme .btn-logout:hover,
+body.light-mode .btn-logout:hover {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #ffffff !important;
+}
+
+@media (max-width: 768px) {
+    .user-info span,
+    .user-name-label,
+    #topUserName,
+    #topbarUserName {
+        max-width: 85px !important;
+    }
+    .btn-logout {
+        padding: 7px 8px !important;
+    }
+}
+
+/* ── Universal Cards & Stat-Cards (High Contrast Borders & No Black Blobs) ── */
+.stat-card,
+.card-box,
+.card,
+.audit-card {
+    background-color: var(--stat-card-bg, #141b2a) !important;
+    border: 1px solid var(--stat-card-border, #2d3852) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.stat-card:hover {
+    border-color: var(--primary-color, #3b82f6) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Stat card texts (Dark Mode) */
+.stat-card .stat-header,
+.stat-card .stat-info h3,
+.stat-card .stat-info h4,
+.stat-card .stat-label {
+    color: #94a3b8 !important;
+    font-weight: 500 !important;
+}
+
+.stat-card .stat-value,
+.stat-card .stat-info .value,
+.stat-card .stat-info div {
+    color: #f8fafc !important;
+    font-weight: 700 !important;
+}
+
+/* Stat Card Variants (Dark Mode) */
+.stat-card.active {
+    border-color: rgba(59, 130, 246, 0.45) !important;
+}
+
+.stat-card.overdue {
+    background: linear-gradient(135deg, #1b1318 0%, #24141a 100%) !important;
+    border-color: rgba(239, 68, 68, 0.45) !important;
+}
+
+.stat-card.returned {
+    border-color: rgba(34, 197, 94, 0.45) !important;
+}
+
+/* Light Mode Overrides for Stat Cards & Boxes */
+html.light-theme .stat-card,
+body.light-mode .stat-card,
+html.light-theme .card-box,
+body.light-mode .card-box,
+html.light-theme .card,
+body.light-mode .card,
+html.light-theme .audit-card,
+body.light-mode .audit-card {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light-theme .stat-card:hover,
+body.light-mode .stat-card:hover {
+    border-color: var(--primary-color, #2563eb) !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12) !important;
+}
+
+html.light-theme .stat-card.active,
+body.light-mode .stat-card.active {
+    background: #f0f7ff !important;
+    background-color: #f0f7ff !important;
+    border-color: #93c5fd !important;
+}
+
+html.light-theme .stat-card.overdue,
+body.light-mode .stat-card.overdue {
+    background: #fff5f5 !important;
+    background-color: #fff5f5 !important;
+    border-color: #fca5a5 !important;
+}
+
+html.light-theme .stat-card.returned,
+body.light-mode .stat-card.returned {
+    background: #f0fdf4 !important;
+    background-color: #f0fdf4 !important;
+    border-color: #86efac !important;
+}
+
+/* High Legibility Typography in Light Mode */
+html.light-theme .stat-card .stat-header,
+html.light-theme .stat-card .stat-info h3,
+html.light-theme .stat-card .stat-info h4,
+html.light-theme .stat-card .stat-label,
+body.light-mode .stat-card .stat-header,
+body.light-mode .stat-card .stat-info h3,
+body.light-mode .stat-card .stat-info h4,
+body.light-mode .stat-card .stat-label {
+    color: #475569 !important;
+    font-weight: 500 !important;
+}
+
+html.light-theme .stat-card .stat-value,
+html.light-theme .stat-card .stat-info .value,
+html.light-theme .stat-card .stat-info div,
+body.light-mode .stat-card .stat-value,
+body.light-mode .stat-card .stat-info .value,
+body.light-mode .stat-card .stat-info div {
+    color: #0f172a !important;
+    font-weight: 700 !important;
 }
 
 /* ── Light Mode Core & Layout Overrides ───────────────────── */
@@ -135,8 +496,8 @@ body.light-mode .brand-logo {
 
 html.light-theme .brand span.version,
 body.light-mode .brand span.version {
-    background-color: rgba(37, 99, 235, 0.1) !important;
-    color: #2563eb !important;
+    background-color: var(--primary-light) !important;
+    color: var(--primary-color) !important;
 }
 
 html.light-theme .nav-group-label,
@@ -153,14 +514,14 @@ body.light-mode .nav-item a {
 html.light-theme .nav-item a:hover,
 body.light-mode .nav-item a:hover {
     background-color: #f1f5f9 !important;
-    color: #2563eb !important;
+    color: var(--primary-color) !important;
 }
 
 html.light-theme .nav-item.active a,
 body.light-mode .nav-item.active a {
-    background-color: #eff6ff !important;
-    color: #2563eb !important;
-    border-left-color: #2563eb !important;
+    background-color: var(--primary-light) !important;
+    color: var(--primary-color) !important;
+    border-left-color: var(--primary-color) !important;
     font-weight: 600;
 }
 
@@ -170,20 +531,6 @@ body.light-mode .topbar {
     background-color: #ffffff !important;
     border-color: #e2e8f0 !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-}
-
-html.light-theme .btn-back,
-body.light-mode .btn-back {
-    background-color: #f1f5f9 !important;
-    color: #2563eb !important;
-    border: 1px solid #cbd5e1 !important;
-    font-weight: 500;
-}
-
-html.light-theme .btn-back:hover,
-body.light-mode .btn-back:hover {
-    background-color: #e2e8f0 !important;
-    color: #1d4ed8 !important;
 }
 
 html.light-theme .user-info span,
@@ -225,48 +572,6 @@ body.light-mode .profile-details .username {
     color: #64748b !important;
 }
 
-/* Cards, Panels & Stats Containers */
-html.light-theme .card-box,
-body.light-mode .card-box,
-html.light-theme .card,
-body.light-mode .card,
-html.light-theme .stat-card,
-body.light-mode .stat-card,
-html.light-theme .slider-panel,
-body.light-mode .slider-panel,
-html.light-theme .audit-card,
-body.light-mode .audit-card,
-html.light-theme .modal-content,
-body.light-mode .modal-content,
-html.light-theme .modal-container,
-body.light-mode .modal-container {
-    background-color: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    color: #0f172a !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
-}
-
-/* Stat Cards Text */
-html.light-theme .stat-info h4,
-body.light-mode .stat-info h4,
-html.light-theme .stat-info h3,
-body.light-mode .stat-info h3,
-html.light-theme .stat-label,
-body.light-mode .stat-label {
-    color: #64748b !important;
-    font-weight: 500 !important;
-}
-
-html.light-theme .stat-info div,
-body.light-mode .stat-info div,
-html.light-theme .stat-info .value,
-body.light-mode .stat-info .value,
-html.light-theme .stat-value,
-body.light-mode .stat-value {
-    color: #0f172a !important;
-    font-weight: 700 !important;
-}
-
 /* Form Controls & Filter Bars */
 html.light-theme .filter-bar,
 body.light-mode .filter-bar,
@@ -302,8 +607,8 @@ html.light-theme .search-input:focus,
 body.light-mode .search-input:focus,
 html.light-theme .filter-select:focus,
 body.light-mode .filter-select:focus {
-    border-color: #2563eb !important;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px var(--primary-light) !important;
 }
 
 html.light-theme input::placeholder,
@@ -377,11 +682,11 @@ body.light-mode .asset-sn {
 
 html.light-theme .asset-code,
 body.light-mode .asset-code {
-    color: #2563eb !important;
+    color: var(--primary-color) !important;
     font-weight: 600 !important;
 }
 
-/* Buttons & Actions in Light Mode */
+/* Buttons & Actions */
 html.light-theme .btn-action,
 body.light-mode .btn-action,
 html.light-theme .action-btn,
@@ -411,8 +716,8 @@ body.light-mode .btn-action-extend:hover,
 html.light-theme .btn-preset:hover,
 body.light-mode .btn-preset:hover {
     background-color: #e2e8f0 !important;
-    color: #2563eb !important;
-    border-color: #2563eb !important;
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
 }
 
 html.light-theme .btn-cancel:hover,
@@ -421,7 +726,7 @@ body.light-mode .btn-cancel:hover {
     color: #0f172a !important;
 }
 
-/* Badges & Pills in Light Mode */
+/* Badges & Pills */
 html.light-theme .badge-neutral,
 body.light-mode .badge-neutral {
     background-color: #e2e8f0 !important;
@@ -471,9 +776,9 @@ body.light-mode .tab-btn:hover {
 
 html.light-theme .tab-btn.active,
 body.light-mode .tab-btn.active {
-    background-color: #2563eb !important;
+    background-color: var(--primary-color) !important;
     color: #ffffff !important;
-    border-color: #2563eb !important;
+    border-color: var(--primary-color) !important;
 }
 
 /* OAuth Items */
@@ -551,7 +856,7 @@ body.light-mode .ind-group span {
 
 html.light-theme .ind-group span b,
 body.light-mode .ind-group span b {
-    color: #2563eb !important;
+    color: var(--primary-color) !important;
 }
 
 /* Data Table & Dashboard Specifics in Light Mode */
@@ -627,8 +932,603 @@ body.light-mode .bar-label {
     font-weight: 500 !important;
 }
 
+/* ── Universal Primary Themed Buttons & Elements ────────────── */
+.btn-primary,
+.btn-submit,
+.btn-save,
+.btn-blue,
+.btn-action-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover,
+.btn-submit:hover,
+.btn-save:hover,
+.btn-blue:hover,
+.btn-action-primary:hover {
+    background-color: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+    box-shadow: 0 0 14px var(--primary-glow) !important;
+}
+
 /* Smooth transition for theme toggle */
 body, .sidebar, .topbar, .card-box, .stat-card, .slider-panel, .form-control {
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
+
+/* ============================================================
+   GLOBAL TYPOGRAPHY PRESETS & RESPONSIVE ENGINE
+   ============================================================ */
+
+/* ── 1. Font Family Presets ── */
+html[data-font="kanit"], body[data-font="kanit"], [data-font="kanit"] {
+    --font-family-base: 'Kanit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+html[data-font="prompt"], body[data-font="prompt"], [data-font="prompt"] {
+    --font-family-base: 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+html[data-font="sarabun"], body[data-font="sarabun"], [data-font="sarabun"] {
+    --font-family-base: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+html[data-font="inter"], body[data-font="inter"], [data-font="inter"] {
+    --font-family-base: 'Inter', 'Kanit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+html[data-font="noto"], body[data-font="noto"], [data-font="noto"] {
+    --font-family-base: 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ── 2. Font Size Scaling Presets ── */
+html[data-font-size="small"] {
+    --font-size-base: 13.5px;
+    font-size: 13.5px;
+}
+html[data-font-size="normal"] {
+    --font-size-base: 15px;
+    font-size: 15px;
+}
+html[data-font-size="large"] {
+    --font-size-base: 16.5px;
+    font-size: 16.5px;
+}
+html[data-font-size="xlarge"] {
+    --font-size-base: 18px;
+    font-size: 18px;
+}
+
+/* ── 3. Base Typography Application ── */
+html {
+    font-size: var(--font-size-base, 15px);
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font-family-base, 'Kanit', sans-serif) !important;
+    font-size: 1rem;
+    line-height: var(--font-line-height, 1.5);
+}
+
+/* Universal text elements inheritance */
+input, button, select, textarea, optgroup, .form-input, .form-select, .form-textarea {
+    font-family: var(--font-family-base, 'Kanit', sans-serif) !important;
+}
+
+/* Protect Font Awesome Icons from font-family override */
+.fa, .fas, .far, .fal, .fad, .fab, .fa-solid, .fa-regular, .fa-brands, [class^="fa-"], [class*=" fa-"] {
+    font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", FontAwesome !important;
+}
+
+/* ── 4. Responsive Layout & Anti-Overflow Rules ── */
+/* Prevent buttons, inputs, badges and tables from overflowing on larger font sizes */
+button, .btn, .btn-primary, .btn-secondary, .btn-cancel, .btn-submit, .btn-save {
+    min-height: 38px;
+    height: auto;
+    white-space: normal;
+    word-break: keep-all;
+    line-height: 1.35;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th, table td {
+    word-break: normal;
+    overflow-wrap: break-word;
+    vertical-align: middle;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 8px;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.card-title, .page-title {
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.nav-item-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    word-break: break-word;
+}
+
+/* ============================================================
+   MODERN COMPACT DASHBOARD LAYOUT SYSTEM
+   Professional, Sleek, High-Density Spacing & Clean Typography
+   ============================================================ */
+
+/* ── 1. Compact Sidebar ────────────────────────────────────── */
+.sidebar,
+aside.sidebar {
+    width: var(--sidebar-width, 240px) !important;
+    min-width: var(--sidebar-width, 240px) !important;
+    max-width: var(--sidebar-width, 240px) !important;
+    background-color: var(--bg-sidebar) !important;
+    border-right: 1px solid var(--border-color) !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex-shrink: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    transition: width 0.2s ease !important;
+}
+
+.brand,
+.brand-header {
+    height: var(--topbar-height, 54px) !important;
+    min-height: var(--topbar-height, 54px) !important;
+    padding: 0 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: var(--text-title) !important;
+    box-sizing: border-box !important;
+}
+
+.brand-logo {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+}
+
+.brand i,
+.brand-logo i {
+    font-size: 1.15rem !important;
+    color: var(--accent-blue) !important;
+}
+
+.brand span.version,
+.version-tag {
+    font-size: 0.68rem !important;
+    background: rgba(56, 139, 253, 0.12) !important;
+    color: var(--accent-blue) !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-weight: 500 !important;
+}
+
+.nav-section {
+    padding: 6px 0 !important;
+}
+
+.nav-group-label,
+.nav-label {
+    padding: 10px 14px 4px 14px !important;
+    font-size: 0.68rem !important;
+    font-weight: 600 !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    margin: 0 !important;
+}
+
+.nav-menu {
+    list-style: none !important;
+    padding: 2px 6px !important;
+    margin: 0 !important;
+}
+
+.nav-item {
+    margin-bottom: 2px !important;
+}
+
+.nav-item a {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 7px 12px !important;
+    color: var(--text-body) !important;
+    text-decoration: none !important;
+    font-size: 0.84rem !important;
+    border-radius: 6px !important;
+    border-left: none !important;
+    transition: all 0.15s ease !important;
+}
+
+.nav-item a:hover {
+    background-color: var(--bg-hover) !important;
+    color: var(--text-title) !important;
+}
+
+.nav-item.active a {
+    background-color: rgba(37, 99, 235, 0.12) !important;
+    color: var(--accent-blue) !important;
+    font-weight: 500 !important;
+}
+
+.nav-item-content,
+.nav-link-content {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.nav-item-content i,
+.nav-link-content i {
+    width: 16px !important;
+    font-size: 0.92rem !important;
+    text-align: center !important;
+    color: var(--text-muted) !important;
+}
+
+.nav-item.active .nav-item-content i,
+.nav-item.active .nav-link-content i {
+    color: var(--accent-blue) !important;
+}
+
+.badge-count {
+    font-size: 0.7rem !important;
+    padding: 1px 6px !important;
+    border-radius: 10px !important;
+}
+
+.sidebar-footer {
+    margin-top: auto !important;
+    padding: 10px 14px !important;
+    border-top: 1px solid var(--border-color) !important;
+    font-size: 0.75rem !important;
+}
+
+/* ── 2. Compact Topbar / Header ────────────────────────────── */
+.topbar,
+header.topbar {
+    height: var(--topbar-height, 54px) !important;
+    min-height: var(--topbar-height, 54px) !important;
+    max-height: var(--topbar-height, 54px) !important;
+    padding: 0 20px !important;
+    background-color: var(--bg-card) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    z-index: 10 !important;
+}
+
+.topbar-right,
+.topbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.search-box {
+    width: 280px !important;
+    max-width: 100% !important;
+    position: relative !important;
+}
+
+.search-box input {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 4px 10px 4px 32px !important;
+    font-size: 0.82rem !important;
+    border-radius: 6px !important;
+}
+
+.search-box i {
+    left: 10px !important;
+    font-size: 0.8rem !important;
+}
+
+.btn-theme-toggle,
+.theme-toggle-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    border-radius: 6px !important;
+    font-size: 0.85rem !important;
+    padding: 0 !important;
+}
+
+.user-profile,
+.user-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding-left: 10px !important;
+    border-left: 1px solid var(--border-color) !important;
+}
+
+.avatar,
+.user-avatar,
+#topbarAvatar {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    border-radius: 50% !important;
+    font-size: 0.78rem !important;
+}
+
+.user-name-label {
+    font-size: 0.82rem !important;
+}
+
+.btn-logout,
+.btn-back {
+    padding: 5px 10px !important;
+    min-height: 30px !important;
+    font-size: 0.78rem !important;
+    border-radius: 5px !important;
+}
+
+/* ── 3. Compact Content Area & Headers ─────────────────────── */
+.content-area,
+main.content-area {
+    padding: var(--content-padding, 16px 20px) !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+}
+
+.page-header {
+    margin-bottom: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+}
+
+.page-title,
+.page-title h1,
+.page-title h2 {
+    font-size: 1.15rem !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    color: var(--text-title) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.page-title p {
+    font-size: 0.78rem !important;
+    margin-top: 2px !important;
+    margin-bottom: 0 !important;
+    color: var(--text-muted) !important;
+}
+
+/* ── 4. Compact Stat Cards ─────────────────────────────────── */
+.stats-grid,
+.stat-cards {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+}
+
+.stat-card {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--card-radius, 8px) !important;
+    padding: var(--stat-card-padding, 12px 14px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    min-height: 76px !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+.stat-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 4px !important;
+}
+
+.stat-title,
+.stat-label,
+.stat-card-title {
+    font-size: var(--stat-lbl-size, 0.78rem) !important;
+    color: var(--text-muted) !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+}
+
+.stat-value,
+.stat-num,
+.stat-number {
+    font-size: var(--stat-val-size, 1.45rem) !important;
+    font-weight: 600 !important;
+    color: var(--text-title) !important;
+    line-height: 1.2 !important;
+    margin: 4px 0 2px 0 !important;
+}
+
+.stat-desc,
+.stat-footer {
+    font-size: 0.72rem !important;
+    color: var(--text-muted) !important;
+}
+
+/* ── 5. Compact Cards & Boxes ──────────────────────────────── */
+.card-box,
+.chart-card,
+.card {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--card-radius, 8px) !important;
+    padding: var(--card-padding, 14px 18px) !important;
+    margin-bottom: 14px !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.card-title,
+.card-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    color: var(--text-title) !important;
+    margin-bottom: 12px !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    padding-bottom: 8px !important;
+}
+
+/* ── 6. Compact & Crisp Tables ─────────────────────────────── */
+.table-responsive {
+    width: 100% !important;
+    overflow-x: auto !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--border-color) !important;
+    margin-top: 8px !important;
+}
+
+table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    text-align: left !important;
+    font-size: 0.84rem !important;
+}
+
+table thead th {
+    background-color: var(--bg-hover) !important;
+    color: var(--text-muted) !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    padding: 8px 12px !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    white-space: nowrap !important;
+}
+
+table tbody td {
+    padding: 8px 12px !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    color: var(--text-body) !important;
+    vertical-align: middle !important;
+}
+
+table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+html.light-theme table tbody tr:hover,
+body.light-mode table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Compact Table Action Buttons */
+.btn-action,
+.table-actions button,
+.action-btn {
+    padding: 3px 8px !important;
+    min-height: 26px !important;
+    font-size: 0.75rem !important;
+    border-radius: 4px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+/* ── 7. Compact Controls & Badges ──────────────────────────── */
+.form-control,
+.form-input,
+.form-select,
+select.select-control {
+    min-height: var(--control-height, 34px) !important;
+    height: var(--control-height, 34px) !important;
+    padding: 4px 10px !important;
+    font-size: 0.84rem !important;
+    border-radius: 6px !important;
+}
+
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-cancel,
+.btn-submit,
+.btn-save {
+    min-height: var(--control-height, 34px) !important;
+    padding: 5px 14px !important;
+    font-size: 0.84rem !important;
+    border-radius: 6px !important;
+    gap: 6px !important;
+}
+
+.badge,
+.status-badge {
+    padding: 2px 7px !important;
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    border-radius: 4px !important;
+    letter-spacing: 0.02em !important;
+}
+
+/* ── 8. Compact Tabs (Settings & Details) ───────────────────── */
+.tabs-header {
+    display: flex !important;
+    gap: 6px !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    margin-bottom: 14px !important;
+    flex-wrap: wrap !important;
+}
+
+.tab-btn {
+    padding: 7px 14px !important;
+    font-size: 0.84rem !important;
+    border-radius: 6px 6px 0 0 !important;
+    min-height: 34px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
 

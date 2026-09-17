@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Console - ถังขยะ (Recycle Bin)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Universal Theme Manager & API Config -->
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <script src="config.js"></script>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #111827;
+            --bg-sidebar: #0e131f;
+            --bg-hover: #1f2937;
+            --border-color: #1f2937;
+            --text-title: #f9fafb;
+            --text-body: #9ca3af;
+            --text-muted: #6b7280;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+        }
+
+        body.light-mode {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-sidebar: #ffffff;
+            --bg-hover: #f1f5f9;
+            --border-color: #e2e8f0;
+            --text-title: #0f172a;
+            --text-body: #475569;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-family-base, 'Prompt', sans-serif);
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-body);
+            display: flex;
+            min-height: 100vh;
+            font-size: 0.9rem;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .brand-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-title);
+        }
+
+        .brand-logo i {
+            color: var(--accent-blue);
+        }
+
+        .nav-section {
+            padding: 16px 0;
+        }
+
+        .nav-label {
+            padding: 0 24px 8px 24px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 24px;
+            color: var(--text-body);
+            text-decoration: none;
+            font-size: 0.88rem;
+            position: relative;
+        }
+
+        .nav-item a:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-title);
+        }
+
+        .nav-item.active a {
+            background-color: var(--bg-hover);
+            color: var(--accent-red);
+            border-left: 3px solid var(--accent-red);
+            font-weight: 500;
+        }
+
+        .badge-count {
+            margin-left: auto;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        /* Main Wrapper */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            overflow-x: hidden;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+
+        .btn-back {
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-body);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            color: var(--text-title);
+            background-color: var(--bg-hover);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .btn-theme-toggle {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-body);
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: var(--accent-red);
+            cursor: pointer;
+            margin-left: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-logout:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 32px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-title {
+            font-size: 1.35rem;
+            color: var(--text-title);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+        }
+
+        .btn-danger:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-title);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-hover);
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 9px 14px 9px 38px;
+            color: var(--text-title);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        /* Table box */
+        .card-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: rgba(0, 0, 0, 0.15);
+            padding: 12px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-body);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background-color: var(--bg-hover);
+        }
+
+        .asset-code-badge {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .thumb-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+            background: var(--bg-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-action-restore {
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-action-restore:hover {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .btn-action-delete {
+            background: rgba(239, 68, 68, 0.12);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-action-delete:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        /* Empty state */
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            margin-bottom: 16px;
+            color: var(--border-color);
+        }
+
+        .empty-state h3 {
+            color: var(--text-title);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        /* Toast notification */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-title);
+            box-shadow: var(--shadow-md);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast-success { border-color: var(--accent-green); color: #34d399; }
+        .toast-error { border-color: var(--accent-red); color: #f87171; }
+        .toast-info { border-color: var(--accent-blue); color: #60a5fa; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand-header">
+            <div class="brand-logo"><i class="fa-solid fa-boxes-stacked"></i> Asset Console</div>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">NAVIGATION</div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="dashboard.html"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</a></li>
+                <li class="nav-item"><a href="asset-list.html"><i class="fa-solid fa-list"></i> รายการทรัพย์สินทั้งหมด</a></li>
+                <li class="nav-item"><a href="asset-detail.html"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูลอุปกรณ์</a></li>
+                <li class="nav-item"><a href="print-qr.html"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</a></li>
+                <li class="nav-item"><a href="borrow-return.html"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</a></li>
+                <li class="nav-item"><a href="maintenance.html"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</a></li>
+                <li class="nav-item"><a href="audit.html"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</a></li>
+                <li class="nav-item active"><a href="recycle-bin.html"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin) <span class="badge-count" id="trashCountBadge">0</span></a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">MANAGEMENT</div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="account.html"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</a></li>
+                <li class="nav-item"><a href="settings.html"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้</a></li>
+                <li class="nav-item"><a href="backup.html"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="dashboard.html" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
+                </a>
+                <a href="asset-list.html" class="btn-back" style="opacity: 0.85;">
+                    <i class="fa-solid fa-list-check"></i> รายการทรัพย์สิน
+                </a>
+            </div>
+            <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-theme-toggle" onclick="toggleTheme()" title="สลับโหมด มืด/สว่าง">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+                <div class="user-info">
+                    <div class="user-avatar" id="avatarIcon">U</div>
+                    <span id="userName" class="user-name-label" style="color: var(--text-title); font-weight: 500;">User</span>
+                </div>
+                <button class="btn-logout" onclick="logout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                </button>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">
+                        <i class="fa-solid fa-trash-can" style="color: var(--accent-red);"></i> ถังขยะทรัพย์สิน (Recycle Bin)
+                    </h1>
+                    <p style="color: var(--text-muted); margin-top: 4px; font-size: 0.85rem;">
+                        รายการทรัพย์สินที่ถูกลบชั่วคราว คุณสามารถกู้คืนกลับมาสถานะเดิม หรือลบออกจากระบบอย่างถาวรได้
+                    </p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="loadTrashAssets()">
+                        <i class="fa-solid fa-rotate-right"></i> รีเฟรช
+                    </button>
+                    <button class="btn-danger" id="btnEmptyTrash" onclick="emptyTrash()" style="display: none;">
+                        <i class="fa-solid fa-dumpster-fire"></i> ล้างถังขยะทั้งหมด
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="filter-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาจากรหัส, ชื่ออุปกรณ์, ซีเรียล หรือผู้ครอบครอง..." oninput="filterLocal()">
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    รายการในถังขยะทั้งหมด: <b id="totalItemsText" style="color: var(--text-title);">0</b> รายการ
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="card-box">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">รูปภาพ</th>
+                                <th>รหัสทรัพย์สิน</th>
+                                <th>ชื่ออุปกรณ์ / รุ่น</th>
+                                <th>หมวดหมู่</th>
+                                <th>ผู้ครอบครอง / แผนก</th>
+                                <th>วันที่ลบลงถังขยะ</th>
+                                <th style="text-align: right; width: 220px;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trashTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px;">
+                                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--accent-blue);"></i>
+                                    <div style="margin-top: 8px;">กำลังโหลดรายการในถังขยะ...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        let trashAssets = [];
+        let currentUser = null;
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info');
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        async function loadTrashAssets() {
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const tbody = document.getElementById('trashTableBody');
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px;"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...</td></tr>`;
+
+            try {
+                const res = await fetch(getApiUrl('/api/trash/assets'), {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    showToast('ไม่มีสิทธิ์เข้าถึงถังขยะ (ต้องเป็น Admin หรือ Manager)', 'error');
+                    tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><h3>ไม่มีสิทธิ์เข้าถึง</h3><p>เฉพาะผู้ดูแลระบบ (Admin) หรือ ผู้จัดการ (Manager) เท่านั้น</p></td></tr>`;
+                    return;
+                }
+
+                const result = await res.json();
+                if (result.success && Array.isArray(result.data)) {
+                    trashAssets = result.data;
+                    renderTable(trashAssets);
+                    updateBadge(trashAssets.length);
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--accent-red); padding: 30px;">${result.message || 'ไม่สามารถโหลดข้อมูลได้'}</td></tr>`;
+                }
+            } catch (err) {
+                console.error('loadTrashAssets error:', err);
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--accent-red); padding: 30px;">การเชื่อมต่อล้มเหลว: ${err.message}</td></tr>`;
+            }
+        }
+
+        function renderTable(items) {
+            const tbody = document.getElementById('trashTableBody');
+            const totalText = document.getElementById('totalItemsText');
+            const emptyBtn = document.getElementById('btnEmptyTrash');
+
+            totalText.innerText = items.length;
+
+            if (items.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="fa-regular fa-trash-can"></i>
+                                <h3>ถังขยะว่างเปล่า</h3>
+                                <p>ไม่มีทรัพย์สินที่อยู่ในถังขยะในขณะนี้</p>
+                                <a href="asset-list.html" class="btn-secondary" style="margin-top: 14px; text-decoration: none;">
+                                    <i class="fa-solid fa-arrow-left"></i> กลับไปรายการทรัพย์สิน
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                emptyBtn.style.display = 'none';
+                return;
+            }
+
+            emptyBtn.style.display = 'inline-flex';
+
+            tbody.innerHTML = items.map(a => {
+                const photoSrc = (a.photos && a.photos.length > 0) ? formatPhotoUrl(a.photos[0]) : (a.image ? formatPhotoUrl(a.image) : 'https://via.placeholder.com/44x44/1e293b/64748b?text=No+Img');
+                const deletedDate = a.deleted_at ? new Date(a.deleted_at).toLocaleString('th-TH') : '-';
+
+                return `
+                    <tr id="row-${a.id}">
+                        <td>
+                            <img src="${photoSrc}" class="thumb-img" alt="${a.name}" onerror="this.src='https://via.placeholder.com/44x44/1e293b/64748b?text=Img'">
+                        </td>
+                        <td><span class="asset-code-badge">${a.asset_code}</span></td>
+                        <td>
+                            <div style="font-weight: 500; color: var(--text-title);">${a.name || '-'}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">${a.serial_number ? 'S/N: ' + a.serial_number : ''}</div>
+                        </td>
+                        <td>${a.category || '-'}</td>
+                        <td>
+                            <div>${a.holder || '-'}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">${a.department || ''}</div>
+                        </td>
+                        <td style="font-size: 0.85rem; color: var(--text-muted);">
+                            <i class="fa-regular fa-clock"></i> ${deletedDate}
+                        </td>
+                        <td style="text-align: right;">
+                            <div class="action-btns" style="justify-content: flex-end;">
+                                <button class="btn-action-restore" onclick="restoreAsset(${a.id}, '${a.asset_code}')" title="กู้คืนกลับมาสถานะเดิม">
+                                    <i class="fa-solid fa-rotate-left"></i> กู้คืน
+                                </button>
+                                <button class="btn-action-delete" onclick="permanentDeleteAsset(${a.id}, '${a.asset_code}')" title="ลบถาวร">
+                                    <i class="fa-solid fa-trash-can"></i> ลบถาวร
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterLocal() {
+            const q = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!q) {
+                renderTable(trashAssets);
+                return;
+            }
+            const filtered = trashAssets.filter(a =>
+                (a.asset_code && a.asset_code.toLowerCase().includes(q)) ||
+                (a.name && a.name.toLowerCase().includes(q)) ||
+                (a.serial_number && a.serial_number.toLowerCase().includes(q)) ||
+                (a.holder && a.holder.toLowerCase().includes(q)) ||
+                (a.department && a.department.toLowerCase().includes(q)) ||
+                (a.category && a.category.toLowerCase().includes(q))
+            );
+            renderTable(filtered);
+        }
+
+        function updateBadge(count) {
+            const badge = document.getElementById('trashCountBadge');
+            if (badge) badge.innerText = count;
+        }
+
+        async function restoreAsset(id, code) {
+            if (!confirm(`คุณต้องการกู้คืนทรัพย์สิน "${code}" กลับมายังระบบใช้งานปกติหรือไม่?`)) return;
+
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            try {
+                const res = await fetch(getApiUrl(`/api/assets/${id}/restore`), {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showToast(`กู้คืนทรัพย์สิน "${code}" สำเร็จแล้ว!`, 'success');
+                    trashAssets = trashAssets.filter(a => a.id !== id);
+                    renderTable(trashAssets);
+                    updateBadge(trashAssets.length);
+                } else {
+                    showToast(data.message || 'ไม่สามารถกู้คืนได้', 'error');
+                }
+            } catch (err) {
+                showToast('การเชื่อมต่อขัดข้อง: ' + err.message, 'error');
+            }
+        }
+
+        async function permanentDeleteAsset(id, code) {
+            if (!confirm(`คำเตือน: คุณต้องการลบทรัพย์สิน "${code}" แบบถาวรจริงหรือไม่?\n\nข้อมูลและประวัติที่เกี่ยวข้องจะถูกลบออกจากฐานข้อมูลและไม่สามารถกู้คืนได้อีก!`)) return;
+
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            try {
+                const res = await fetch(getApiUrl(`/api/trash/assets/${id}`), {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showToast(`ลบทรัพย์สิน "${code}" แบบถาวรเรียบร้อยแล้ว`, 'success');
+                    trashAssets = trashAssets.filter(a => a.id !== id);
+                    renderTable(trashAssets);
+                    updateBadge(trashAssets.length);
+                } else {
+                    showToast(data.message || 'ลบไม่สำเร็จ', 'error');
+                }
+            } catch (err) {
+                showToast('การเชื่อมต่อขัดข้อง: ' + err.message, 'error');
+            }
+        }
+
+        async function emptyTrash() {
+            if (!confirm(`คำเตือนสูงสุด: คุณต้องการล้างถังขยะทั้งหมด (${trashAssets.length} รายการ) แบบถาวรจริงหรือไม่?\n\nข้อมูลทั้งหมดในถังขยะจะถูกทำลายและไม่สามารถกู้คืนได้!`)) return;
+
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            try {
+                const res = await fetch(getApiUrl('/api/trash/empty'), {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showToast(`ล้างถังขยะทั้งหมดเรียบร้อยแล้ว (${data.count} รายการ)`, 'success');
+                    trashAssets = [];
+                    renderTable(trashAssets);
+                    updateBadge(0);
+                } else {
+                    showToast(data.message || 'ไม่สามารถล้างถังขยะได้', 'error');
+                }
+            } catch (err) {
+                showToast('การเชื่อมต่อขัดข้อง: ' + err.message, 'error');
+            }
+        }
+
+        async function logout() {
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    await fetch(getApiUrl('/api/logout'), {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                } catch(e) {}
+            }
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            window.location.href = 'index.html';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                currentUser = JSON.parse(localStorage.getItem('auth_user') || '{}');
+                if (currentUser.name || currentUser.username) {
+                    const name = currentUser.name || currentUser.username;
+                    document.getElementById('userName').innerText = name;
+                    document.getElementById('avatarIcon').innerText = name.charAt(0).toUpperCase();
+                }
+            } catch(e) {}
+
+            loadTrashAssets();
+        });
+    </script>
+</body>
+
+</html>

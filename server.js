@@ -12,13 +12,51 @@ const fs       = require('fs');
 const QRCode   = require('qrcode');
 const crypto   = require('crypto');
 
+// ฟังก์ชันโหลด Environment Variables จากไฟล์ .env อัตโนมัติ (Zero-dependency)
+(function loadEnvFile() {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    try {
+      const content = fs.readFileSync(envPath, 'utf8');
+      content.split(/\r?\n/).forEach(line => {
+        line = line.trim();
+        if (!line || line.startsWith('#')) return;
+        const eqIdx = line.indexOf('=');
+        if (eqIdx > 0) {
+          const key = line.slice(0, eqIdx).trim();
+          let val = line.slice(eqIdx + 1).trim();
+          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.slice(1, -1);
+          }
+          if (!process.env[key] && val !== '') {
+            process.env[key] = val;
+          }
+        }
+      });
+    } catch (_) {}
+  }
+})();
+
 const app  = express();
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
+
+// Trust reverse proxies (Cloudflare, Render, Railway, Nginx)
+app.set('trust proxy', 1);
 
 // ── Directories ────────────────────────────────────────────
 const PUBLIC_DIR  = path.join(__dirname, 'public');
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+// ── Cloud Health Check (Render / Railway / Cloudflare ping) ──
+app.get(['/health', '/api/health'], (_req, res) => {
+  return res.json({
+    status: 'ok',
+    version: '3.4.0',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
 
 // ── CORS (Cross-Origin Resource Sharing) ────────────────────
 // Fully supports Cloudflare Pages, Cloudflare Tunnels, custom domains, and mobile browsers
@@ -118,20 +156,156 @@ async function processAndSaveImage(buffer, originalName) {
   }
 }
 
-// ── SQLite DB (better-sqlite3 – synchronous) ───────────────
-const DB_PATH = path.join(__dirname, 'assets.db');
-let db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-console.log('✅ SQLite DB opened:', DB_PATH);
+// ── SQLite DB (better-sqlite3 – High Reliability & Crash-Resistant) ──
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'assets.db');
 
-// Sync helpers wrapped as Promises so all route async/await stays unchanged
+function initDatabase() {
+  const dbDir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+
+  // Open Database with busy timeout (15 seconds) to prevent immediate "disk I/O error (10)" or "database is locked"
+  const instance = new Database(DB_PATH, {
+    timeout: 15000,
+    fileMustExist: false
+  });
+
+  try {
+    // 1. Set busy timeout in SQLite engine (wait up to 15,000ms for file locks to release)
+    instance.pragma('busy_timeout = 15000');
+
+    // 2. Enforce foreign keys
+    instance.pragma('foreign_keys = ON');
+
+    // 3. Robust Journal Mode with safe fallback
+    // In network drives/VM shares (e.g. Z:\), WAL shared memory (-shm) can fail. Fallback to DELETE mode if WAL errors.
+    let journal = '';
+    try {
+      journal = instance.pragma('journal_mode = WAL', { simple: true });
+    } catch (walErr) {
+      console.warn('⚠️ WAL mode initialization failed, falling back to DELETE mode:', walErr.message);
+      journal = instance.pragma('journal_mode = DELETE', { simple: true });
+    }
+
+    if (journal && String(journal).toLowerCase() === 'wal') {
+      // NORMAL sync is safe for WAL and avoids heavy fsync disk IO collisions on Windows
+      instance.pragma('synchronous = NORMAL');
+      // Auto-checkpoint every 500 pages (~2MB) to prevent WAL file growing out of control
+      instance.pragma('wal_autocheckpoint = 500');
+      try {
+        instance.pragma('wal_checkpoint(PASSIVE)');
+      } catch (cpErr) {
+        console.warn('Startup WAL checkpoint notice:', cpErr.message);
+      }
+    } else {
+      instance.pragma('synchronous = FULL');
+    }
+
+    // 4. Memory storage for temp tables & page cache to minimize physical disk I/O
+    instance.pragma('temp_store = MEMORY');
+    instance.pragma('cache_size = -8000'); // 8MB page cache in RAM
+  } catch (err) {
+    console.warn('⚠️ SQLite pragma configuration notice:', err.message);
+  }
+
+  const currentMode = instance.pragma('journal_mode', { simple: true });
+  console.log(`✅ SQLite DB connected: ${DB_PATH} (Mode: ${currentMode}, Timeout: 15000ms)`);
+  return instance;
+}
+
+let db = initDatabase();
+
+// Safe execution helper with auto-retry on transient lock/disk I/O error
+function executeWithRetry(operationFn, maxRetries = 3) {
+  let attempt = 0;
+  while (true) {
+    try {
+      return operationFn();
+    } catch (err) {
+      attempt++;
+      const isTransient = err && (
+        err.code === 'SQLITE_BUSY' ||
+        err.code === 'SQLITE_LOCKED' ||
+        err.code === 'SQLITE_IOERR' ||
+        (err.message && /disk I\/O error/i.test(err.message)) ||
+        (err.message && /database is locked/i.test(err.message)) ||
+        (err.message && /busy/i.test(err.message))
+      );
+
+      if (isTransient && attempt < maxRetries) {
+        console.warn(`⚠️ SQLite transient error (${err.message}). Retrying attempt ${attempt}/${maxRetries}...`);
+        const waitMs = attempt * 200;
+        const start = Date.now();
+        while (Date.now() - start < waitMs) {} // synchronous yield
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+// Sync helpers wrapped as Promises with auto-retry
 const dbRun = (sql, params = []) => {
-  const info = db.prepare(sql).run(params);
-  return Promise.resolve({ lastID: info.lastInsertRowid, changes: info.changes });
+  return Promise.resolve().then(() => {
+    return executeWithRetry(() => {
+      const info = db.prepare(sql).run(params);
+      return { lastID: info.lastInsertRowid, changes: info.changes };
+    });
+  });
 };
-const dbGet = (sql, params = []) => Promise.resolve(db.prepare(sql).get(params));
-const dbAll = (sql, params = []) => Promise.resolve(db.prepare(sql).all(params));
+
+const dbGet = (sql, params = []) => {
+  return Promise.resolve().then(() => {
+    return executeWithRetry(() => db.prepare(sql).get(params));
+  });
+};
+
+const dbAll = (sql, params = []) => {
+  return Promise.resolve().then(() => {
+    return executeWithRetry(() => db.prepare(sql).all(params));
+  });
+};
+
+// Periodic WAL checkpoint (every 5 minutes) to keep WAL/SHM file size small and prevent disk write collisions
+setInterval(() => {
+  try {
+    if (db && db.open) {
+      const currentMode = db.pragma('journal_mode', { simple: true });
+      if (currentMode && String(currentMode).toLowerCase() === 'wal') {
+        db.pragma('wal_checkpoint(PASSIVE)');
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Periodic WAL maintenance notice:', err.message);
+  }
+}, 5 * 60 * 1000).unref();
+
+// Graceful shutdown: Flush and checkpoint WAL cleanly so assets.db, assets.db-wal, assets.db-shm are closed properly
+function shutdownDatabaseGracefully() {
+  if (db && db.open) {
+    try {
+      console.log('🔄 Performing final WAL checkpoint and closing SQLite database...');
+      try {
+        const mode = db.pragma('journal_mode', { simple: true });
+        if (mode && String(mode).toLowerCase() === 'wal') {
+          db.pragma('wal_checkpoint(TRUNCATE)');
+        }
+      } catch (_) {}
+      db.close();
+      console.log('✅ SQLite database connection closed cleanly.');
+    } catch (err) {
+      console.warn('⚠️ Error during graceful database closure:', err.message);
+    }
+  }
+}
+
+process.on('SIGINT', () => {
+  shutdownDatabaseGracefully();
+  process.exit(0);
+});
+process.on('SIGTERM', () => {
+  shutdownDatabaseGracefully();
+  process.exit(0);
+});
 
 // ── Create tables ──────────────────────────────────────────
 db.exec(`
@@ -157,6 +331,8 @@ db.exec(`
     notes           TEXT    NOT NULL DEFAULT '',
     photos          TEXT    NOT NULL DEFAULT '[]',
     image           TEXT    DEFAULT '',
+    is_deleted      INTEGER NOT NULL DEFAULT 0,
+    deleted_at      TEXT    DEFAULT NULL,
     created_at      TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
     updated_at      TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
   );
@@ -245,6 +421,14 @@ db.exec(`
     ip_address  TEXT    NOT NULL DEFAULT '',
     created_at  TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
   );
+
+  CREATE TABLE IF NOT EXISTS categories (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    category_name TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    description   TEXT    NOT NULL DEFAULT '',
+    created_at    TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+    updated_at    TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+  );
 `);
 
 // Seed default users for testing RBAC
@@ -263,20 +447,46 @@ const editorHash = crypto.createHash('sha256').update('editor1234').digest('hex'
 db.prepare(`INSERT OR IGNORE INTO users (username, password, name, role) VALUES (?, ?, ?, ?)`)
   .run(['editor', editorHash, 'ผู้แก้ไขข้อมูล (Editor)', 'editor']);
 
+// manager: manager1234 (manager)
+const managerHash = crypto.createHash('sha256').update('manager1234').digest('hex');
+db.prepare(`INSERT OR IGNORE INTO users (username, password, name, role) VALUES (?, ?, ?, ?)`)
+  .run(['manager', managerHash, 'ผู้จัดการทรัพย์สิน (Manager)', 'manager']);
+
 // viewer: viewer1234 (viewer)
 const viewerHash = crypto.createHash('sha256').update('viewer1234').digest('hex');
 db.prepare(`INSERT OR IGNORE INTO users (username, password, name, role) VALUES (?, ?, ?, ?)`)
   .run(['viewer', viewerHash, 'ผู้เข้าชม (Viewer)', 'viewer']);
 
-// ── SQLite Schema Migration: Ensure 'image' column exists in assets ──────
+// ── SQLite Schema Migration: Ensure 'image', 'is_deleted', and 'deleted_at' exist ──────
 try {
   const colInfo = db.pragma('table_info(assets)');
   if (!colInfo.some(c => c.name === 'image')) {
     db.exec("ALTER TABLE assets ADD COLUMN image TEXT DEFAULT ''");
     console.log('✅ SQLite: Added image column to assets table');
   }
+  if (!colInfo.some(c => c.name === 'is_deleted')) {
+    db.exec("ALTER TABLE assets ADD COLUMN is_deleted INTEGER NOT NULL DEFAULT 0");
+    console.log('✅ SQLite: Added is_deleted column to assets table');
+  }
+  if (!colInfo.some(c => c.name === 'deleted_at')) {
+    db.exec("ALTER TABLE assets ADD COLUMN deleted_at TEXT DEFAULT NULL");
+    console.log('✅ SQLite: Added deleted_at column to assets table');
+  }
 } catch (e) {
   console.warn('DB Migration warning:', e.message);
+}
+
+// ── Sync existing asset categories (No hardcoded pre-seeded categories) ──
+try {
+  // Import any existing categories from assets table if present
+  db.exec(`
+    INSERT OR IGNORE INTO categories (category_name, description)
+    SELECT DISTINCT TRIM(category), 'นำเข้าอัตโนมัติจากข้อมูลทรัพย์สิน'
+    FROM assets
+    WHERE category IS NOT NULL AND TRIM(category) != ''
+  `);
+} catch (e) {
+  console.warn('Category sync notice:', e.message);
 }
 
 // ── Asset & Photo Helpers ────────────────────────────────────
@@ -398,6 +608,23 @@ async function authenticate(req, res) {
   }
 }
 
+// ── Role & Auth Middleware Helpers ──────────────────────────
+function requireRole(...allowedRoles) {
+  return async (req, res, next) => {
+    const sess = await authenticate(req, res);
+    if (!sess) return;
+    req.session = sess;
+    req.user = { id: sess.user_id, username: sess.username, name: sess.name, role: sess.role };
+    if (!allowedRoles.includes(sess.role)) {
+      return res.status(403).json({
+        success: false,
+        message: `ไม่มีสิทธิ์ดำเนินการ (ต้องการสิทธิ์: ${allowedRoles.join(' หรือ ')})`
+      });
+    }
+    next();
+  };
+}
+
 // ============================================================
 //  AUTH ROUTES
 // ============================================================
@@ -450,7 +677,7 @@ app.get(['/api/me', '/api/auth/me'], async (req, res) => {
 app.get('/api/assets', async (req, res) => {
   try {
     const { search = '', status = '', category = '', page = 1, limit = 50 } = req.query;
-    let where  = [];
+    let where  = ['(is_deleted = 0 OR is_deleted IS NULL)'];
     let params = [];
 
     if (search) {
@@ -545,12 +772,14 @@ app.get('/api/assets/available-codes', async (req, res) => {
 app.get('/api/assets/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const includeDeleted = req.query.include_deleted === '1';
+    const delClause = includeDeleted ? '' : ' AND (is_deleted = 0 OR is_deleted IS NULL)';
     let asset;
     if (/^\d+$/.test(id)) {
-      asset = await dbGet('SELECT * FROM assets WHERE id = ?', [parseInt(id)]);
+      asset = await dbGet(`SELECT * FROM assets WHERE id = ?${delClause}`, [parseInt(id)]);
     }
     if (!asset) {
-      asset = await dbGet('SELECT * FROM assets WHERE asset_code = ?', [id]);
+      asset = await dbGet(`SELECT * FROM assets WHERE asset_code = ?${delClause}`, [id]);
     }
     if (!asset) return res.status(404).json({ success: false, message: 'ไม่พบทรัพย์สินนี้' });
     return res.json({ success: true, data: formatAssetOutput(asset) });
@@ -567,9 +796,13 @@ app.post('/api/assets', async (req, res) => {
     if (!asset_code)
       return res.status(400).json({ success: false, message: 'กรุณาระบุรหัสทรัพย์สิน' });
 
-    const existing = await dbGet('SELECT id FROM assets WHERE asset_code = ?', [asset_code]);
-    if (existing)
+    const existing = await dbGet('SELECT id, is_deleted FROM assets WHERE asset_code = ?', [asset_code]);
+    if (existing) {
+      if (existing.is_deleted) {
+        return res.status(409).json({ success: false, message: `รหัส ${asset_code} อยู่ในถังขยะ คุณสามารถกู้คืนได้ที่หน้าถังขยะ (Recycle Bin)` });
+      }
       return res.status(409).json({ success: false, message: `รหัส ${asset_code} ถูกลงทะเบียนในระบบแล้ว` });
+    }
 
     // Normalize photos & image (handles raw path strings, arrays, and safely decodes base64 without bloating DB)
     const processedPhotos = await normalizePhotosInput(photos, image);
@@ -577,11 +810,15 @@ app.post('/api/assets', async (req, res) => {
     const primaryImage = processedPhotos.length > 0 ? processedPhotos[0] : (typeof image === 'string' ? image.trim() : '');
 
     const result = await dbRun(
-      `INSERT INTO assets (asset_code,name,serial_number,category,department,holder,received_date,status,notes,photos,image,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,datetime('now','localtime'))`,
+      `INSERT INTO assets (asset_code,name,serial_number,category,department,holder,received_date,status,notes,photos,image,is_deleted,deleted_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,0,NULL,datetime('now','localtime'))`,
       [asset_code, name||'', serial_number||'', category||'', department||'', holder||'', received_date||'', status||'active', notes||'', photosJson, primaryImage]
     );
     const newAsset = await dbGet('SELECT * FROM assets WHERE id = ?', [result.lastID]);
+
+    const actor = req.body.operator || (req.headers.authorization ? 'User' : 'Guest');
+    logAudit('CREATE_ASSET', 'asset', asset_code, `เพิ่มทรัพย์สินใหม่: ${name||''} (${asset_code})`, req, actor);
+
     return res.status(201).json({ success: true, data: formatAssetOutput(newAsset) });
   } catch (err) {
     console.error('/api/assets POST error:', err);
@@ -589,12 +826,12 @@ app.post('/api/assets', async (req, res) => {
   }
 });
 
-// PUT /api/assets/:id (update) — ต้องเป็น admin หรือ editor เท่านั้น
+// PUT /api/assets/:id (update) — ต้องเป็น admin หรือ manager หรือ editor
 app.put('/api/assets/:id', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (!['admin', 'editor'].includes(sess.role))
-    return res.status(403).json({ success: false, message: 'ต้องเป็น Admin หรือ Editor เท่านั้นจึงจะแก้ไขข้อมูลได้' });
+  if (!['admin', 'manager', 'editor'].includes(sess.role))
+    return res.status(403).json({ success: false, message: 'ต้องเป็น Admin, Manager หรือ Editor เท่านั้นจึงจะแก้ไขข้อมูลได้' });
   try {
     const { id } = req.params;
     let asset;
@@ -632,6 +869,9 @@ app.put('/api/assets/:id', async (req, res) => {
       ]
     );
     const updated = await dbGet('SELECT * FROM assets WHERE id = ?', [asset.id]);
+
+    logAudit('UPDATE_ASSET', 'asset', asset.asset_code, `แก้ไขข้อมูลทรัพย์สิน: ${name || asset.name} (${asset.asset_code})`, req, sess.name);
+
     return res.json({ success: true, data: formatAssetOutput(updated) });
   } catch (err) {
     console.error('/api/assets/:id PUT error:', err);
@@ -639,11 +879,12 @@ app.put('/api/assets/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/assets/:id (admin only)
+// DELETE /api/assets/:id (Soft delete: move to Recycle Bin)
 app.delete('/api/assets/:id', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (sess.role !== 'admin') return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ลบข้อมูล (เฉพาะ Admin เท่านั้น)' });
+  if (!['admin', 'manager', 'editor'].includes(sess.role))
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ลบข้อมูล (เฉพาะ Admin หรือ Manager เท่านั้น)' });
   try {
     const { id } = req.params;
     let asset = /^\d+$/.test(id)
@@ -651,16 +892,343 @@ app.delete('/api/assets/:id', async (req, res) => {
       : await dbGet('SELECT * FROM assets WHERE asset_code = ?', [id]);
     if (!asset) return res.status(404).json({ success: false, message: 'ไม่พบทรัพย์สินนี้ในระบบ' });
 
-    // Cascade delete related records
+    await dbRun(
+      `UPDATE assets SET is_deleted = 1, deleted_at = datetime('now','localtime'), updated_at = datetime('now','localtime') WHERE id = ?`,
+      [asset.id]
+    );
+
+    logAudit('SOFT_DELETE_ASSET', 'asset', asset.asset_code, `ย้ายทรัพย์สินลงถังขยะ: ${asset.name} (${asset.asset_code})`, req, sess.name);
+
+    return res.json({
+      success: true,
+      message: `ย้ายทรัพย์สิน "${asset.asset_code}" (${asset.name}) ลงในถังขยะเรียบร้อยแล้ว`,
+      id: asset.id,
+      asset_code: asset.asset_code
+    });
+  } catch (err) {
+    console.error('DELETE /api/assets/:id error:', err);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการลบข้อมูล: ' + err.message });
+  }
+});
+
+// ============================================================
+//  CATEGORY MANAGEMENT ROUTES
+// ============================================================
+
+// GET /api/categories — ดึงรายการหมวดหมู่ทั้งหมด พร้อมจำนวนทรัพย์สินที่ใช้งาน
+app.get('/api/categories', async (_req, res) => {
+  try {
+    const rows = await dbAll(`
+      SELECT 
+        c.id, 
+        c.category_name, 
+        c.description, 
+        c.created_at, 
+        c.updated_at,
+        COUNT(CASE WHEN (a.is_deleted = 0 OR a.is_deleted IS NULL) THEN a.id END) as asset_count
+      FROM categories c
+      LEFT JOIN assets a ON LOWER(TRIM(a.category)) = LOWER(TRIM(c.category_name))
+      GROUP BY c.id
+      ORDER BY c.category_name COLLATE NOCASE ASC
+    `);
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('GET /api/categories error:', err);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลหมวดหมู่: ' + err.message });
+  }
+});
+
+// POST /api/categories — เพิ่มหมวดหมู่ใหม่ (รองรับทั้งจากหน้า Settings และฟอร์มเพิ่ม/แก้ไขทรัพย์สิน)
+app.post('/api/categories', async (req, res) => {
+  let actorName = 'User';
+  try {
+    const authHeader = req.headers['authorization'] || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : req.query.token || '';
+    if (token) {
+      const sess = await dbGet('SELECT * FROM sessions WHERE token = ?', [token]);
+      if (sess && sess.expires_at >= Date.now()) {
+        actorName = sess.name || sess.username;
+      }
+    } else if (req.body.operator) {
+      actorName = req.body.operator;
+    }
+
+    const { category_name, description } = req.body;
+    const name = (category_name || '').trim();
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อหมวดหมู่' });
+    }
+
+    const existing = await dbGet('SELECT id, category_name FROM categories WHERE LOWER(TRIM(category_name)) = LOWER(?)', [name]);
+    if (existing) {
+      return res.status(409).json({ success: false, message: `หมวดหมู่ "${existing.category_name}" มีอยู่ในระบบแล้ว`, data: existing });
+    }
+
+    const result = await dbRun(
+      `INSERT INTO categories (category_name, description, created_at, updated_at) VALUES (?, ?, datetime('now','localtime'), datetime('now','localtime'))`,
+      [name, (description || '').trim()]
+    );
+
+    const newCategory = await dbGet('SELECT * FROM categories WHERE id = ?', [result.lastID]);
+    logAudit('CREATE_CATEGORY', 'category', result.lastID, `เพิ่มหมวดหมู่ใหม่: "${name}"`, req, actorName);
+
+    return res.status(201).json({
+      success: true,
+      message: `เพิ่มหมวดหมู่ "${name}" สำเร็จเรียบร้อยแล้ว`,
+      data: { ...newCategory, asset_count: 0 }
+    });
+  } catch (err) {
+    console.error('POST /api/categories error:', err);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการเพิ่มหมวดหมู่: ' + err.message });
+  }
+});
+
+// PUT /api/categories/:id — แก้ไขหมวดหมู่ (Admin, Manager, Editor)
+app.put('/api/categories/:id', async (req, res) => {
+  const sess = await authenticate(req, res);
+  if (!sess) return;
+  if (!['admin', 'manager', 'editor'].includes(sess.role)) {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์แก้ไขหมวดหมู่ (ต้องเป็น Admin, Manager หรือ Editor)' });
+  }
+
+  try {
+    const id = parseInt(req.params.id);
+    if (!id) return res.status(400).json({ success: false, message: 'ID หมวดหมู่ไม่ถูกต้อง' });
+
+    const current = await dbGet('SELECT * FROM categories WHERE id = ?', [id]);
+    if (!current) {
+      return res.status(404).json({ success: false, message: 'ไม่พบหมวดหมู่นี้ในระบบ' });
+    }
+
+    const { category_name, description } = req.body;
+    const newName = (category_name !== undefined ? category_name : current.category_name).trim();
+    const newDesc = description !== undefined ? description.trim() : current.description;
+
+    if (!newName) {
+      return res.status(400).json({ success: false, message: 'ชื่อหมวดหมู่ต้องไม่ว่างเปล่า' });
+    }
+
+    // Check duplicate if name changed
+    if (newName.toLowerCase() !== current.category_name.toLowerCase()) {
+      const existing = await dbGet('SELECT id FROM categories WHERE LOWER(TRIM(category_name)) = LOWER(?) AND id != ?', [newName, id]);
+      if (existing) {
+        return res.status(409).json({ success: false, message: `มีหมวดหมู่ชื่อ "${newName}" อยู่แล้วในระบบ` });
+      }
+    }
+
+    const nameChanged = newName !== current.category_name;
+
+    // Run in transaction if updating assets
+    const updateTx = db.transaction(() => {
+      db.prepare(`
+        UPDATE categories 
+        SET category_name = ?, description = ?, updated_at = datetime('now','localtime') 
+        WHERE id = ?
+      `).run(newName, newDesc, id);
+
+      if (nameChanged) {
+        db.prepare(`
+          UPDATE assets 
+          SET category = ?, updated_at = datetime('now','localtime') 
+          WHERE LOWER(TRIM(category)) = LOWER(?)
+        `).run(newName, current.category_name.trim());
+      }
+    });
+
+    updateTx();
+
+    const updated = await dbGet('SELECT * FROM categories WHERE id = ?', [id]);
+    const countRow = await dbGet('SELECT COUNT(*) as cnt FROM assets WHERE LOWER(TRIM(category)) = LOWER(?) AND (is_deleted = 0 OR is_deleted IS NULL)', [newName]);
+
+    logAudit(
+      'UPDATE_CATEGORY',
+      'category',
+      id,
+      nameChanged 
+        ? `เปลี่ยนชื่อหมวดหมู่จาก "${current.category_name}" เป็น "${newName}" (อัปเดตข้อมูลทรัพย์สินที่เกี่ยวข้อง ${countRow ? countRow.cnt : 0} รายการ)`
+        : `แก้ไขคำอธิบายหมวดหมู่ "${newName}"`,
+      req,
+      sess.name
+    );
+
+    return res.json({
+      success: true,
+      message: `แก้ไขหมวดหมู่ "${newName}" สำเร็จ`,
+      data: { ...updated, asset_count: countRow ? countRow.cnt : 0 }
+    });
+  } catch (err) {
+    console.error('PUT /api/categories/:id error:', err);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการแก้ไขหมวดหมู่: ' + err.message });
+  }
+});
+
+// DELETE /api/categories/:id — ลบหมวดหมู่ (ตรวจสอบความปลอดภัย ไม่ให้ลบหากมีทรัพย์สินใช้งานอยู่)
+app.delete('/api/categories/:id', async (req, res) => {
+  let actorName = 'User';
+  try {
+    const authHeader = req.headers['authorization'] || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : req.query.token || '';
+    if (token) {
+      const sess = await dbGet('SELECT * FROM sessions WHERE token = ?', [token]);
+      if (sess && sess.expires_at >= Date.now()) {
+        actorName = sess.name || sess.username;
+      }
+    }
+
+    const id = parseInt(req.params.id);
+    if (!id) return res.status(400).json({ success: false, message: 'ID หมวดหมู่ไม่ถูกต้อง' });
+
+    const current = await dbGet('SELECT * FROM categories WHERE id = ?', [id]);
+    if (!current) {
+      return res.status(404).json({ success: false, message: 'ไม่พบหมวดหมู่นี้ในระบบ' });
+    }
+
+    // Check if any active assets are using this category
+    const assetCheck = await dbGet(
+      'SELECT COUNT(*) as cnt FROM assets WHERE LOWER(TRIM(category)) = LOWER(?) AND (is_deleted = 0 OR is_deleted IS NULL)',
+      [current.category_name.trim()]
+    );
+
+    if (assetCheck && assetCheck.cnt > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `ไม่สามารถลบหมวดหมู่ "${current.category_name}" ได้ เนื่องจากมีทรัพย์สินที่ใช้งานอยู่จำนวน ${assetCheck.cnt} รายการ กรุณาเปลี่ยนหมวดหมู่ของทรัพย์สินเหล่านั้นก่อนทำการลบ`
+      });
+    }
+
+    await dbRun('DELETE FROM categories WHERE id = ?', [id]);
+    logAudit('DELETE_CATEGORY', 'category', id, `ลบหมวดหมู่: "${current.category_name}"`, req, actorName);
+
+    return res.json({
+      success: true,
+      message: `ลบหมวดหมู่ "${current.category_name}" สำเร็จเรียบร้อยแล้ว`
+    });
+  } catch (err) {
+    console.error('DELETE /api/categories/:id error:', err);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการลบหมวดหมู่: ' + err.message });
+  }
+});
+
+// ============================================================
+//  RECYCLE BIN (TRASH) ROUTES
+// ============================================================
+
+// GET /api/trash/assets — รายการทรัพย์สินในถังขยะ
+app.get('/api/trash/assets', async (req, res) => {
+  const sess = await authenticate(req, res);
+  if (!sess) return;
+  if (!['admin', 'manager', 'editor'].includes(sess.role))
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ดูรายการในถังขยะ' });
+  try {
+    const { search = '', category = '', page = 1, limit = 50 } = req.query;
+    let where = ['is_deleted = 1'];
+    let params = [];
+    if (search) {
+      where.push('(asset_code LIKE ? OR name LIKE ? OR serial_number LIKE ? OR holder LIKE ?)');
+      const q = `%${search}%`;
+      params.push(q, q, q, q);
+    }
+    if (category) {
+      where.push('category = ?');
+      params.push(category);
+    }
+    const whereStr = `WHERE ${where.join(' AND ')}`;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const countRow = await dbGet(`SELECT COUNT(*) as cnt FROM assets ${whereStr}`, params);
+    const total = countRow ? countRow.cnt : 0;
+    const rows = await dbAll(`SELECT * FROM assets ${whereStr} ORDER BY deleted_at DESC LIMIT ? OFFSET ?`, [...params, parseInt(limit), offset]);
+    return res.json({ success: true, data: rows.map(formatAssetOutput), total, page: parseInt(page), limit: parseInt(limit) });
+  } catch (err) {
+    console.error('GET /api/trash/assets error:', err);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลถังขยะ' });
+  }
+});
+
+// POST /api/assets/:id/restore — กู้คืนทรัพย์สินจากถังขยะ
+app.post('/api/assets/:id/restore', async (req, res) => {
+  const sess = await authenticate(req, res);
+  if (!sess) return;
+  if (!['admin', 'manager', 'editor'].includes(sess.role))
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์กู้คืนทรัพย์สิน' });
+  try {
+    const { id } = req.params;
+    let asset = /^\d+$/.test(id)
+      ? await dbGet('SELECT * FROM assets WHERE id = ?', [parseInt(id)])
+      : await dbGet('SELECT * FROM assets WHERE asset_code = ?', [id]);
+    if (!asset) return res.status(404).json({ success: false, message: 'ไม่พบทรัพย์สินนี้' });
+
+    await dbRun(
+      `UPDATE assets SET is_deleted = 0, deleted_at = NULL, updated_at = datetime('now','localtime') WHERE id = ?`,
+      [asset.id]
+    );
+
+    logAudit('RESTORE_ASSET', 'asset', asset.asset_code, `กู้คืนทรัพย์สินจากถังขยะ: ${asset.name} (${asset.asset_code})`, req, sess.name);
+
+    return res.json({
+      success: true,
+      message: `กู้คืนทรัพย์สิน "${asset.asset_code}" เรียบร้อยแล้ว`,
+      id: asset.id,
+      asset_code: asset.asset_code
+    });
+  } catch (err) {
+    console.error('POST /api/assets/:id/restore error:', err);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการกู้คืน: ' + err.message });
+  }
+});
+
+// DELETE /api/trash/assets/:id — ลบทรัพย์สินในถังขยะแบบถาวร (Hard Delete)
+app.delete(['/api/trash/assets/:id', '/api/assets/:id/permanent'], async (req, res) => {
+  const sess = await authenticate(req, res);
+  if (!sess) return;
+  if (!['admin', 'manager'].includes(sess.role))
+    return res.status(403).json({ success: false, message: 'เฉพาะ Admin หรือ Manager เท่านั้นจึงจะลบถาวรได้' });
+  try {
+    const { id } = req.params;
+    let asset = /^\d+$/.test(id)
+      ? await dbGet('SELECT * FROM assets WHERE id = ?', [parseInt(id)])
+      : await dbGet('SELECT * FROM assets WHERE asset_code = ?', [id]);
+    if (!asset) return res.status(404).json({ success: false, message: 'ไม่พบทรัพย์สินนี้' });
+
     await dbRun('DELETE FROM borrows WHERE asset_id = ? OR asset_code = ?', [asset.id, asset.asset_code]);
     await dbRun('DELETE FROM maintenance WHERE asset_id = ? OR asset_code = ?', [asset.id, asset.asset_code]);
     await dbRun('DELETE FROM audit_items WHERE asset_code = ?', [asset.asset_code]);
     await dbRun('DELETE FROM assets WHERE id = ?', [asset.id]);
 
-    return res.json({ success: true, message: `ลบทรัพย์สิน "${asset.asset_code}" เรียบร้อยแล้ว`, id: asset.id, asset_code: asset.asset_code });
+    logAudit('HARD_DELETE_ASSET', 'asset', asset.asset_code, `ลบทรัพย์สินถาวร: ${asset.name} (${asset.asset_code})`, req, sess.name);
+
+    return res.json({ success: true, message: `ลบทรัพย์สิน "${asset.asset_code}" ถาวรเรียบร้อยแล้ว` });
   } catch (err) {
-    console.error('DELETE /api/assets/:id error:', err);
-    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการลบข้อมูล: ' + err.message });
+    console.error('DELETE /api/trash/assets/:id error:', err);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการลบถาวร: ' + err.message });
+  }
+});
+
+// DELETE /api/trash/empty — ล้างถังขยะทั้งหมดแบบถาวร
+app.delete('/api/trash/empty', async (req, res) => {
+  const sess = await authenticate(req, res);
+  if (!sess) return;
+  if (!['admin', 'manager'].includes(sess.role))
+    return res.status(403).json({ success: false, message: 'เฉพาะ Admin หรือ Manager เท่านั้นจึงจะล้างถังขยะได้' });
+  try {
+    const deletedAssets = await dbAll('SELECT id, asset_code, name FROM assets WHERE is_deleted = 1');
+    const count = deletedAssets.length;
+    if (count === 0) {
+      return res.json({ success: true, message: 'ถังขยะว่างเปล่าอยู่แล้ว', count: 0 });
+    }
+
+    for (const a of deletedAssets) {
+      await dbRun('DELETE FROM borrows WHERE asset_id = ? OR asset_code = ?', [a.id, a.asset_code]);
+      await dbRun('DELETE FROM maintenance WHERE asset_id = ? OR asset_code = ?', [a.id, a.asset_code]);
+      await dbRun('DELETE FROM audit_items WHERE asset_code = ?', [a.asset_code]);
+    }
+    await dbRun('DELETE FROM assets WHERE is_deleted = 1');
+
+    logAudit('EMPTY_TRASH', 'asset', 'ALL', `ล้างถังขยะทั้งหมด (${count} รายการ)`, req, sess.name);
+
+    return res.json({ success: true, message: `ล้างถังขยะเรียบร้อยแล้ว (${count} รายการ)`, count });
+  } catch (err) {
+    console.error('DELETE /api/trash/empty error:', err);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการล้างถังขยะ: ' + err.message });
   }
 });
 
@@ -718,8 +1286,8 @@ app.get('/api/borrows', async (req, res) => {
 app.post('/api/borrows', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (!['admin', 'editor'].includes(sess.role)) {
-    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin หรือ Editor)' });
+  if (!['admin', 'manager', 'editor'].includes(sess.role)) {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin, Manager หรือ Editor)' });
   }
   try {
     const { asset_code, borrower, department, borrow_date, due_date, notes } = req.body;
@@ -745,8 +1313,8 @@ app.post('/api/borrows', async (req, res) => {
 app.put('/api/borrows/:id/return', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (!['admin', 'editor'].includes(sess.role)) {
-    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin หรือ Editor)' });
+  if (!['admin', 'manager', 'editor'].includes(sess.role)) {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin, Manager หรือ Editor)' });
   }
   try {
     const borrow = await dbGet('SELECT * FROM borrows WHERE id=?', [parseInt(req.params.id)]);
@@ -764,8 +1332,8 @@ app.put('/api/borrows/:id/return', async (req, res) => {
 app.put('/api/borrows/:id/extend', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (!['admin', 'editor'].includes(sess.role)) {
-    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin หรือ Editor)' });
+  if (!['admin', 'manager', 'editor'].includes(sess.role)) {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin, Manager หรือ Editor)' });
   }
   try {
     const borrow = await dbGet('SELECT * FROM borrows WHERE id=?', [parseInt(req.params.id)]);
@@ -821,8 +1389,8 @@ app.get('/api/maintenance', async (req, res) => {
 app.post('/api/maintenance', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (!['admin', 'editor'].includes(sess.role)) {
-    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin หรือ Editor)' });
+  if (!['admin', 'manager', 'editor'].includes(sess.role)) {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin, Manager หรือ Editor)' });
   }
   try {
     const { asset_code, type, description, technician, cost, start_date, end_date, notes } = req.body;
@@ -845,8 +1413,8 @@ app.post('/api/maintenance', async (req, res) => {
 app.put('/api/maintenance/:id/complete', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (!['admin', 'editor'].includes(sess.role)) {
-    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin หรือ Editor)' });
+  if (!['admin', 'manager', 'editor'].includes(sess.role)) {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin, Manager หรือ Editor)' });
   }
   try {
     const rec = await dbGet('SELECT * FROM maintenance WHERE id=?', [parseInt(req.params.id)]);
@@ -904,8 +1472,8 @@ app.get('/api/audits/:id', async (req, res) => {
 app.post('/api/audits', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (!['admin', 'editor'].includes(sess.role)) {
-    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์สร้างรอบตรวจนับ (ต้องเป็น Admin หรือ Editor)' });
+  if (!['admin', 'manager', 'editor'].includes(sess.role)) {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์สร้างรอบตรวจนับ (ต้องเป็น Admin, Manager หรือ Editor)' });
   }
   try {
     const { title, department, auditor, audit_date, notes } = req.body;
@@ -934,8 +1502,8 @@ app.post('/api/audits', async (req, res) => {
 app.post('/api/audits/:id/scan', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (!['admin', 'editor'].includes(sess.role)) {
-    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์บันทึกตรวจนับ (ต้องเป็น Admin หรือ Editor)' });
+  if (!['admin', 'manager', 'editor'].includes(sess.role)) {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์บันทึกตรวจนับ (ต้องเป็น Admin, Manager หรือ Editor)' });
   }
   try {
     const auditId = parseInt(req.params.id);
@@ -967,7 +1535,7 @@ app.post('/api/audits/:id/scan', async (req, res) => {
 app.put('/api/audits/:id/complete', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (!['admin', 'editor'].includes(sess.role)) {
+  if (!['admin', 'manager', 'editor'].includes(sess.role)) {
     return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ' });
   }
   try {
@@ -1000,16 +1568,18 @@ app.delete('/api/audits/:id', async (req, res) => {
 // ============================================================
 app.get('/api/stats', async (req, res) => {
   try {
-    const totalAssets   = (await dbGet("SELECT COUNT(*) as cnt FROM assets")).cnt;
-    const activeAssets  = (await dbGet("SELECT COUNT(*) as cnt FROM assets WHERE status='active'")).cnt;
-    const borrowed      = (await dbGet("SELECT COUNT(*) as cnt FROM assets WHERE status='borrowed'")).cnt;
-    const maintenance   = (await dbGet("SELECT COUNT(*) as cnt FROM assets WHERE status='maintenance'")).cnt;
-    const disposed      = (await dbGet("SELECT COUNT(*) as cnt FROM assets WHERE status='disposed'")).cnt;
+    const notDeletedClause = "(is_deleted = 0 OR is_deleted IS NULL)";
+    const totalAssets   = (await dbGet(`SELECT COUNT(*) as cnt FROM assets WHERE ${notDeletedClause}`)).cnt;
+    const activeAssets  = (await dbGet(`SELECT COUNT(*) as cnt FROM assets WHERE status='active' AND ${notDeletedClause}`)).cnt;
+    const borrowed      = (await dbGet(`SELECT COUNT(*) as cnt FROM assets WHERE status='borrowed' AND ${notDeletedClause}`)).cnt;
+    const maintenance   = (await dbGet(`SELECT COUNT(*) as cnt FROM assets WHERE status='maintenance' AND ${notDeletedClause}`)).cnt;
+    const disposed      = (await dbGet(`SELECT COUNT(*) as cnt FROM assets WHERE status='disposed' AND ${notDeletedClause}`)).cnt;
+    const trashCount    = (await dbGet("SELECT COUNT(*) as cnt FROM assets WHERE is_deleted = 1"))?.cnt || 0;
     const totalAudits   = (await dbGet("SELECT COUNT(*) as cnt FROM audits"))?.cnt || 0;
     const totalBorrows  = (await dbGet("SELECT COUNT(*) as cnt FROM borrows"))?.cnt || 0;
     const totalMaint    = (await dbGet("SELECT COUNT(*) as cnt FROM maintenance"))?.cnt || 0;
-    const recentAssets  = await dbAll("SELECT * FROM assets ORDER BY id DESC LIMIT 10");
-    const categoryStats = await dbAll("SELECT category, COUNT(*) as cnt FROM assets WHERE category IS NOT NULL AND category != '' GROUP BY category ORDER BY cnt DESC");
+    const recentAssets  = await dbAll(`SELECT * FROM assets WHERE ${notDeletedClause} ORDER BY id DESC LIMIT 10`);
+    const categoryStats = await dbAll(`SELECT category, COUNT(*) as cnt FROM assets WHERE ${notDeletedClause} AND category IS NOT NULL AND category != '' GROUP BY category ORDER BY cnt DESC`);
 
     // Real monthly trends (last 6 months)
     const months = [];
@@ -1028,7 +1598,7 @@ app.get('/api/stats', async (req, res) => {
     return res.json({
       success: true,
       data: {
-        totalAssets, activeAssets, borrowed, maintenance, disposed,
+        totalAssets, activeAssets, borrowed, maintenance, disposed, trashCount,
         totalAudits, totalBorrows, totalMaint,
         recentAssets: recentAssets.map(formatAssetOutput),
         categoryStats,
@@ -1100,8 +1670,8 @@ app.put('/api/users/:id/role', async (req, res) => {
   try {
     const targetId = parseInt(req.params.id);
     const { role } = req.body;
-    if (!['admin', 'editor', 'viewer'].includes(role))
-      return res.status(400).json({ success: false, message: 'Role ไม่ถูกต้อง (admin / editor / viewer)' });
+    if (!['admin', 'manager', 'editor', 'viewer'].includes(role))
+      return res.status(400).json({ success: false, message: 'Role ไม่ถูกต้อง (admin / manager / editor / viewer)' });
     const target = await dbGet('SELECT id,username FROM users WHERE id=?', [targetId]);
     if (!target) return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้' });
     await dbRun('UPDATE users SET role=? WHERE id=?', [role, targetId]);
@@ -1152,72 +1722,144 @@ app.put('/api/users/:id/password', async (req, res) => {
 
 // ============================================================
 //  OAUTH — Google & Facebook Account Linking
-//  (อ่านการตั้งค่าจาก oauth.config.js หรือ Environment Variables)
+//  (อ่านการตั้งค่าจาก Environment Variables หรือ oauth.config.js แบบยืดหยุ่น)
 // ============================================================
-let oauthConfig = {};
-try {
-  oauthConfig = require('./oauth.config.js');
-} catch (e) {
-  // หากไม่มีไฟล์ config ให้ใช้ default empty
-}
+function getResolvedOAuthConfig() {
+  let oauthModule = {};
+  try {
+    delete require.cache[require.resolve('./oauth.config.js')];
+    oauthModule = require('./oauth.config.js');
+  } catch (e) {
+    oauthModule = {};
+  }
 
-const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID     || oauthConfig.GOOGLE_CLIENT_ID     || '';
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || oauthConfig.GOOGLE_CLIENT_SECRET || '';
-const FB_APP_ID            = process.env.FB_APP_ID            || oauthConfig.FB_APP_ID            || '';
-const FB_APP_SECRET        = process.env.FB_APP_SECRET        || oauthConfig.FB_APP_SECRET        || '';
-const OAUTH_BASE_URL       = process.env.OAUTH_BASE_URL       || oauthConfig.OAUTH_BASE_URL       || `http://127.0.0.1:${PORT}`;
+  // โหลด .env สดใหม่ทุกครั้งเพื่อให้แน่ใจว่าค่าล่าสุดถูกดึงมาใช้เสมอ
+  let envVars = {};
+  if (typeof oauthModule.readEnvFile === 'function') {
+    envVars = oauthModule.readEnvFile();
+  }
+
+  // ลำดับการตรวจสอบอย่างยืดหยุ่น:
+  // 1. process.env
+  // 2. ตัวแปรในไฟล์ .env
+  // 3. ค่าที่ระบุใน oauth.config.js โดยตรง
+  const resolveKey = (key, fallbackVal) => {
+    if (process.env[key] && process.env[key].trim() !== '') return process.env[key].trim();
+    if (envVars[key] && envVars[key].trim() !== '') return envVars[key].trim();
+    if (fallbackVal && typeof fallbackVal === 'string' && fallbackVal.trim() !== '') return fallbackVal.trim();
+    return '';
+  };
+
+  const clientId = resolveKey('GOOGLE_CLIENT_ID', oauthModule.GOOGLE_CLIENT_ID);
+  const clientSecret = resolveKey('GOOGLE_CLIENT_SECRET', oauthModule.GOOGLE_CLIENT_SECRET);
+  const callbackUrl = resolveKey('GOOGLE_CALLBACK_URL', oauthModule.GOOGLE_CALLBACK_URL);
+  const baseUrl = resolveKey('OAUTH_BASE_URL', oauthModule.OAUTH_BASE_URL) || `http://127.0.0.1:${PORT}`;
+  const fbAppId = resolveKey('FB_APP_ID', oauthModule.FB_APP_ID);
+  const fbSecret = resolveKey('FB_APP_SECRET', oauthModule.FB_APP_SECRET);
+
+  // ตรวจสอบว่าได้กำหนดค่าทั้ง Client ID และ Secret หรือไม่
+  const isGoogleConfigured = Boolean(
+    clientId &&
+    clientSecret &&
+    !clientId.includes('YOUR_GOOGLE_CLIENT_ID') &&
+    !clientSecret.includes('YOUR_GOOGLE_CLIENT_SECRET')
+  );
+
+  const redirectUri = callbackUrl || `${baseUrl.replace(/\/+$/, '')}/api/auth/google/callback`;
+
+  return {
+    clientId,
+    clientSecret,
+    callbackUrl,
+    baseUrl,
+    fbAppId,
+    fbSecret,
+    isGoogleConfigured,
+    redirectUri,
+    errorMessage: 'Google OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน oauth.config.js หรือไฟล์ .env'
+  };
+}
 
 // GET /api/auth/status — ตรวจสอบสถานะว่าระบบเปิดใช้ Google / Facebook หรือไม่
 app.get('/api/auth/status', (_req, res) => {
+  const oauth = getResolvedOAuthConfig();
   return res.json({
     success: true,
     providers: {
-      google:   { enabled: Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) },
-      facebook: { enabled: Boolean(FB_APP_ID && FB_APP_SECRET) }
+      google: {
+        enabled: oauth.isGoogleConfigured,
+        configured: oauth.isGoogleConfigured,
+        callbackUrl: oauth.redirectUri,
+        message: oauth.isGoogleConfigured ? 'พร้อมใช้งาน' : oauth.errorMessage
+      },
+      facebook: {
+        enabled: Boolean(oauth.fbAppId && oauth.fbSecret),
+        configured: Boolean(oauth.fbAppId && oauth.fbSecret)
+      }
     }
   });
 });
 
 // ── Google OAuth ─────────────────────────────────────────────
 app.get('/api/auth/google', (req, res) => {
-  if (!GOOGLE_CLIENT_ID)
-    return res.status(503).json({ success: false, message: 'Google OAuth ยังไม่ได้ตั้งค่า (โปรดใส่ GOOGLE_CLIENT_ID ใน oauth.config.js)' });
-  const returnTo = req.query.return_to || '/account.html';
+  const oauth = getResolvedOAuthConfig();
+  const returnTo = req.query.return_to || '/dashboard.html';
   const clientOrigin = req.query.client_origin || req.headers.origin || (req.headers.referer ? new URL(req.headers.referer).origin : '');
+  const clientBase = clientOrigin ? clientOrigin.replace(/\/+$/, '') : '';
+
+  if (!oauth.isGoogleConfigured) {
+    if (clientBase) {
+      const targetPage = returnTo.includes('account.html') ? 'account.html' : 'index.html';
+      return res.redirect(`${clientBase}/${targetPage}?error=google_oauth_not_configured`);
+    }
+    return res.status(503).json({
+      success: false,
+      message: oauth.errorMessage
+    });
+  }
+
+  const redirectUri = oauth.redirectUri;
   const params = new URLSearchParams({
-    client_id:     GOOGLE_CLIENT_ID,
-    redirect_uri:  `${OAUTH_BASE_URL}/api/auth/google/callback`,
+    client_id:     oauth.clientId,
+    redirect_uri:  redirectUri,
     response_type: 'code',
     scope:         'openid email profile',
-    state:         Buffer.from(JSON.stringify({ token: req.query.token || '', returnTo, clientOrigin })).toString('base64')
+    state:         Buffer.from(JSON.stringify({ token: req.query.token || '', returnTo, clientOrigin, redirectUri })).toString('base64')
   });
   return res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
 });
 
 app.get('/api/auth/google/callback', async (req, res) => {
+  const oauth = getResolvedOAuthConfig();
   let clientBase = '';
   try {
     const { code, state } = req.query;
     let stateObj = {};
     try { stateObj = JSON.parse(Buffer.from(state || '', 'base64').toString()); } catch {}
-    const { token: sessToken, returnTo = '/account.html', clientOrigin = '' } = stateObj;
+    const { token: sessToken, returnTo = '/dashboard.html', clientOrigin = '', redirectUri: stateRedirectUri } = stateObj;
     clientBase = clientOrigin ? clientOrigin.replace(/\/+$/, '') : '';
+    const targetPage = returnTo.includes('account.html') ? 'account.html' : 'index.html';
 
-    if (!GOOGLE_CLIENT_ID)
-      return res.redirect(`${clientBase}/account.html?error=oauth_disabled`);
-    if (!code) return res.redirect(`${clientBase}/account.html?error=no_code`);
+    if (!oauth.isGoogleConfigured)
+      return res.redirect(`${clientBase}/${targetPage}?error=google_oauth_not_configured`);
+    if (!code) return res.redirect(`${clientBase}/${targetPage}?error=no_code`);
+
+    const finalRedirectUri = stateRedirectUri || oauth.redirectUri;
 
     // แลก code -> access_token
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        code, client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET,
-        redirect_uri: `${OAUTH_BASE_URL}/api/auth/google/callback`, grant_type: 'authorization_code'
+        code,
+        client_id: oauth.clientId,
+        client_secret: oauth.clientSecret,
+        redirect_uri: finalRedirectUri,
+        grant_type: 'authorization_code'
       })
     });
     const tokenData = await tokenRes.json();
-    if (!tokenData.access_token) return res.redirect(`${clientBase}/account.html?error=token_failed`);
+    if (!tokenData.access_token) return res.redirect(`${clientBase}/${targetPage}?error=token_failed`);
 
     // ดึงโปรไฟล์จาก Google
     const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -1251,8 +1893,9 @@ app.get('/api/auth/google/callback', async (req, res) => {
       if (existingUser) {
         userId = existingUser.id;
       } else {
+        const defaultRole = 'manager';
         const info = db.prepare('INSERT INTO users (username,password,name,role) VALUES (?,?,?,?)')
-          .run([email, '', display_name || email, 'viewer']);
+          .run([email, '', display_name || email, defaultRole]);
         userId = info.lastInsertRowid;
       }
       db.prepare('INSERT OR IGNORE INTO oauth_accounts (user_id,provider,provider_id,email,display_name) VALUES (?,?,?,?,?)')
@@ -1426,6 +2069,7 @@ app.get('/api/backup/export-json', async (req, res) => {
     const maintenance = await dbAll('SELECT * FROM maintenance');
     const audits = await dbAll('SELECT * FROM audits');
     const audit_items = await dbAll('SELECT * FROM audit_items');
+    const categories = await dbAll('SELECT * FROM categories');
     const users = (await dbAll('SELECT id, username, name, role, created_at FROM users'));
 
     const exportData = {
@@ -1433,6 +2077,7 @@ app.get('/api/backup/export-json', async (req, res) => {
       exported_at: new Date().toISOString(),
       exported_by: sess.username,
       data: {
+        categories,
         assets,
         borrows,
         maintenance,
@@ -1557,6 +2202,23 @@ app.post('/api/backup/restore', uploadMiddleware, async (req, res) => {
             });
           }
         }
+
+        if (Array.isArray(dataset.categories)) {
+          db.prepare('DELETE FROM categories').run();
+          const insertCat = db.prepare(`
+            INSERT INTO categories (id, category_name, description, created_at, updated_at)
+            VALUES (@id, @category_name, @description, @created_at, @updated_at)
+          `);
+          for (const item of dataset.categories) {
+            insertCat.run({
+              id: item.id || null,
+              category_name: item.category_name,
+              description: item.description || '',
+              created_at: item.created_at || new Date().toISOString(),
+              updated_at: item.updated_at || new Date().toISOString()
+            });
+          }
+        }
       });
 
       restoreTx();
@@ -1581,17 +2243,15 @@ app.post('/api/backup/restore', uploadMiddleware, async (req, res) => {
       // 2. Close active db connection
       try { db.close(); } catch (e) {}
 
-      // 3. Write new database file
-      fs.writeFileSync(DB_PATH, uploaded.buffer);
-
-      // Clean wal / shm files if present to prevent corrupt sync
+      // Clean wal / shm files before writing new db file to prevent corrupt sync & header mismatch
       if (fs.existsSync(`${DB_PATH}-wal`)) try { fs.unlinkSync(`${DB_PATH}-wal`); } catch (e) {}
       if (fs.existsSync(`${DB_PATH}-shm`)) try { fs.unlinkSync(`${DB_PATH}-shm`); } catch (e) {}
 
-      // 4. Reopen connection
-      db = new Database(DB_PATH);
-      db.pragma('journal_mode = WAL');
-      db.pragma('foreign_keys = ON');
+      // 3. Write new database file
+      fs.writeFileSync(DB_PATH, uploaded.buffer);
+
+      // 4. Reopen connection with robust timeout & pragma configuration
+      db = initDatabase();
 
       logAudit('RESTORE_DB', 'database', originalName, `กู้คืนฐานข้อมูลสมบูรณ์จากไฟล์ .db (${originalName})`, req, sess.name);
       return res.json({ success: true, message: 'กู้คืนฐานข้อมูล SQLite (.db) สำเร็จเรียบร้อยแล้ว' });
@@ -1599,6 +2259,85 @@ app.post('/api/backup/restore', uploadMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Restore error:', err);
     return res.status(500).json({ success: false, message: `เกิดข้อผิดพลาดในการกู้คืน: ${err.message}` });
+  }
+});
+
+// GET /api/system/db-status — สถานะไฟล์ฐานข้อมูล, WAL, SHM และการตั้งค่า SQLite
+app.get('/api/system/db-status', async (req, res) => {
+  const sess = await authenticate(req, res);
+  if (!sess) return;
+  try {
+    const getFileSize = (filePath) => {
+      try {
+        if (fs.existsSync(filePath)) {
+          const stats = fs.statSync(filePath);
+          return { exists: true, sizeBytes: stats.size, sizeFormatted: `${(stats.size / 1024).toFixed(2)} KB` };
+        }
+      } catch (_) {}
+      return { exists: false, sizeBytes: 0, sizeFormatted: '0 KB' };
+    };
+
+    const dbFile  = getFileSize(DB_PATH);
+    const walFile = getFileSize(`${DB_PATH}-wal`);
+    const shmFile = getFileSize(`${DB_PATH}-shm`);
+
+    let pragmaInfo = {};
+    let integrityCheck = 'unknown';
+
+    try {
+      pragmaInfo = {
+        journal_mode: db.pragma('journal_mode', { simple: true }),
+        busy_timeout: db.pragma('busy_timeout', { simple: true }),
+        synchronous: db.pragma('synchronous', { simple: true }),
+        cache_size: db.pragma('cache_size', { simple: true }),
+        foreign_keys: db.pragma('foreign_keys', { simple: true })
+      };
+      integrityCheck = db.pragma('quick_check', { simple: true });
+    } catch (pe) {
+      pragmaInfo.error = pe.message;
+    }
+
+    return res.json({
+      success: true,
+      dbPath: DB_PATH,
+      files: {
+        db: dbFile,
+        wal: walFile,
+        shm: shmFile
+      },
+      pragma: pragmaInfo,
+      integrity: integrityCheck,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/system/db-checkpoint — ทำการ Flush WAL เข้าสู่ฐานข้อมูลหลักทันที
+app.post('/api/system/db-checkpoint', async (req, res) => {
+  const sess = await authenticate(req, res);
+  if (!sess) return;
+  if (sess.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น' });
+  }
+
+  try {
+    const mode = req.body && req.body.mode ? String(req.body.mode).toUpperCase() : 'TRUNCATE';
+    const validModes = ['PASSIVE', 'FULL', 'RESTART', 'TRUNCATE'];
+    const selectedMode = validModes.includes(mode) ? mode : 'TRUNCATE';
+
+    const result = db.pragma(`wal_checkpoint(${selectedMode})`);
+    logAudit('DB_CHECKPOINT', 'database', DB_PATH, `ทำ SQLite Checkpoint (${selectedMode}) สำเร็จ`, req, sess.name);
+
+    return res.json({
+      success: true,
+      message: `SQLite wal_checkpoint(${selectedMode}) สำเร็จ`,
+      result
+    });
+  } catch (err) {
+    console.error('db-checkpoint error:', err);
+    return res.status(500).json({ success: false, message: `เกิดข้อผิดพลาดในการ Checkpoint: ${err.message}` });
   }
 });
 

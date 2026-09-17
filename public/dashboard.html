@@ -20,39 +20,40 @@
         :root {
             /* Dark Theme (Default) */
             --bg-main: #0b0f19;
-            --bg-card: #111827;
+            --bg-card: #141b2a;
             --bg-sidebar: #0e131f;
-            --bg-hover: #1f2937;
-            --border-color: #1f2937;
+            --bg-hover: #1b2336;
+            --border-color: #2d3852;
             --text-title: #f9fafb;
-            --text-body: #9ca3af;
-            --text-muted: #6b7280;
+            --text-body: #cbd5e1;
+            --text-muted: #808c9f;
             --accent-blue: #3b82f6;
             --accent-green: #10b981;
             --accent-orange: #f59e0b;
             --accent-red: #ef4444;
             --accent-cyan: #06b6d4;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.35);
         }
 
-        body.light-mode {
+        body.light-mode,
+        html.light-theme {
             /* Light Theme */
             --bg-main: #f8fafc;
             --bg-card: #ffffff;
             --bg-sidebar: #ffffff;
             --bg-hover: #f1f5f9;
-            --border-color: #e2e8f0;
+            --border-color: #cbd5e1;
             --text-title: #0f172a;
-            --text-body: #475569;
-            --text-muted: #94a3b8;
-            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --text-body: #334155;
+            --text-muted: #64748b;
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Prompt', sans-serif;
+            font-family: var(--font-family-base, 'Prompt', sans-serif);
             transition: background-color 0.2s, border-color 0.2s, color 0.2s;
         }
 
@@ -664,6 +665,12 @@
                         <span class="nav-link-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="recycle-bin.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</span>
+                        <span class="badge-count" id="badgeTrash" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red);">0</span>
+                    </a>
+                </li>
             </ul>
         </div>
 
@@ -690,7 +697,7 @@
                     <div style="font-size:0.72rem;color:var(--text-muted);" id="sidebarUserRole">ผู้ดูแลระบบ</div>
                 </div>
             </div>
-            <button onclick="handleLogout()" style="width:100%;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);padding:7px;border-radius:6px;cursor:pointer;font-size:0.82rem;display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Prompt',sans-serif;">
+            <button onclick="handleLogout()" style="width:100%;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);padding:7px;border-radius:6px;cursor:pointer;font-size:0.82rem;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;">
                 <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
             </button>
         </div>
@@ -934,6 +941,8 @@
                 if (bBorrowed) bBorrowed.textContent = data.borrowed || 0;
                 const bMaint = document.getElementById('badgeMaintenance');
                 if (bMaint) bMaint.textContent = data.maintenance || 0;
+                const bTrash = document.getElementById('badgeTrash');
+                if (bTrash) bTrash.textContent = data.trashCount || 0;
 
                 // Render Dynamic Category Breakdown
                 renderCategoryChart(data.categoryStats || [], data.totalAssets || 0);

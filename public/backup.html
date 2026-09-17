@@ -43,7 +43,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif;
+            font-family: var(--font-family-base, 'Plus Jakarta Sans', 'Sarabun', sans-serif);
             transition: background-color 0.2s, border-color 0.2s;
         }
 
@@ -358,6 +358,7 @@
             <li class="nav-item"><a href="borrow-return.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> ระบบยืม - คืน</a></li>
             <li class="nav-item"><a href="maintenance.html"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</a></li>
             <li class="nav-item"><a href="audit.html"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</a></li>
+            <li class="nav-item"><a href="recycle-bin.html"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</a></li>
         </ul>
 
         <div class="nav-section">MANAGEMENT</div>
@@ -373,10 +374,17 @@
         <!-- Topbar -->
         <header class="topbar">
             <a href="dashboard.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด</a>
-            <div class="user-nav">
-                <div class="theme-toggle" id="themeBtn" onclick="toggleTheme()"><i class="fa-solid fa-moon"
-                        id="themeIcon"></i></div>
-                <div style="font-size:0.9rem; font-weight:600;"><i class="fa-solid fa-user-circle"></i> Admin User</div>
+            <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-theme-toggle" id="themeBtn" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+                <div class="user-info">
+                    <div class="user-avatar">A</div>
+                    <span id="topUserName" class="user-name-label">Admin User</span>
+                </div>
+                <button class="btn-logout" onclick="logout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                </button>
             </div>
         </header>
 

@@ -54,7 +54,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Kanit', sans-serif;
+            font-family: var(--font-family-base, 'Kanit', sans-serif);
             transition: background-color 0.2s, color 0.2s, border-color 0.2s;
         }
 
@@ -534,6 +534,11 @@
                     <div class="nav-item-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</div>
                 </a>
             </li>
+            <li class="nav-item">
+                <a href="recycle-bin.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</div>
+                </a>
+            </li>
         </ul>
 
         <div class="nav-group-label">MANAGEMENT</div>
@@ -559,14 +564,21 @@
     <!-- Main Content -->
     <div class="main-wrapper">
         <header class="topbar">
-            <div class="topbar-left">
+            <div class="topbar-left" style="display: flex; align-items: center; gap: 14px;">
+                <a href="dashboard.html" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
+                </a>
                 <span class="page-title"><i class="fa-solid fa-id-card"></i> ข้อมูลบัญชีผู้ใช้ & บัญชีที่เชื่อมต่อ</span>
             </div>
-            <div class="topbar-right">
+            <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
                 <button class="theme-toggle-btn" onclick="toggleTheme()" title="เปลี่ยนธีมสี">
                     <i class="fa-solid fa-moon" id="themeIcon"></i>
                 </button>
-                <button class="btn-unlink" onclick="handleLogout()" style="color:var(--text-secondary); border-color:var(--border-color);">
+                <div class="user-info">
+                    <div class="user-avatar" id="topAvatar">A</div>
+                    <span id="topUserName" class="user-name-label">User</span>
+                </div>
+                <button class="btn-logout" onclick="handleLogout()">
                     <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
                 </button>
             </div>
@@ -759,7 +771,7 @@
                     googleStatus.className = 'oauth-status';
                     googleStatus.textContent = 'ยังไม่ได้เชื่อมต่อบัญชี';
                     googleAction.innerHTML = `
-                        <a href="${API}/api/auth/google?token=${TOKEN}&return_to=/account.html" class="btn-connect-google">
+                        <a href="${API}/api/auth/google?token=${TOKEN}&return_to=/account.html&client_origin=${encodeURIComponent(window.location.origin)}" class="btn-connect-google">
                             <i class="fa-brands fa-google" style="color:var(--google-red);"></i> เชื่อมต่อกับ Google
                         </a>
                     `;
@@ -780,7 +792,7 @@
                     fbStatus.className = 'oauth-status';
                     fbStatus.textContent = 'ยังไม่ได้เชื่อมต่อบัญชี';
                     fbAction.innerHTML = `
-                        <a href="${API}/api/auth/facebook?token=${TOKEN}&return_to=/account.html" class="btn-connect-facebook">
+                        <a href="${API}/api/auth/facebook?token=${TOKEN}&return_to=/account.html&client_origin=${encodeURIComponent(window.location.origin)}" class="btn-connect-facebook">
                             <i class="fa-brands fa-facebook-f"></i> เชื่อมต่อกับ Facebook
                         </a>
                     `;
@@ -886,8 +898,8 @@
             } else if (urlParams.get('linked') === 'facebook') {
                 showToast('success', 'เชื่อมต่อบัญชี Facebook สำเร็จเรียบร้อย!');
                 window.history.replaceState({}, document.title, window.location.pathname);
-            } else if (urlParams.get('error') === 'oauth_disabled') {
-                showToast('info', 'ระบบ OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน oauth.config.js');
+            } else if (urlParams.get('error') === 'google_oauth_not_configured' || urlParams.get('error') === 'oauth_disabled') {
+                showToast('info', 'Google OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน oauth.config.js หรือไฟล์ .env');
                 window.history.replaceState({}, document.title, window.location.pathname);
             } else if (urlParams.get('error')) {
                 showToast('error', 'การเชื่อมต่อบัญชีไม่สำเร็จ: ' + urlParams.get('error'));

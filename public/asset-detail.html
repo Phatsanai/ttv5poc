@@ -54,7 +54,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Prompt', sans-serif;
+            font-family: var(--font-family-base, 'Prompt', sans-serif);
             transition: background-color 0.2s, color 0.2s, border-color 0.2s;
         }
 
@@ -315,7 +315,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-family: 'Prompt', sans-serif;
+            font-family: inherit;
         }
 
         .btn-edit:hover {
@@ -333,7 +333,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-family: 'Prompt', sans-serif;
+            font-family: inherit;
         }
 
         .btn-save:hover {
@@ -351,7 +351,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-family: 'Prompt', sans-serif;
+            font-family: inherit;
         }
 
         .btn-cancel:hover {
@@ -369,7 +369,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-family: 'Prompt', sans-serif;
+            font-family: inherit;
             transition: opacity 0.2s;
         }
 
@@ -387,7 +387,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-family: 'Prompt', sans-serif;
+            font-family: inherit;
         }
 
         .btn-login-link:hover {
@@ -647,7 +647,7 @@
             padding: 8px 12px;
             color: var(--text-title);
             font-size: 0.88rem;
-            font-family: 'Prompt', sans-serif;
+            font-family: inherit;
             outline: none;
         }
 
@@ -669,7 +669,7 @@
             padding: 8px 12px;
             color: var(--text-title);
             font-size: 0.88rem;
-            font-family: 'Prompt', sans-serif;
+            font-family: inherit;
             outline: none;
             min-height: 80px;
             resize: vertical;
@@ -688,7 +688,7 @@
             padding: 8px 12px;
             color: var(--text-title);
             font-size: 0.88rem;
-            font-family: 'Prompt', sans-serif;
+            font-family: inherit;
             outline: none;
             cursor: pointer;
         }
@@ -785,7 +785,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            font-family: 'Prompt', sans-serif;
+            font-family: inherit;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
             margin-top: 8px;
         }
@@ -1043,6 +1043,7 @@
                         บำรุงรักษา</a></li>
                 <li class="nav-item"><a href="audit.html"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก
                         (Audit)</a></li>
+                <li class="nav-item"><a href="recycle-bin.html"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</a></li>
             </ul>
         </div>
 
@@ -1077,8 +1078,8 @@
         <!-- TOPBAR -->
         <header class="topbar">
             <div class="topbar-left">
-                <a class="btn-back" onclick="goBack()" href="javascript:void(0)" id="btnBack">
-                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
+                <a href="dashboard.html" class="btn-back" id="btnBack">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
                 </a>
                 <span class="page-title" id="pageTitle">รายละเอียดทรัพย์สิน</span>
             </div>
@@ -1136,6 +1137,43 @@
          ========================================================= -->
     <div class="toast-container" id="toastContainer"></div>
 
+    <!-- Modal เลือกแหล่งรูปภาพ (Camera vs Gallery) -->
+    <div class="modal" id="photoSourceModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; width: 90%; max-width: 420px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-title); font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-camera-rotate" style="color: var(--accent-blue);"></i> เลือกแหล่งที่มาของรูปภาพ
+                </h3>
+                <button type="button" onclick="closePhotoSourceModal()" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer;">&times;</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                เลือกวิธีเพิ่มรูปภาพสำหรับอุปกรณ์นี้ (รองรับการบีบอัดภาพอัตโนมัติ)
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button type="button" onclick="chooseUploadSource('camera')" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-title); cursor: pointer; text-align: left; font-size: 0.95rem; font-weight: 500; transition: all 0.2s;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-title);">ถ่ายรูปจากกล้องโดยตรง</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">เปิดกล้องบนมือถือหรือเว็บแคมเพื่อถ่ายภาพทันที</div>
+                    </div>
+                </button>
+
+                <button type="button" onclick="chooseUploadSource('gallery')" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-title); cursor: pointer; text-align: left; font-size: 0.95rem; font-weight: 500; transition: all 0.2s;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: var(--accent-green); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                        <i class="fa-solid fa-images"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-title);">เลือกจากคลังภาพ / ไฟล์ในเครื่อง</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">เลือกภาพ JPG, PNG, WEBP จากอัลบั้มหรือโฟลเดอร์</div>
+                    </div>
+                </button>
+            </div>
+            <button type="button" onclick="closePhotoSourceModal()" style="width: 100%; margin-top: 16px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.85rem;">ยกเลิก</button>
+        </div>
+    </div>
+
     <!-- Hidden file inputs for photo upload (desktop/gallery + mobile camera) -->
     <input type="file" id="photoUploadInput" multiple accept="image/*" style="display:none"
         onchange="handlePhotoUpload(event)">
@@ -1156,11 +1194,58 @@
         let pageAssetCode = null;
         let galleryPhotos = [];
         let activePhotoIdx = 0;
+        let availableCategories = [];
+
+        async function loadCategories() {
+            try {
+                const r = await fetch(getApiUrl('/api/categories'));
+                const json = await r.json();
+                if (json.success && Array.isArray(json.data)) {
+                    availableCategories = json.data;
+                }
+            } catch (err) {
+                console.warn('loadCategories warning:', err.message);
+            }
+        }
+
+        async function promptAddNewCategory(targetSelectId) {
+            const name = window.prompt('ระบุชื่อหมวดหมู่ใหม่ (เช่น Laptop, จอคอม, สาย HDMI, กล้อง, ไมค์):');
+            if (!name || !name.trim()) return;
+            try {
+                const res = await fetch(getApiUrl('/api/categories'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category_name: name.trim() })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    await loadCategories();
+                    const targetSelect = document.getElementById(targetSelectId);
+                    if (targetSelect) {
+                        targetSelect.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>' + 
+                            availableCategories.map(c => `<option value="${escapeHtml(c.category_name)}" ${c.category_name.toLowerCase() === name.trim().toLowerCase() ? 'selected' : ''}>${escapeHtml(c.category_name)}</option>`).join('');
+                        targetSelect.value = data.category ? data.category.category_name : name.trim();
+                    }
+                    if (typeof showToast === 'function') {
+                        showToast(`เพิ่มหมวดหมู่ "${name.trim()}" สำเร็จ`, 'success');
+                    } else {
+                        alert(`เพิ่มหมวดหมู่ "${name.trim()}" สำเร็จ`);
+                    }
+                } else {
+                    alert(data.message || 'ไม่สามารถเพิ่มหมวดหมู่ได้');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+            }
+        }
+
 
         // ============================================================
         //  INIT
         // ============================================================
         window.addEventListener('DOMContentLoaded', async () => {
+            await loadCategories();
             const urlParams = new URLSearchParams(location.search);
             pageAssetCode = urlParams.get('id') || urlParams.get('code') || '';
 
@@ -1173,8 +1258,8 @@
                         const data = await r.json();
                         currentUser = data.user;
                         isAdmin = (currentUser.role === 'admin');
-                        canEdit = ['admin', 'editor'].includes(currentUser.role);
-                        canDelete = (currentUser.role === 'admin');
+                        canEdit = ['admin', 'manager', 'editor'].includes(currentUser.role);
+                        canDelete = ['admin', 'manager'].includes(currentUser.role);
                     } else {
                         // Token หมดอายุ
                         localStorage.removeItem('auth_token');
@@ -1199,6 +1284,10 @@
             // โหลดข้อมูลทรัพย์สิน
             await loadPage();
         });
+
+        window.goBack = function() {
+            window.location.href = 'dashboard.html';
+        };
 
         function configureAuthUI() {
             const sidebar = document.getElementById('mainSidebar');
@@ -1380,7 +1469,7 @@
                 { label: 'รหัสทรัพย์สิน', icon: 'fa-barcode', value: asset.asset_code, key: 'asset_code', locked: true },
                 { label: 'ชื่ออุปกรณ์', icon: 'fa-tag', value: asset.name, key: 'name' },
                 { label: 'Serial Number', icon: 'fa-fingerprint', value: asset.serial_number, key: 'serial_number' },
-                { label: 'หมวดหมู่', icon: 'fa-layer-group', value: asset.category, key: 'category' },
+                { label: 'หมวดหมู่', icon: 'fa-layer-group', value: asset.category, key: 'category', isCategory: true },
                 { label: 'แผนก', icon: 'fa-building', value: asset.department, key: 'department' },
                 { label: 'ผู้ถือครอง', icon: 'fa-user', value: asset.holder, key: 'holder' },
                 { label: 'วันที่รับเข้า', icon: 'fa-calendar-alt', value: formatDate(asset.received_date), key: 'received_date', isDate: true, rawValue: asset.received_date },
@@ -1395,6 +1484,23 @@
                         valueHtml = `<input class="form-input" value="${escapeHtml(f.value)}" disabled>`;
                     } else if (f.isTextarea) {
                         valueHtml = `<textarea class="form-textarea" data-key="${f.key}" id="edit_${f.key}">${escapeHtml(f.value || '')}</textarea>`;
+                    } else if (f.isCategory) {
+                        let opts = '<option value="">-- เลือกหมวดหมู่ --</option>';
+                        let found = false;
+                        availableCategories.forEach(c => {
+                            const isSel = (f.value && f.value.toLowerCase() === c.category_name.toLowerCase()) ? 'selected' : '';
+                            if (isSel) found = true;
+                            opts += `<option value="${escapeHtml(c.category_name)}" ${isSel}>${escapeHtml(c.category_name)}</option>`;
+                        });
+                        if (f.value && !found) {
+                            opts += `<option value="${escapeHtml(f.value)}" selected>${escapeHtml(f.value)}</option>`;
+                        }
+                        valueHtml = `<div style="display:flex; gap:6px;">
+                            <select class="form-select" data-key="${f.key}" id="edit_${f.key}" style="flex:1;">${opts}</select>
+                            <button type="button" class="btn btn-secondary" onclick="promptAddNewCategory('edit_${f.key}')" title="เพิ่มหมวดหมู่ใหม่" style="padding:0 12px; font-size:12px; white-space:nowrap;">
+                                <i class="fa-solid fa-plus"></i> เพิ่ม
+                            </button>
+                        </div>`;
                     } else if (f.isStatus) {
                         valueHtml = `<select class="form-select" data-key="${f.key}" id="edit_${f.key}">
                             <option value="active"      ${f.value === 'active' ? 'selected' : ''}>ใช้งานปกติ</option>
@@ -1492,16 +1598,16 @@
         // ============================================================
         async function deleteCurrentAsset() {
             if (!currentUser) {
-                if (confirm('คุณต้องเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบ (Admin) ก่อนทำการลบข้อมูลทรัพย์สิน\n\nต้องการไปที่หน้าเข้าสู่ระบบทันทีหรือไม่?')) {
+                if (confirm('คุณต้องเข้าสู่ระบบก่อนทำการย้ายข้อมูลทรัพย์สินลงถังขยะ\n\nต้องการไปที่หน้าเข้าสู่ระบบทันทีหรือไม่?')) {
                     window.location.href = `index.html?return_to=${encodeURIComponent(window.location.href)}`;
                 }
                 return;
             }
             if (!canDelete) {
-                showToast('error', 'สิทธิ์ไม่เพียงพอ: เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นจึงจะลบทรัพย์สินได้');
+                showToast('error', 'สิทธิ์ไม่เพียงพอ: เฉพาะผู้ดูแลระบบ (Admin) หรือ ผู้จัดการ (Manager) เท่านั้นจึงจะย้ายลงถังขยะได้');
                 return;
             }
-            if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบทรัพย์สิน "${currentAsset.asset_code} - ${currentAsset.name || ''}"?\n\nคำเตือน: ข้อมูลนี้จะถูกลบออกจากฐานข้อมูลถาวร!`)) {
+            if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการย้ายทรัพย์สิน "${currentAsset.asset_code} - ${currentAsset.name || ''}" ลงในถังขยะ (Recycle Bin)?\n\n(คุณสามารถกู้คืนกลับมาสถานะเดิมได้จากหน้าถังขยะ)`)) {
                 return;
             }
 
@@ -1514,7 +1620,7 @@
                 });
                 const data = await r.json();
                 if (!r.ok || !data.success) throw new Error(data.message || 'ลบไม่สำเร็จ');
-                showToast('success', 'ลบทรัพย์สินเรียบร้อยแล้ว');
+                showToast('success', data.message || 'ย้ายทรัพย์สินลงในถังขยะเรียบร้อยแล้ว');
                 setTimeout(() => {
                     window.location.href = 'asset-list.html';
                 }, 1000);
@@ -1595,20 +1701,15 @@
                                     </div>
                                     <div class="form-group" style="margin-bottom:0;">
                                         <label class="form-label"><i class="fa-solid fa-layer-group"></i> หมวดหมู่</label>
-                                        <select class="form-select" id="reg_category">
-                                            <option value="">-- เลือกหมวดหมู่ --</option>
-                                            <option>คอมพิวเตอร์</option>
-                                            <option>จอแสดงผล</option>
-                                            <option>แท็บเล็ต</option>
-                                            <option>สมาร์ทโฟน</option>
-                                            <option>เซิร์ฟเวอร์</option>
-                                            <option>อุปกรณ์เครือข่าย</option>
-                                            <option>เครื่องพิมพ์</option>
-                                            <option>เครื่องใช้ไฟฟ้า</option>
-                                            <option>เฟอร์นิเจอร์</option>
-                                            <option>ยานพาหนะ</option>
-                                            <option>อื่นๆ</option>
-                                        </select>
+                                        <div style="display:flex; gap:6px;">
+                                            <select class="form-select" id="reg_category" style="flex:1;">
+                                                <option value="">-- เลือกหมวดหมู่ --</option>
+                                                ${availableCategories.map(c => `<option value="${escapeHtml(c.category_name)}">${escapeHtml(c.category_name)}</option>`).join('')}
+                                            </select>
+                                            <button type="button" class="btn btn-secondary" onclick="promptAddNewCategory('reg_category')" title="เพิ่มหมวดหมู่ใหม่" style="padding:0 12px; white-space:nowrap; font-size:13px;">
+                                                <i class="fa-solid fa-plus"></i> เพิ่ม
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1755,13 +1856,32 @@
         }
 
         function triggerPhotoUpload(mode) {
-            // mode: 'camera' | 'gallery' | undefined (auto-detect)
-            const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-            if (mode === 'camera' || (!mode && isMobile)) {
-                // Prefer dedicated camera input (capture="environment")
+            if (mode === 'camera') {
+                document.getElementById('photoCameraInput').click();
+                return;
+            }
+            if (mode === 'gallery') {
+                document.getElementById('photoUploadInput').click();
+                return;
+            }
+            const modal = document.getElementById('photoSourceModal');
+            if (modal) {
+                modal.style.display = 'flex';
+            } else {
+                document.getElementById('photoUploadInput').click();
+            }
+        }
+
+        function closePhotoSourceModal() {
+            const modal = document.getElementById('photoSourceModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function chooseUploadSource(source) {
+            closePhotoSourceModal();
+            if (source === 'camera') {
                 document.getElementById('photoCameraInput').click();
             } else {
-                // Desktop or explicit gallery mode → multi-file picker
                 document.getElementById('photoUploadInput').click();
             }
         }

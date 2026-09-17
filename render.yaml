@@ -1,0 +1,37 @@
+# ============================================================
+# Render Blueprint Specification (render.yaml)
+# Deploy Asset Console with Persistent Disk for SQLite Database
+# ============================================================
+services:
+  - type: web
+    name: asset-console
+    env: node
+    plan: starter
+    region: singapore # or oregon / frankfurt
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    disk:
+      name: asset-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_PATH
+        value: /data/assets.db
+      - key: UPLOADS_DIR
+        value: /data/uploads
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: OAUTH_BASE_URL
+        fromService:
+          type: web
+          name: asset-console
+          property: host

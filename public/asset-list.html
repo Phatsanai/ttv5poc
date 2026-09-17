@@ -17,7 +17,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Kanit', sans-serif;
+            font-family: var(--font-family-base, 'Kanit', sans-serif);
         }
 
         body {
@@ -527,6 +527,13 @@
                     </div>
                 </a>
             </li>
+            <li class="nav-item">
+                <a href="recycle-bin.html">
+                    <div class="nav-item-content">
+                        <i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)
+                    </div>
+                </a>
+            </li>
         </ul>
 
         <div class="nav-group-label">MANAGEMENT</div>
@@ -562,7 +569,7 @@
         <header class="topbar">
             <div>
                 <a href="dashboard.html" class="btn-back">
-                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
                 </a>
             </div>
             <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
@@ -571,8 +578,11 @@
                 </button>
                 <div class="user-info">
                     <div class="user-avatar">A</div>
-                    <span style="color: #f0f6fc; font-size: 0.9rem;">Admin User</span>
+                    <span style="color: #f0f6fc; font-size: 0.9rem;" class="user-name-label">Admin User</span>
                 </div>
+                <button class="btn-logout" onclick="logout()" title="ออกจากระบบ">
+                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                </button>
             </div>
         </header>
 
@@ -591,15 +601,12 @@
             <div class="card-box">
                 <!-- Search & Filters -->
                 <div class="filter-bar">
-                    <input type="text" class="search-input"
+                    <input type="text" class="search-input" id="searchInput" oninput="onSearchInput(this.value)"
                         placeholder="ค้นหาตามรหัสทรัพย์สิน, ชื่ออุปกรณ์, หรือ S/N...">
-                    <select class="filter-select">
+                    <select class="filter-select" id="categoryFilter" onchange="triggerFilterChange()">
                         <option value="">หมวดหมู่ทั้งหมด</option>
-                        <option value="ไอที / ออกแบบ">ไอที / ออกแบบ</option>
-                        <option value="ไอที / อุปกรณ์ต่อพ่วง">ไอที / อุปกรณ์ต่อพ่วง</option>
-                        <option value="เครื่องใช้สำนักงาน">เครื่องใช้สำนักงาน</option>
                     </select>
-                    <select class="filter-select" id="statusFilter" onchange="loadAssets(document.querySelector('.search-input').value, this.value)">
+                    <select class="filter-select" id="statusFilter" onchange="triggerFilterChange()">
                         <option value="">สถานะทั้งหมด</option>
                         <option value="active">ใช้งานปกติ</option>
                         <option value="maintenance">ส่งซ่อม</option>
@@ -640,30 +647,31 @@
             </div>
             <form onsubmit="handleAddSubmit(event)">
                 <div class="form-group">
-                    <label>รหัสทรัพย์สิน</label>
+                    <label>รหัสทรัพย์สิน <span style="color:#ef4444;">*</span></label>
                     <input type="text" class="form-control" id="add-code" placeholder="เช่น A005" required>
                 </div>
                 <div class="form-group">
-                    <label>ชื่ออุปกรณ์ / รุ่น</label>
-                    <input type="text" class="form-control" placeholder="เช่น Lenovo ThinkPad X1" required>
+                    <label>ชื่ออุปกรณ์ / รุ่น <span style="color:#ef4444;">*</span></label>
+                    <input type="text" class="form-control" id="add-name" placeholder="เช่น Lenovo ThinkPad X1" required>
                 </div>
                 <div class="form-group">
                     <label>Serial Number (S/N)</label>
-                    <input type="text" class="form-control" placeholder="เช่น SN-XXXXXXXX">
+                    <input type="text" class="form-control" id="add-sn" placeholder="เช่น SN-XXXXXXXX">
                 </div>
                 <div class="form-group">
-                    <label>หมวดหมู่</label>
-                    <select class="form-control" required>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <label style="margin-bottom:0;">หมวดหมู่ <span style="color:#ef4444;">*</span></label>
+                        <button type="button" onclick="openQuickAddCategoryModal('add-category')" style="background:none;border:none;color:#388bfd;font-size:0.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                            <i class="fa-solid fa-plus-circle"></i> + เพิ่มหมวดหมู่ใหม่
+                        </button>
+                    </div>
+                    <select class="form-control" id="add-category" required>
                         <option value="">-- เลือกหมวดหมู่ --</option>
-                        <option value="ไอที / ออกแบบ">ไอที / ออกแบบ</option>
-                        <option value="ไอที / อุปกรณ์ต่อพ่วง">ไอที / อุปกรณ์ต่อพ่วง</option>
-                        <option value="ไอที / พกพา">ไอที / พกพา</option>
-                        <option value="เครื่องใช้สำนักงาน">เครื่องใช้สำนักงาน</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>ผู้ครอบครอง / แผนก</label>
-                    <input type="text" class="form-control" placeholder="ระบุชื่อผู้ใช้งาน">
+                    <input type="text" class="form-control" id="add-owner" placeholder="ระบุชื่อผู้ใช้งาน">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" onclick="closeModal('addAssetModal')">ยกเลิก</button>
@@ -695,8 +703,15 @@
                     <input type="text" class="form-control" id="edit-sn">
                 </div>
                 <div class="form-group">
-                    <label>หมวดหมู่</label>
-                    <input type="text" class="form-control" id="edit-category" required>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <label style="margin-bottom:0;">หมวดหมู่ <span style="color:#ef4444;">*</span></label>
+                        <button type="button" onclick="openQuickAddCategoryModal('edit-category')" style="background:none;border:none;color:#388bfd;font-size:0.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                            <i class="fa-solid fa-plus-circle"></i> + เพิ่มหมวดหมู่ใหม่
+                        </button>
+                    </div>
+                    <select class="form-control" id="edit-category" required>
+                        <option value="">-- เลือกหมวดหมู่ --</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>ผู้ครอบครอง</label>
@@ -713,6 +728,33 @@
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" onclick="closeModal('editAssetModal')">ยกเลิก</button>
                     <button type="submit" class="btn-primary">อัปเดตข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal เพิ่มหมวดหมู่ด่วน (Quick Add Category) -->
+    <div class="modal" id="quickAddCategoryModal" style="z-index: 1005;">
+        <div class="modal-content" style="max-width: 440px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-folder-plus" style="color:var(--accent-blue, #388bfd);"></i> เพิ่มหมวดหมู่ใหม่</h3>
+                <button class="close-btn" onclick="closeModal('quickAddCategoryModal')">&times;</button>
+            </div>
+            <form onsubmit="handleQuickAddCategorySubmit(event)">
+                <div class="form-group">
+                    <label>ชื่อหมวดหมู่ใหม่ <span style="color:#ef4444;">*</span></label>
+                    <input type="text" class="form-control" id="quickCategoryName" placeholder="เช่น Laptop, จอคอม, สาย HDMI, กล้อง" required>
+                </div>
+                <div class="form-group">
+                    <label>คำอธิบายเพิ่มเติม (ไม่บังคับ)</label>
+                    <input type="text" class="form-control" id="quickCategoryDesc" placeholder="รายละเอียดของหมวดหมู่นี้">
+                </div>
+                <div id="quickCategoryError" style="color:#ff7b72;font-size:0.85rem;margin-bottom:12px;display:none;"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal('quickAddCategoryModal')">ยกเลิก</button>
+                    <button type="submit" class="btn-primary" id="btnSaveQuickCategory">
+                        <i class="fa-solid fa-check"></i> บันทึกและเลือก
+                    </button>
                 </div>
             </form>
         </div>
@@ -736,17 +778,138 @@
             window.location.href = 'index.html';
         }
 
+        // ── Load Categories from API ─────────────────────────────
+        let dynamicCategories = [];
+        let targetCategorySelectId = 'add-category';
+
+        function openQuickAddCategoryModal(selectId) {
+            targetCategorySelectId = selectId || 'add-category';
+            document.getElementById('quickCategoryName').value = '';
+            document.getElementById('quickCategoryDesc').value = '';
+            document.getElementById('quickCategoryError').style.display = 'none';
+            document.getElementById('quickAddCategoryModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('quickCategoryName')?.focus(), 100);
+        }
+
+        async function handleQuickAddCategorySubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('quickCategoryName').value.trim();
+            const desc = document.getElementById('quickCategoryDesc').value.trim();
+            const errEl = document.getElementById('quickCategoryError');
+            const btn = document.getElementById('btnSaveQuickCategory');
+
+            if (!name) return;
+            errEl.style.display = 'none';
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+            try {
+                const res = await fetch(getApiUrl('/api/categories'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({ category_name: name, description: desc })
+                });
+                const json = await res.json();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> บันทึกและเลือก';
+
+                if (!json.success && res.status !== 409) {
+                    errEl.textContent = json.message || 'เพิ่มหมวดหมู่ไม่สำเร็จ';
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                // Refresh dropdowns and select the new category
+                await loadDynamicCategories();
+                const targetSelect = document.getElementById(targetCategorySelectId);
+                if (targetSelect) {
+                    targetSelect.value = name;
+                }
+                closeModal('quickAddCategoryModal');
+            } catch(err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> บันทึกและเลือก';
+                errEl.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+                errEl.style.display = 'block';
+            }
+        }
+
+        async function loadDynamicCategories() {
+            try {
+                const r = await fetch(getApiUrl('/api/categories'));
+                const res = await r.json();
+                if (!res.success || !Array.isArray(res.data)) return;
+
+                dynamicCategories = res.data;
+
+                // 1. Populate Filter Select
+                const filterEl = document.getElementById('categoryFilter');
+                if (filterEl) {
+                    const currentVal = filterEl.value;
+                    let opts = '<option value="">หมวดหมู่ทั้งหมด</option>';
+                    dynamicCategories.forEach(c => {
+                        opts += `<option value="${escHtml(c.category_name)}">${escHtml(c.category_name)}</option>`;
+                    });
+                    filterEl.innerHTML = opts;
+                    if (currentVal) filterEl.value = currentVal;
+                }
+
+                // 2. Populate Add Modal Select
+                const addCatEl = document.getElementById('add-category');
+                if (addCatEl) {
+                    const curAddVal = addCatEl.value;
+                    let opts = '<option value="">-- เลือกหมวดหมู่ --</option>';
+                    dynamicCategories.forEach(c => {
+                        opts += `<option value="${escHtml(c.category_name)}">${escHtml(c.category_name)}</option>`;
+                    });
+                    addCatEl.innerHTML = opts;
+                    if (curAddVal) addCatEl.value = curAddVal;
+                }
+
+                // 3. Populate Edit Modal Select
+                const editCatEl = document.getElementById('edit-category');
+                if (editCatEl) {
+                    const curEditVal = editCatEl.value;
+                    let opts = '<option value="">-- เลือกหมวดหมู่ --</option>';
+                    dynamicCategories.forEach(c => {
+                        opts += `<option value="${escHtml(c.category_name)}">${escHtml(c.category_name)}</option>`;
+                    });
+                    editCatEl.innerHTML = opts;
+                    if (curEditVal) editCatEl.value = curEditVal;
+                }
+            } catch (err) {
+                console.warn('loadDynamicCategories warning:', err.message);
+            }
+        }
+
+        function triggerFilterChange() {
+            const searchVal = document.getElementById('searchInput')?.value?.trim() || '';
+            const statusVal = document.getElementById('statusFilter')?.value || '';
+            const catVal = document.getElementById('categoryFilter')?.value || '';
+            loadAssets(searchVal, statusVal, 1, catVal);
+        }
+
         // ── Load Assets from API ──────────────────────────────────
         let currentPage = 1;
         const PAGE_LIMIT = 50;
 
-        async function loadAssets(search = '', status = '', page = 1) {
+        async function loadAssets(search = '', status = '', page = 1, category = '') {
             const token = requireAuth();
             if (!token) return;
 
+            currentPage = page;
+            const searchVal = search !== '' ? search : (document.getElementById('searchInput')?.value?.trim() || '');
+            const statusVal = status !== '' ? status : (document.getElementById('statusFilter')?.value || '');
+            const catVal    = category !== '' ? category : (document.getElementById('categoryFilter')?.value || '');
+
             const params = new URLSearchParams({ page, limit: PAGE_LIMIT });
-            if (search) params.set('search', search);
-            if (status) params.set('status', status);
+            if (searchVal) params.set('search', searchVal);
+            if (statusVal) params.set('status', statusVal);
+            if (catVal)    params.set('category', catVal);
 
             try {
                 const r = await fetch(getApiUrl(`/api/assets?${params}`), {
@@ -843,19 +1006,19 @@
 
         async function deleteAsset(id, code) {
             const currentUser = getCurrentUser();
-            if (!currentUser || currentUser.role !== 'admin') {
+            if (!currentUser || !['admin', 'manager'].includes(currentUser.role)) {
                 if (!currentUser || !currentUser.username) {
-                    if (confirm('คุณต้องเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบ (Admin) ก่อนทำการลบข้อมูลทรัพย์สิน\n\nต้องการไปที่หน้าเข้าสู่ระบบทันทีหรือไม่?')) {
+                    if (confirm('คุณต้องเข้าสู่ระบบก่อนทำการย้ายข้อมูลทรัพย์สินลงถังขยะ\n\nต้องการไปที่หน้าเข้าสู่ระบบทันทีหรือไม่?')) {
                         window.location.href = `index.html?return_to=${encodeURIComponent(window.location.href)}`;
                     }
                 } else {
-                    alert('สิทธิ์ไม่เพียงพอ: เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นจึงจะลบข้อมูลทรัพย์สินได้');
+                    alert('สิทธิ์ไม่เพียงพอ: เฉพาะผู้ดูแลระบบ (Admin) หรือ ผู้จัดการ (Manager) เท่านั้นจึงจะย้ายข้อมูลลงถังขยะได้');
                 }
                 return;
             }
 
             const targetLabel = code ? `${code}` : `ID: ${id}`;
-            if (!confirm(`คุณต้องการลบทรัพย์สิน "${targetLabel}" (ID: ${id}) ออกจากระบบจริงหรือไม่?\n\nการดำเนินการนี้จะลบข้อมูลออกจากฐานข้อมูลทันทีและไม่สามารถเรียกคืนได้`)) {
+            if (!confirm(`คุณต้องการย้ายทรัพย์สิน "${targetLabel}" (ID: ${id}) ลงในถังขยะ (Recycle Bin) หรือไม่?\n\n(คุณสามารถกู้คืนกลับมาสถานะเดิมได้จากหน้าถังขยะ)`)) {
                 return;
             }
 
@@ -872,7 +1035,7 @@
                 });
                 const data = await r.json();
                 if (!r.ok || !data.success) throw new Error(data.message || 'ลบไม่สำเร็จ');
-                alert(`ลบทรัพย์สิน "${targetLabel}" เรียบร้อยแล้ว`);
+                alert(data.message || `ย้ายทรัพย์สิน "${targetLabel}" ลงในถังขยะเรียบร้อยแล้ว`);
                 // อัปเดตตารางอัตโนมัติทันที
                 const searchVal = document.getElementById('searchInput')?.value?.trim() || '';
                 const statusVal = document.getElementById('statusFilter')?.value || '';
@@ -896,7 +1059,19 @@
             document.getElementById('edit-code').value = code;
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-sn').value = sn;
-            document.getElementById('edit-category').value = category;
+            
+            const catSelect = document.getElementById('edit-category');
+            if (catSelect) {
+                // Ensure the category exists in the dropdown options
+                if (category && !Array.from(catSelect.options).some(o => o.value === category)) {
+                    const opt = document.createElement('option');
+                    opt.value = category;
+                    opt.textContent = category;
+                    catSelect.appendChild(opt);
+                }
+                catSelect.value = category || '';
+            }
+
             document.getElementById('edit-owner').value = owner;
             document.getElementById('edit-status').value = status;
             document.getElementById('editAssetModal').style.display = 'flex';
@@ -1004,7 +1179,8 @@
                 }
             } catch(e) {}
 
-            // Load assets
+            // Load categories and assets
+            await loadDynamicCategories();
             await loadAssets();
         };
     </script>

@@ -1,17 +1,45 @@
 /**
  * Asset Console Enterprise Edition
- * Global Theme Manager (Dark / Light Mode)
- * - Persists theme selection across all pages in localStorage
+ * Global Theme & Typography Manager
+ * - Persists theme selection (Dark / Light) in localStorage
+ * - Persists typography selection (Font Family & Base Font Size) in localStorage
  * - Runs synchronously in <head> to prevent FOUC (flash of unstyled content)
  * - Synchronizes across browser tabs via storage events
  */
 (function () {
     'use strict';
 
+    // ── Theme Configuration ─────────────────────────────────────
     const THEME_KEY = 'theme';
     const THEME_DARK = 'dark';
     const THEME_LIGHT = 'light';
 
+    // ── Typography Configuration ────────────────────────────────
+    const FONT_FAMILY_KEY = 'app_font_family';
+    const FONT_SIZE_KEY = 'app_font_size';
+
+    const DEFAULT_FONT = 'kanit';
+    const DEFAULT_SIZE = 'normal';
+
+    const VALID_FONTS = ['kanit', 'prompt', 'sarabun', 'inter', 'noto'];
+    const VALID_SIZES = ['small', 'normal', 'large', 'xlarge'];
+
+    const FONT_STACKS = {
+        kanit: "'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        prompt: "'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        sarabun: "'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        inter: "'Inter', 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        noto: "'Noto Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+    };
+
+    const FONT_SIZES = {
+        small: '13.5px',
+        normal: '15px',
+        large: '16.5px',
+        xlarge: '18px'
+    };
+
+    // ── Theme Functions ─────────────────────────────────────────
     function getSavedTheme() {
         try {
             return localStorage.getItem(THEME_KEY) === THEME_LIGHT ? THEME_LIGHT : THEME_DARK;
@@ -49,14 +77,14 @@
         const iconColor = isLight ? '#f59e0b' : '';
         const titleText = isLight ? 'สลับเป็นโหมดมืด (Dark Mode)' : 'สลับเป็นโหมดสว่าง (Light Mode)';
 
-        // 1. All elements with id 'themeIcon'
+        // Update all theme icons across the DOM
         const themeIcons = document.querySelectorAll('#themeIcon, .theme-icon');
         themeIcons.forEach(icon => {
             icon.className = iconClass;
             icon.style.color = iconColor;
         });
 
-        // 2. All toggle buttons
+        // Update all toggle buttons
         const toggleButtons = document.querySelectorAll('.btn-theme-toggle, .theme-toggle-btn, .theme-toggle, #themeToggleBtn, #themeBtn');
         toggleButtons.forEach(btn => {
             btn.setAttribute('title', titleText);
@@ -68,11 +96,51 @@
         });
     }
 
-    // Apply theme immediately upon script evaluation (in <head>)
+    // ── Typography Functions ────────────────────────────────────
+    function getSavedFont() {
+        try {
+            const saved = (localStorage.getItem(FONT_FAMILY_KEY) || '').toLowerCase();
+            return VALID_FONTS.includes(saved) ? saved : DEFAULT_FONT;
+        } catch (e) {
+            return DEFAULT_FONT;
+        }
+    }
+
+    function getSavedSize() {
+        try {
+            const saved = (localStorage.getItem(FONT_SIZE_KEY) || '').toLowerCase();
+            return VALID_SIZES.includes(saved) ? saved : DEFAULT_SIZE;
+        } catch (e) {
+            return DEFAULT_SIZE;
+        }
+    }
+
+    function applyTypography(font, size) {
+        const f = VALID_FONTS.includes(font) ? font : DEFAULT_FONT;
+        const s = VALID_SIZES.includes(size) ? size : DEFAULT_SIZE;
+        const root = document.documentElement;
+
+        root.setAttribute('data-font', f);
+        root.setAttribute('data-font-size', s);
+        root.style.setProperty('--font-family-base', FONT_STACKS[f]);
+        root.style.setProperty('--font-size-base', FONT_SIZES[s]);
+        root.style.fontSize = FONT_SIZES[s];
+
+        if (document.body) {
+            document.body.setAttribute('data-font', f);
+            document.body.setAttribute('data-font-size', s);
+        }
+    }
+
+    // ── Synchronous Init in <head> ──────────────────────────────
     const initialTheme = getSavedTheme();
     applyThemeClasses(initialTheme);
 
-    // Global Theme Object & Functions
+    const initialFont = getSavedFont();
+    const initialSize = getSavedSize();
+    applyTypography(initialFont, initialSize);
+
+    // ── Global Theme API ────────────────────────────────────────
     window.getTheme = function () {
         return getSavedTheme();
     };
@@ -111,11 +179,68 @@
         updateIcons: window.updateThemeIcons
     };
 
-    // When DOM is parsed or fully loaded, ensure body classes and icons are up to date
+    // ── Global Typography API ───────────────────────────────────
+    window.getFontFamily = function () {
+        return getSavedFont();
+    };
+
+    window.setFontFamily = function (font) {
+        const target = (font || '').toLowerCase();
+        if (!VALID_FONTS.includes(target)) return;
+        try {
+            localStorage.setItem(FONT_FAMILY_KEY, target);
+        } catch (e) { }
+        applyTypography(target, getSavedSize());
+        window.dispatchEvent(new CustomEvent('typographychange', {
+            detail: { fontFamily: target, fontSize: getSavedSize() }
+        }));
+    };
+
+    window.getFontSize = function () {
+        return getSavedSize();
+    };
+
+    window.setFontSize = function (size) {
+        const target = (size || '').toLowerCase();
+        if (!VALID_SIZES.includes(target)) return;
+        try {
+            localStorage.setItem(FONT_SIZE_KEY, target);
+        } catch (e) { }
+        applyTypography(getSavedFont(), target);
+        window.dispatchEvent(new CustomEvent('typographychange', {
+            detail: { fontFamily: getSavedFont(), fontSize: target }
+        }));
+    };
+
+    window.resetTypography = function () {
+        try {
+            localStorage.removeItem(FONT_FAMILY_KEY);
+            localStorage.removeItem(FONT_SIZE_KEY);
+        } catch (e) { }
+        applyTypography(DEFAULT_FONT, DEFAULT_SIZE);
+        window.dispatchEvent(new CustomEvent('typographychange', {
+            detail: { fontFamily: DEFAULT_FONT, fontSize: DEFAULT_SIZE }
+        }));
+    };
+
+    window.TypographyManager = {
+        getFontFamily: window.getFontFamily,
+        setFontFamily: window.setFontFamily,
+        getFontSize: window.getFontSize,
+        setFontSize: window.setFontSize,
+        resetTypography: window.resetTypography,
+        applyTypography: applyTypography,
+        getAvailableFonts: function () { return VALID_FONTS.slice(); },
+        getAvailableSizes: function () { return VALID_SIZES.slice(); }
+    };
+
+    // ── DOM Ready / Load Handler ────────────────────────────────
     function onReady() {
         const currentTheme = getSavedTheme();
         applyThemeClasses(currentTheme);
         updateIcons(currentTheme);
+
+        applyTypography(getSavedFont(), getSavedSize());
     }
 
     if (document.readyState === 'loading') {
@@ -126,14 +251,21 @@
 
     window.addEventListener('load', () => {
         updateIcons(getSavedTheme());
+        applyTypography(getSavedFont(), getSavedSize());
     });
 
-    // Multi-tab sync
+    // ── Multi-Tab Storage Synchronization ───────────────────────
     window.addEventListener('storage', function (e) {
         if (e.key === THEME_KEY) {
             const newTheme = e.newValue === THEME_LIGHT ? THEME_LIGHT : THEME_DARK;
             applyThemeClasses(newTheme);
             updateIcons(newTheme);
+        } else if (e.key === FONT_FAMILY_KEY || e.key === FONT_SIZE_KEY) {
+            applyTypography(getSavedFont(), getSavedSize());
+            window.dispatchEvent(new CustomEvent('typographychange', {
+                detail: { fontFamily: getSavedFont(), fontSize: getSavedSize() }
+            }));
         }
     });
 })();
+

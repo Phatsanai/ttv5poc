@@ -16,25 +16,26 @@
     <style>
         :root {
             --bg-main: #0b0f19;
-            --bg-card: #111827;
-            --bg-input: #0e131f;
-            --border-color: #1f2937;
+            --bg-card: #141b2a;
+            --bg-input: #101626;
+            --border-color: #2d3852;
             --text-title: #f9fafb;
-            --text-body: #9ca3af;
-            --text-muted: #6b7280;
-            --accent-blue: #3b82f6;
-            --accent-blue-hover: #2563eb;
+            --text-body: #cbd5e1;
+            --text-muted: #808c9f;
+            --accent-blue: var(--primary-color, #2563eb);
+            --accent-blue-hover: var(--primary-hover, #1d4ed8);
             --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
-        body.light-mode {
+        body.light-mode,
+        html.light-theme {
             --bg-main: #f8fafc;
             --bg-card: #ffffff;
-            --bg-input: #f1f5f9;
-            --border-color: #e2e8f0;
+            --bg-input: #ffffff;
+            --border-color: #cbd5e1;
             --text-title: #0f172a;
-            --text-body: #475569;
-            --text-muted: #94a3b8;
+            --text-body: #334155;
+            --text-muted: #64748b;
             --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
@@ -42,7 +43,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Prompt', sans-serif;
+            font-family: var(--font-family-base, 'Prompt', sans-serif);
             transition: background-color 0.2s, border-color 0.2s, color 0.2s;
         }
 
@@ -80,11 +81,8 @@
             pointer-events: none;
         }
 
-        /* Theme Toggle Button Top Right */
+        /* Theme Toggle Button */
         .btn-theme-toggle {
-            position: absolute;
-            top: 24px;
-            right: 24px;
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
             color: var(--text-body);
@@ -96,7 +94,6 @@
             align-items: center;
             justify-content: center;
             font-size: 1.1rem;
-            z-index: 10;
         }
 
         .btn-theme-toggle:hover {
@@ -241,7 +238,7 @@
         /* Submit Button */
         .btn-submit {
             width: 100%;
-            background-color: var(--accent-blue);
+            background-color: var(--primary-color, #2563eb);
             color: white;
             border: none;
             padding: 12px;
@@ -253,11 +250,13 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+            box-shadow: 0 4px 12px var(--primary-light, rgba(37, 99, 235, 0.25));
+            transition: all 0.2s ease;
         }
 
         .btn-submit:hover {
-            background-color: var(--accent-blue-hover);
+            background-color: var(--primary-hover, #1d4ed8);
+            box-shadow: 0 6px 16px var(--primary-glow, rgba(37, 99, 235, 0.35));
         }
 
         /* OAuth Social Login */
@@ -348,10 +347,12 @@
     <div class="glow-bg"></div>
     <div class="glow-bg-bottom"></div>
 
-    <!-- Theme Switcher -->
-    <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
-        <i class="fa-solid fa-moon" id="themeIcon"></i>
-    </button>
+    <!-- Theme Switcher & Color Picker Controls -->
+    <div style="position: absolute; top: 24px; right: 24px; display: flex; align-items: center; gap: 8px; z-index: 100;">
+        <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
+            <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+    </div>
 
     <!-- Login Container Box -->
     <div class="login-card">
@@ -508,10 +509,11 @@
         // 4. โหลดข้อมูลเมื่อเปิดหน้าเว็บ (ดึงรหัสผ่านที่เคยจำไว้)
         window.onload = async function () {
             // ปรับแต่งลิงก์ OAuth ให้ชี้ไปยัง Backend Server ตาม API_BASE_URL
+            const clientOriginParam = `&client_origin=${encodeURIComponent(window.location.origin)}`;
             const googleBtn = document.getElementById('btnGoogleLogin');
-            if (googleBtn) googleBtn.href = getApiUrl('/api/auth/google?return_to=/dashboard.html');
+            if (googleBtn) googleBtn.href = getApiUrl(`/api/auth/google?return_to=/dashboard.html${clientOriginParam}`);
             const fbBtn = document.getElementById('btnFacebookLogin');
-            if (fbBtn) fbBtn.href = getApiUrl('/api/auth/facebook?return_to=/dashboard.html');
+            if (fbBtn) fbBtn.href = getApiUrl(`/api/auth/facebook?return_to=/dashboard.html${clientOriginParam}`);
 
             // ตรวจสอบ query string สำหรับ OAuth callback และข้อผิดพลาด
             const params = new URLSearchParams(window.location.search);
@@ -533,7 +535,8 @@
 
             if (oauthError) {
                 const errorMsgMap = {
-                    oauth_disabled: 'ระบบ Social Login ยังไม่ได้ตั้งค่า Client ID / Secret ใน oauth.config.js',
+                    google_oauth_not_configured: 'Google OAuth ยังไม่ได้ตั้งค่า (โปรดใส่ GOOGLE_CLIENT_ID และ GOOGLE_CLIENT_SECRET ใน oauth.config.js หรือไฟล์ .env)',
+                    oauth_disabled: 'ระบบ Social Login ยังไม่ได้ตั้งค่า Client ID / Secret ใน oauth.config.js หรือไฟล์ .env',
                     oauth_failed:   'การเข้าสู่ระบบผ่านผู้ให้บริการภายนอกไม่สำเร็จ',
                     token_failed:   'ไม่สามารถยืนยันตัวตนกับผู้ให้บริการ OAuth ได้',
                     no_code:        'ไม่พบรหัสยืนยันตัวตนจากผู้ให้บริการ'
