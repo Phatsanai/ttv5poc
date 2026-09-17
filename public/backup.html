@@ -501,8 +501,8 @@
                         <i class="fa-solid fa-clock-rotate-left"></i>
                         <div class="card-title">ประวัติกิจกรรมการสำรองข้อมูล (Audit Logs)</div>
                     </div>
-                    <button type="button" onclick="loadBackupHistory()" style="background:none; border:1px solid var(--border-color); color:var(--text-muted); border-radius:6px; padding:4px 10px; cursor:pointer; font-size:0.8rem;">
-                        <i class="fa-solid fa-rotate"></i> รีเฟรช
+                    <button type="button" id="btnRefreshLogs" onclick="refreshLogs(this)" style="background:none; border:1px solid var(--border-color); color:var(--text-muted); border-radius:6px; padding:4px 10px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:6px; transition:border-color 0.15s, color 0.15s;" onmouseover="this.style.borderColor='var(--accent-blue)';this.style.color='var(--accent-blue)'" onmouseout="this.style.borderColor='var(--border-color)';this.style.color='var(--text-muted)'">
+                        <i class="fa-solid fa-rotate" id="refreshIcon"></i> รีเฟรช
                     </button>
                 </div>
                 <table class="table-responsive">
@@ -537,19 +537,33 @@
             return token;
         }
 
+        // ── Logout (alias for the button onclick="logout()") ──────
+        function logout() { handleLogout(); }
+
         async function handleLogout() {
             const token = localStorage.getItem('auth_token');
             if (token) {
-                try { 
-                    await fetch(getApiUrl('/api/logout'), { 
-                        method: 'POST', 
-                        headers: { 'Authorization': `Bearer ${token}` } 
-                    }); 
-                } catch(e){}
+                try {
+                    await fetch(getApiUrl('/api/logout'), {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                } catch (e) {}
             }
             localStorage.removeItem('auth_token');
             localStorage.removeItem('auth_user');
             window.location.href = 'index.html';
+        }
+
+        // ── Refresh button handler with visual spinner ─────────────
+        function refreshLogs(btn) {
+            const icon = document.getElementById('refreshIcon');
+            if (btn) btn.disabled = true;
+            if (icon) { icon.classList.add('fa-spin'); }
+            loadBackupHistory().finally(() => {
+                if (btn) btn.disabled = false;
+                if (icon) { icon.classList.remove('fa-spin'); }
+            });
         }
 
         // ── Download .db Database Backup ──────────────────────────
@@ -679,26 +693,31 @@
             const tbody = document.getElementById('backupLogTable');
             if (!tbody) return;
 
+            // Show loading state
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">
+                <i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;"></i>กำลังโหลดประวัติ...</td></tr>`;
+
             try {
-                const res = await fetch(getApiUrl('/api/audit-logs?limit=30'), {
+                const res = await fetch(getApiUrl('/api/audit-logs?limit=50'), {
                     headers: token ? { 'Authorization': `Bearer ${token}` } : {}
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                const logs = data.data || [];
+                const logs = Array.isArray(data.data) ? data.data : [];
 
                 if (logs.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">ยังไม่มีประวัติกิจกรรม</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">
+                        <i class="fa-solid fa-inbox" style="margin-right:8px;"></i>ยังไม่มีประวัติกิจกรรม</td></tr>`;
                     return;
                 }
 
                 tbody.innerHTML = logs.map(item => {
                     let actionBadge = `<span style="color:var(--accent-blue); font-weight:600;">${item.action}</span>`;
-                    if (item.action.includes('BACKUP')) {
+                    if (item.action && item.action.includes('BACKUP')) {
                         actionBadge = `<span style="color:var(--accent-green); font-weight:600;"><i class="fa-solid fa-download"></i> ${item.action}</span>`;
-                    } else if (item.action.includes('RESTORE')) {
+                    } else if (item.action && item.action.includes('RESTORE')) {
                         actionBadge = `<span style="color:var(--accent-yellow); font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> ${item.action}</span>`;
-                    } else if (item.action.includes('DELETE')) {
+                    } else if (item.action && item.action.includes('DELETE')) {
                         actionBadge = `<span style="color:var(--accent-red); font-weight:600;"><i class="fa-solid fa-trash"></i> ${item.action}</span>`;
                     }
 
@@ -715,7 +734,9 @@
                 }).join('');
             } catch (err) {
                 console.warn('Failed to load audit logs:', err);
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--accent-red);">ไม่สามารถโหลดประวัติได้ (${err.message})</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--accent-red);">
+                    <i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i>ไม่สามารถโหลดประวัติได้ (${err.message})
+                    <br><small style="color:var(--text-muted); margin-top:6px; display:block;">ตรวจสอบการเชื่อมต่อหรือกดรีเฟรชอีกครั้ง</small></td></tr>`;
             }
         }
 
