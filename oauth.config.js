@@ -45,9 +45,12 @@ const config = {
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
 
   // URL สำหรับรับ Callback จาก Google
-  // หากปล่อยว่างไว้ ระบบจะใช้ค่าเริ่มต้น: ${OAUTH_BASE_URL}/api/auth/google/callback
-  // หากใช้ Cloudflare Tunnel หรือ Cloud Server ให้ระบุ URL เต็มได้ที่นี่
+  // หากปล่อยว่างไว้ ระบบจะใช้ค่าเริ่มต้นอัตโนมัติตาม Host: http://{host}/api/auth/google/callback
+  // หรือระบุ URL เต็มได้ที่นี่ (เช่น https://yourdomain.com/api/auth/google/callback)
   GOOGLE_CALLBACK_URL:  process.env.GOOGLE_CALLBACK_URL  || '',
+
+  // โหมดทดสอบการล็อกอิน (สำหรับ Development / Testing เมื่อยังไม่ได้สร้าง Google Cloud Project)
+  GOOGLE_MOCK_LOGIN:    process.env.GOOGLE_MOCK_LOGIN === 'true',
 
   // ── Facebook OAuth (ทางเลือกเสริม) ───────────────────────────
   FB_APP_ID:            process.env.FB_APP_ID            || '',
@@ -63,6 +66,7 @@ function getGoogleAuthStatus() {
   const env = readEnvFile();
   const clientId = (process.env.GOOGLE_CLIENT_ID || env.GOOGLE_CLIENT_ID || config.GOOGLE_CLIENT_ID || '').trim();
   const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || env.GOOGLE_CLIENT_SECRET || config.GOOGLE_CLIENT_SECRET || '').trim();
+  const isMock = (process.env.GOOGLE_MOCK_LOGIN || env.GOOGLE_MOCK_LOGIN || '') === 'true' || config.GOOGLE_MOCK_LOGIN === true;
   const isConfigured = Boolean(
     clientId &&
     clientSecret &&
@@ -72,11 +76,12 @@ function getGoogleAuthStatus() {
 
   return {
     isConfigured,
+    isMock,
     clientId,
     clientSecret,
     callbackUrl: (process.env.GOOGLE_CALLBACK_URL || env.GOOGLE_CALLBACK_URL || config.GOOGLE_CALLBACK_URL || '').trim(),
     baseUrl: (process.env.OAUTH_BASE_URL || env.OAUTH_BASE_URL || config.OAUTH_BASE_URL || 'http://127.0.0.1:8080').trim(),
-    errorMessage: isConfigured ? null : 'Google OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน oauth.config.js หรือไฟล์ .env'
+    errorMessage: isConfigured ? null : (isMock ? 'Google OAuth เปิดใช้งานในโหมดทดสอบ (Mock Login)' : 'Google OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน oauth.config.js หรือไฟล์ .env')
   };
 }
 

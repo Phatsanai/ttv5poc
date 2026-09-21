@@ -1737,10 +1737,31 @@ function getResolvedOAuthConfig() {
     oauthModule = {};
   }
 
-  // โหลด .env สดใหม่ทุกครั้งเพื่อให้แน่ใจว่าค่าล่าสุดถูกดึงมาใช้เสมอ
+  // โหลดค่าจากไฟล์ .env สดใหม่ทุกครั้งเพื่อให้แน่ใจว่าค่าล่าสุดถูกดึงมาใช้เสมอ
   let envVars = {};
   if (typeof oauthModule.readEnvFile === 'function') {
     envVars = oauthModule.readEnvFile();
+  } else {
+    const envPath = path.join(__dirname, '.env');
+    if (fs.existsSync(envPath)) {
+      try {
+        const content = fs.readFileSync(envPath, 'utf8');
+        content.split(/\r?\n/).forEach(line => {
+          line = line.trim();
+          if (!line || line.startsWith('#')) return;
+          const eqIdx = line.indexOf('=');
+          if (eqIdx > 0) {
+            const key = line.slice(0, eqIdx).trim();
+            let val = line.slice(eqIdx + 1).trim();
+            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+              val = val.slice(1, -1);
+            }
+            envVars[key] = val;
+            process.env[key] = val;
+          }
+        });
+      } catch (_) {}
+    }
   }
 
   // ลำดับการตรวจสอบอย่างยืดหยุ่น:
@@ -1758,6 +1779,7 @@ function getResolvedOAuthConfig() {
   const clientSecret = resolveKey('GOOGLE_CLIENT_SECRET', oauthModule.GOOGLE_CLIENT_SECRET);
   const callbackUrl = resolveKey('GOOGLE_CALLBACK_URL', oauthModule.GOOGLE_CALLBACK_URL);
   const baseUrl = resolveKey('OAUTH_BASE_URL', oauthModule.OAUTH_BASE_URL) || `http://127.0.0.1:${PORT}`;
+  const isMock = resolveKey('GOOGLE_MOCK_LOGIN', oauthModule.GOOGLE_MOCK_LOGIN ? 'true' : '') === 'true';
   const fbAppId = resolveKey('FB_APP_ID', oauthModule.FB_APP_ID);
   const fbSecret = resolveKey('FB_APP_SECRET', oauthModule.FB_APP_SECRET);
 
@@ -1776,11 +1798,12 @@ function getResolvedOAuthConfig() {
     clientSecret,
     callbackUrl,
     baseUrl,
+    isMock,
     fbAppId,
     fbSecret,
     isGoogleConfigured,
     redirectUri,
-    errorMessage: 'Google OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน oauth.config.js หรือไฟล์ .env'
+    errorMessage: isGoogleConfigured ? null : (isMock ? 'Google OAuth เปิดใช้งานในโหมดทดสอบ (Mock Login)' : 'Google OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน oauth.config.js หรือไฟล์ .env')
   };
 }
 
@@ -1791,10 +1814,11 @@ app.get('/api/auth/status', (_req, res) => {
     success: true,
     providers: {
       google: {
-        enabled: oauth.isGoogleConfigured,
+        enabled: oauth.isGoogleConfigured || oauth.isMock,
         configured: oauth.isGoogleConfigured,
+        isMock: oauth.isMock,
         callbackUrl: oauth.redirectUri,
-        message: oauth.isGoogleConfigured ? 'พร้อมใช้งาน' : oauth.errorMessage
+        message: oauth.isGoogleConfigured ? 'พร้อมใช้งาน' : (oauth.isMock ? 'พร้อมใช้งาน (โหมดทดสอบ Mock Login)' : oauth.errorMessage)
       },
       facebook: {
         enabled: Boolean(oauth.fbAppId && oauth.fbSecret),
@@ -1808,13 +1832,44 @@ app.get('/api/auth/status', (_req, res) => {
 app.get('/api/auth/google', (req, res) => {
   const oauth = getResolvedOAuthConfig();
   const returnTo = req.query.return_to || '/dashboard.html';
-  const clientOrigin = req.query.client_origin || req.headers.origin || (req.headers.referer ? new URL(req.headers.referer).origin : '');
+
+  let refererOrigin = '';
+  if (req.headers.referer) {
+    try {
+      refererOrigin = new URL(req.headers.referer).origin;
+    } catch (_) {}
+  }
+
+  const clientOrigin = req.query.client_origin || req.headers.origin || refererOrigin || process.env.FRONTEND_URL || '';
   const clientBase = clientOrigin ? clientOrigin.replace(/\/+$/, '') : '';
+  const targetPage = returnTo.includes('account.html') ? 'account.html' : (returnTo.includes('login.html') ? 'login.html' : 'index.html');
+
+  // คำนวณ redirectUri (หากไม่ได้ระบุ GOOGLE_CALLBACK_URL เต็ม ให้ใช้ Host ปัจจุบัน)
+  const reqProto = (req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0].trim();
+  const reqHost = req.get('host') || `127.0.0.1:${PORT}`;
+  const dynamicOrigin = `${reqProto}://${reqHost}`;
+  const redirectUri = oauth.callbackUrl || `${(oauth.baseUrl || dynamicOrigin).replace(/\/+$/, '')}/api/auth/google/callback`;
+
+  const statePayload = {
+    token: req.query.token || '',
+    returnTo,
+    clientOrigin,
+    redirectUri,
+    nonce: crypto.randomBytes(16).toString('hex')
+  };
+  const stateEncoded = Buffer.from(JSON.stringify(statePayload)).toString('base64');
+
+  // กรณีเปิดโหมดทดสอบ (Mock Login สำหรับ Development เมื่อยังไม่ได้กรอก Google Credentials)
+  if (oauth.isMock && !oauth.isGoogleConfigured) {
+    return res.redirect(`/api/auth/google/callback?code=mock_google_code&state=${encodeURIComponent(stateEncoded)}`);
+  }
 
   if (!oauth.isGoogleConfigured) {
     if (clientBase) {
-      const targetPage = returnTo.includes('account.html') ? 'account.html' : 'index.html';
       return res.redirect(`${clientBase}/${targetPage}?error=google_oauth_not_configured`);
+    }
+    if (req.accepts('html')) {
+      return res.redirect(`/${targetPage}?error=google_oauth_not_configured`);
     }
     return res.status(503).json({
       success: false,
@@ -1822,102 +1877,194 @@ app.get('/api/auth/google', (req, res) => {
     });
   }
 
-  const redirectUri = oauth.redirectUri;
   const params = new URLSearchParams({
     client_id:     oauth.clientId,
     redirect_uri:  redirectUri,
     response_type: 'code',
     scope:         'openid email profile',
-    state:         Buffer.from(JSON.stringify({ token: req.query.token || '', returnTo, clientOrigin, redirectUri })).toString('base64')
+    access_type:   'offline',
+    prompt:        'select_account',
+    state:         stateEncoded
   });
+
   return res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
 });
 
 app.get('/api/auth/google/callback', async (req, res) => {
   const oauth = getResolvedOAuthConfig();
   let clientBase = '';
+  let targetPage = 'index.html';
+
   try {
-    const { code, state } = req.query;
+    const { code, state, error: googleError, error_description } = req.query;
     let stateObj = {};
-    try { stateObj = JSON.parse(Buffer.from(state || '', 'base64').toString()); } catch {}
+    try {
+      if (state) stateObj = JSON.parse(Buffer.from(state, 'base64').toString('utf8'));
+    } catch (_) {}
+
     const { token: sessToken, returnTo = '/dashboard.html', clientOrigin = '', redirectUri: stateRedirectUri } = stateObj;
-    clientBase = clientOrigin ? clientOrigin.replace(/\/+$/, '') : '';
-    const targetPage = returnTo.includes('account.html') ? 'account.html' : 'index.html';
+    clientBase = clientOrigin ? clientOrigin.replace(/\/+$/, '') : (process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/+$/, '') : '');
+    targetPage = returnTo.includes('account.html') ? 'account.html' : (returnTo.includes('login.html') ? 'login.html' : 'index.html');
 
-    if (!oauth.isGoogleConfigured)
-      return res.redirect(`${clientBase}/${targetPage}?error=google_oauth_not_configured`);
-    if (!code) return res.redirect(`${clientBase}/${targetPage}?error=no_code`);
+    // 1. ผู้ใช้ยกเลิกการเข้าสู่ระบบหรือ Google แจ้ง Error
+    if (googleError) {
+      console.warn('⚠️ Google OAuth callback received error:', googleError, error_description || '');
+      const errCode = googleError === 'access_denied' ? 'oauth_failed' : encodeURIComponent(googleError);
+      const redirectUrl = clientBase ? `${clientBase}/${targetPage}?error=${errCode}` : `/${targetPage}?error=${errCode}`;
+      return res.redirect(redirectUrl);
+    }
 
-    const finalRedirectUri = stateRedirectUri || oauth.redirectUri;
+    // 2. ตรวจสอบการตั้งค่า Client ID & Secret (ยกเว้นในโหมด Mock)
+    const isMockAuth = oauth.isMock && code === 'mock_google_code';
+    if (!oauth.isGoogleConfigured && !isMockAuth) {
+      const redirectUrl = clientBase ? `${clientBase}/${targetPage}?error=google_oauth_not_configured` : `/${targetPage}?error=google_oauth_not_configured`;
+      return res.redirect(redirectUrl);
+    }
 
-    // แลก code -> access_token
-    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        code,
-        client_id: oauth.clientId,
-        client_secret: oauth.clientSecret,
-        redirect_uri: finalRedirectUri,
-        grant_type: 'authorization_code'
-      })
-    });
-    const tokenData = await tokenRes.json();
-    if (!tokenData.access_token) return res.redirect(`${clientBase}/${targetPage}?error=token_failed`);
+    // 3. ตรวจสอบว่ามี Authorization Code หรือไม่
+    if (!code) {
+      const redirectUrl = clientBase ? `${clientBase}/${targetPage}?error=no_code` : `/${targetPage}?error=no_code`;
+      return res.redirect(redirectUrl);
+    }
 
-    // ดึงโปรไฟล์จาก Google
-    const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: `Bearer ${tokenData.access_token}` }
-    });
-    const profile = await profileRes.json();
-    const { sub: provider_id, email, name: display_name } = profile;
+    let profile = null;
 
+    if (isMockAuth) {
+      // ข้อมูลผู้ใช้จำลองสำหรับ Development Test Mode
+      profile = {
+        sub: 'google_dev_mock_sub_1001',
+        email: 'test.google@assetconsole.local',
+        name: 'Google User (Dev)',
+        picture: ''
+      };
+    } else {
+      const finalRedirectUri = stateRedirectUri || oauth.redirectUri;
+
+      // 4. แลก authorization code เป็น access_token จาก Google
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code: String(code),
+          client_id: oauth.clientId,
+          client_secret: oauth.clientSecret,
+          redirect_uri: finalRedirectUri,
+          grant_type: 'authorization_code'
+        })
+      });
+
+      const tokenData = await tokenRes.json();
+      if (!tokenRes.ok || !tokenData.access_token) {
+        console.error('❌ Google token exchange failed:', tokenData);
+        const redirectUrl = clientBase ? `${clientBase}/${targetPage}?error=token_failed` : `/${targetPage}?error=token_failed`;
+        return res.redirect(redirectUrl);
+      }
+
+      // 5. ดึงข้อมูลโปรไฟล์ผู้ใช้จาก Google UserInfo API
+      const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` }
+      });
+
+      if (!profileRes.ok) {
+        console.error('❌ Google UserInfo fetch failed with status:', profileRes.status);
+        const redirectUrl = clientBase ? `${clientBase}/${targetPage}?error=oauth_failed` : `/${targetPage}?error=oauth_failed`;
+        return res.redirect(redirectUrl);
+      }
+
+      profile = await profileRes.json();
+    }
+
+    const provider_id = profile && profile.sub;
+    if (!provider_id) {
+      console.error('❌ Google profile missing sub identifier:', profile);
+      const redirectUrl = clientBase ? `${clientBase}/${targetPage}?error=oauth_failed` : `/${targetPage}?error=oauth_failed`;
+      return res.redirect(redirectUrl);
+    }
+
+    const email = (profile.email || `${provider_id}@accounts.google.com`).trim().toLowerCase();
+    const displayName = (profile.name || profile.given_name || email.split('@')[0] || 'Google User').trim();
+
+    // 6. โหมดเชื่อมต่อบัญชี (Account Linking) จากหน้า account.html
     if (sessToken) {
-      // โหมดเชื่อมต่อบัญชี — ผู้ใช้ล็อกอินอยู่แล้ว
-      const sess = db.prepare('SELECT * FROM sessions WHERE token=?').get([sessToken]);
+      const sess = db.prepare('SELECT * FROM sessions WHERE token = ?').get([sessToken]);
       if (sess && sess.expires_at > Date.now()) {
-        const already = db.prepare('SELECT id FROM oauth_accounts WHERE provider=? AND provider_id=?').get(['google', provider_id]);
+        const already = db.prepare('SELECT id FROM oauth_accounts WHERE provider = ? AND provider_id = ?').get(['google', provider_id]);
         if (!already) {
-          db.prepare('INSERT OR IGNORE INTO oauth_accounts (user_id,provider,provider_id,email,display_name) VALUES (?,?,?,?,?)')
-            .run([sess.user_id, 'google', provider_id, email||'', display_name||'']);
+          db.prepare('INSERT OR IGNORE INTO oauth_accounts (user_id, provider, provider_id, email, display_name) VALUES (?, ?, ?, ?, ?)')
+            .run([sess.user_id, 'google', provider_id, email, displayName]);
+        } else {
+          db.prepare('UPDATE oauth_accounts SET email = ?, display_name = ? WHERE id = ?')
+            .run([email, displayName, already.id]);
         }
-        logAudit('LINK_OAUTH', 'user', sess.user_id, `เชื่อมต่อบัญชี Google: ${email || display_name}`, req, sess.name);
-        const dest = returnTo.startsWith('http') ? returnTo : `${clientBase}${returnTo.startsWith('/') ? returnTo : '/' + returnTo}`;
+        logAudit('LINK_OAUTH', 'user', sess.user_id, `เชื่อมต่อบัญชี Google: ${email} (${displayName})`, req, sess.name);
+        const dest = returnTo.startsWith('http') ? returnTo : (clientBase ? `${clientBase}${returnTo.startsWith('/') ? returnTo : '/' + returnTo}` : returnTo);
         return res.redirect(`${dest}${dest.includes('?') ? '&' : '?'}linked=google`);
       }
     }
 
-    // โหมดเข้าสู่ระบบ — หาผู้ใช้จาก oauth_accounts หรือสร้างบัญชีใหม่
-    let oauthRow = db.prepare('SELECT * FROM oauth_accounts WHERE provider=? AND provider_id=?').get(['google', provider_id]);
+    // 7. โหมดเข้าสู่ระบบ (Login) — หาผู้ใช้จาก oauth_accounts หรือสร้างบัญชีใหม่
+    let oauthRow = db.prepare('SELECT * FROM oauth_accounts WHERE provider = ? AND provider_id = ?').get(['google', provider_id]);
     let userId;
+
     if (oauthRow) {
       userId = oauthRow.user_id;
+      // อัปเดตข้อมูลอีเมลและชื่อล่าสุด
+      db.prepare('UPDATE oauth_accounts SET email = ?, display_name = ? WHERE id = ?')
+        .run([email, displayName, oauthRow.id]);
     } else {
-      const existingUser = db.prepare('SELECT id FROM users WHERE username=?').get([email]);
+      // ตรวจสอบว่ามีผู้ใช้อีเมลนี้ในตาราง users แล้วหรือไม่ (แบบ case-insensitive)
+      const existingUser = db.prepare('SELECT id, name, role FROM users WHERE LOWER(username) = LOWER(?)').get([email]);
       if (existingUser) {
         userId = existingUser.id;
+        if (!existingUser.name || existingUser.name.trim() === '') {
+          db.prepare('UPDATE users SET name = ? WHERE id = ?').run([displayName, userId]);
+        }
       } else {
+        // สร้างบัญชีผู้ใช้ใหม่ (ค่าเริ่มต้น Role: manager)
         const defaultRole = 'manager';
-        const info = db.prepare('INSERT INTO users (username,password,name,role) VALUES (?,?,?,?)')
-          .run([email, '', display_name || email, defaultRole]);
+        const randomPassword = crypto.randomBytes(32).toString('hex');
+        const info = db.prepare('INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)')
+          .run([email, randomPassword, displayName, defaultRole]);
         userId = info.lastInsertRowid;
       }
-      db.prepare('INSERT OR IGNORE INTO oauth_accounts (user_id,provider,provider_id,email,display_name) VALUES (?,?,?,?,?)')
-        .run([userId, 'google', provider_id, email||'', display_name||'']);
+      db.prepare('INSERT OR IGNORE INTO oauth_accounts (user_id, provider, provider_id, email, display_name) VALUES (?, ?, ?, ?, ?)')
+        .run([userId, 'google', provider_id, email, displayName]);
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE id=?').get([userId]);
-    const newToken = generateToken();
-    const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
-    db.prepare('DELETE FROM sessions WHERE user_id=?').run([userId]);
-    db.prepare('INSERT INTO sessions (token,user_id,username,name,role,expires_at) VALUES (?,?,?,?,?,?)')
-      .run([newToken, userId, user.username, user.name, user.role, expiresAt]);
+    let user = db.prepare('SELECT * FROM users WHERE id = ?').get([userId]);
+    if (!user) {
+      // กรณีข้อมูล user ขาดหาย ให้สร้างใหม่ทันทีเพื่อความปลอดภัย
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const info = db.prepare('INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)')
+        .run([email, randomPassword, displayName, 'manager']);
+      userId = info.lastInsertRowid;
+      user = db.prepare('SELECT * FROM users WHERE id = ?').get([userId]);
+      db.prepare('UPDATE oauth_accounts SET user_id = ? WHERE provider = ? AND provider_id = ?')
+        .run([userId, 'google', provider_id]);
+    }
 
-    logAudit('LOGIN_GOOGLE', 'user', user.username, `เข้าสู่ระบบด้วย Google: ${email || display_name}`, req, user.name);
-    return res.redirect(`${clientBase}/dashboard.html?oauth_token=${newToken}`);
+    const userName = (user.name && user.name.trim()) ? user.name.trim() : (displayName || user.username || 'User');
+
+    // 8. สร้าง Session Token ใหม่
+    const newToken = generateToken();
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 ชั่วโมง
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run([userId]);
+    db.prepare('INSERT INTO sessions (token, user_id, username, name, role, expires_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .run([newToken, userId, user.username, userName, user.role, expiresAt]);
+
+    logAudit('LOGIN_GOOGLE', 'user', user.username, `เข้าสู่ระบบด้วย Google: ${email} (${displayName})`, req, userName);
+
+    // 9. Redirect กลับมาที่หน้า dashboard.html พร้อม Token ใช้งานได้ทันที
+    const destPath = (returnTo && !returnTo.includes('login') && !returnTo.includes('index')) ? returnTo : '/dashboard.html';
+    const cleanDest = destPath.startsWith('/') ? destPath : '/' + destPath;
+    const sep = cleanDest.includes('?') ? '&' : '?';
+    const redirectUrl = clientBase ? `${clientBase}${cleanDest}${sep}oauth_token=${newToken}` : `${cleanDest}${sep}oauth_token=${newToken}`;
+    return res.redirect(redirectUrl);
+
   } catch (err) {
-    console.error('Google OAuth callback error:', err);
-    return res.redirect(`${clientBase}/index.html?error=oauth_failed`);
+    console.error('❌ Google OAuth callback unhandled exception:', err);
+    const redirectUrl = clientBase ? `${clientBase}/${targetPage}?error=oauth_failed` : `/${targetPage}?error=oauth_failed`;
+    return res.redirect(redirectUrl);
   }
 });
 
@@ -2048,6 +2195,9 @@ app.delete('/api/auth/unlink/:provider', async (req, res) => {
 app.get('/api/backup/download', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
+  if (sess.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'สิทธิ์ไม่เพียงพอ (เฉพาะผู้ดูแลระบบ Admin เท่านั้นที่สามารถดาวน์โหลดฐานข้อมูลได้)' });
+  }
   try {
     // Checkpoint WAL data into main database file before downloading
     try { db.pragma('wal_checkpoint(TRUNCATE)'); } catch (e) { console.warn('WAL checkpoint notice:', e.message); }
@@ -2067,6 +2217,9 @@ app.get('/api/backup/download', async (req, res) => {
 app.get('/api/backup/export-json', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
+  if (sess.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'สิทธิ์ไม่เพียงพอ (เฉพาะผู้ดูแลระบบ Admin เท่านั้นที่สามารถส่งออกข้อมูลสำรองได้)' });
+  }
   try {
     const assets = (await dbAll('SELECT * FROM assets')).map(formatAssetOutput);
     const borrows = await dbAll('SELECT * FROM borrows');

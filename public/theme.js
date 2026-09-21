@@ -314,6 +314,48 @@
     window.closeMobileSidebar = closeMobileSidebar;
     window.openMobileSidebar = openMobileSidebar;
 
+    // ── Global User Info Sync & Logout Handler ──────────────────
+    function syncSidebarUserInfo() {
+        try {
+            const raw = localStorage.getItem('auth_user');
+            if (!raw) return;
+            const u = JSON.parse(raw);
+            const roleLabels = {
+                admin: 'ผู้ดูแลระบบ (Admin)',
+                manager: 'ผู้จัดการทรัพย์สิน (Manager)',
+                editor: 'ผู้แก้ไขข้อมูล (Editor)',
+                viewer: 'ผู้ชม (Viewer)'
+            };
+            const name = u.name || u.username || 'Admin';
+            const role = roleLabels[u.role] || u.role || 'ผู้ดูแลระบบ';
+
+            document.querySelectorAll('#sidebarUserName, .sidebar-user-name').forEach(el => el.textContent = name);
+            document.querySelectorAll('#sidebarUserRole, .sidebar-user-role').forEach(el => el.textContent = role);
+            document.querySelectorAll('#topUserName, #topbarUserName, .topbar-user-name, #userName').forEach(el => el.textContent = name);
+            document.querySelectorAll('#topUserRole, #topbarUserRole, .topbar-user-role').forEach(el => el.textContent = role);
+        } catch (e) {}
+    }
+
+    if (!window.handleLogout) {
+        window.handleLogout = async function() {
+            const token = localStorage.getItem('auth_token');
+            if (token && typeof window.getApiUrl === 'function') {
+                try {
+                    await fetch(window.getApiUrl('/api/logout'), {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                } catch (e) {}
+            }
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            window.location.href = 'index.html';
+        };
+    }
+    if (!window.logout) {
+        window.logout = function() { window.handleLogout(); };
+    }
+
     // ── DOM Ready / Load Handler ────────────────────────────────
     function onReady() {
         const currentTheme = getSavedTheme();
@@ -322,6 +364,7 @@
 
         applyTypography(getSavedFont(), getSavedSize());
         initMobileSidebar();
+        syncSidebarUserInfo();
     }
 
     if (document.readyState === 'loading') {
@@ -333,6 +376,7 @@
     window.addEventListener('load', () => {
         updateIcons(getSavedTheme());
         applyTypography(getSavedFont(), getSavedSize());
+        syncSidebarUserInfo();
     });
 
     // ── Multi-Tab Storage Synchronization ───────────────────────

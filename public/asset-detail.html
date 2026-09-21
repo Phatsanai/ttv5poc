@@ -83,12 +83,6 @@
             transition: width 0.3s ease;
         }
 
-        .sidebar.hidden {
-            width: 0;
-            min-width: 0;
-            overflow: hidden;
-            border-right: none;
-        }
 
         .brand-header {
             padding: 20px 24px;
@@ -1054,52 +1048,89 @@
          ========================================================= -->
     <aside class="sidebar" id="mainSidebar">
         <div class="brand-header">
-            <a href="dashboard.html" class="brand-logo">
-                <i class="fa-solid fa-boxes-stacked"></i>
-                <span>Asset Console</span>
-            </a>
+            <div class="brand-logo">
+                <i class="fa-solid fa-boxes-stacked"></i> Asset Console
+            </div>
             <span class="version-tag">v3.4</span>
         </div>
 
-        <div class="nav-section">
+        <div class="sidebar-nav">
+            <div class="nav-section">
             <div class="nav-label">NAVIGATION</div>
             <ul class="nav-menu">
-                <li class="nav-item"><a href="dashboard.html"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</a></li>
-                <li class="nav-item"><a href="asset-list.html"><i class="fa-solid fa-list"></i>
-                        รายการทรัพย์สินทั้งหมด</a></li>
-                <li class="nav-item active"><a href="asset-detail.html"><i class="fa-solid fa-camera"></i> สแกน /
-                        ดูข้อมูล</a></li>
-                <li class="nav-item"><a href="print-qr.html"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</a>
+                <li class="nav-item">
+                    <a href="dashboard.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</span>
+                    </a>
                 </li>
-                <li class="nav-item"><a href="borrow-return.html"><i class="fa-solid fa-right-left"></i> ระบบยืม -
-                        คืน</a></li>
-                <li class="nav-item"><a href="maintenance.html"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม &
-                        บำรุงรักษา</a></li>
-                <li class="nav-item"><a href="audit.html"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก
-                        (Audit)</a></li>
-                <li class="nav-item"><a href="recycle-bin.html"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</a></li>
+                <li class="nav-item">
+                    <a href="print-qr.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="asset-list.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-list"></i> รายการทรัพย์สินทั้งหมด</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="asset-detail.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="borrow-return.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</span>
+                        <span class="badge-count danger" id="badgeBorrowed">—</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="maintenance.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</span>
+                        <span class="badge-count" id="badgeMaintenance">—</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="audit.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="recycle-bin.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</span>
+                        <span class="badge-count" id="badgeTrash" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red);">0</span>
+                    </a>
+                </li>
             </ul>
         </div>
 
         <div class="nav-section">
             <div class="nav-label">MANAGEMENT</div>
             <ul class="nav-menu">
-                <li class="nav-item"><a href="account.html"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</a></li>
-                <li class="nav-item"><a href="settings.html"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ &
-                        สิทธิ์ผู้ใช้</a></li>
-                <li class="nav-item"><a href="backup.html"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</a></li>
+                <li class="nav-item">
+                    <a href="account.html"><span class="nav-link-content"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="settings.html"><span class="nav-link-content"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="backup.html"><span class="nav-link-content"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</span></a>
+                </li>
             </ul>
+                    </div>
         </div>
 
         <div class="sidebar-footer">
-            <div class="user-pill">
-                <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
-                <div>
-                    <div class="user-name" id="sidebarUserName">ผู้ดูแลระบบ</div>
-                    <div class="user-role" id="sidebarUserRole">Administrator</div>
+            <div class="sidebar-footer-profile">
+                <div class="sidebar-footer-avatar">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div style="overflow:hidden;min-width:0;flex:1;">
+                    <div id="sidebarUserName" style="font-weight:600;color:var(--text-title);font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Admin</div>
+                    <div id="sidebarUserRole" style="font-size:0.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ผู้ดูแลระบบ</div>
                 </div>
             </div>
-            <button class="btn-logout" onclick="handleLogout()">
+            <button onclick="handleLogout()" class="btn-sidebar-logout">
                 <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
             </button>
         </div>
@@ -1328,25 +1359,29 @@
             const wrapper = document.getElementById('mainWrapper');
             const btnGroupGuest = document.getElementById('btnGroupGuest');
 
+            if (sidebar) sidebar.classList.remove('hidden');
+            if (wrapper) wrapper.classList.remove('no-sidebar');
+
             if (currentUser) {
-                // ผู้ใช้ล็อกอินแล้ว: แสดงแถบเมนูด้านข้าง
-                sidebar.classList.remove('hidden');
-                wrapper.classList.remove('no-sidebar');
-                btnGroupGuest.style.display = 'none';
+                if (btnGroupGuest) btnGroupGuest.style.display = 'none';
 
                 // อัปเดตข้อมูลผู้ใช้ในแถบ Sidebar
-                document.getElementById('sidebarUserName').textContent = currentUser.name || currentUser.username;
                 const roleLabels = {
                     admin: 'ผู้ดูแลระบบ (Admin)',
-                    editor: 'ผู้แก้ไข (Editor)',
+                    manager: 'ผู้จัดการทรัพย์สิน (Manager)',
+                    editor: 'ผู้แก้ไขข้อมูล (Editor)',
                     viewer: 'ผู้ชม (Viewer)'
                 };
-                document.getElementById('sidebarUserRole').textContent = roleLabels[currentUser.role] || currentUser.role;
+                const nameEl = document.getElementById('sidebarUserName');
+                const roleEl = document.getElementById('sidebarUserRole');
+                if (nameEl) nameEl.textContent = currentUser.name || currentUser.username;
+                if (roleEl) roleEl.textContent = roleLabels[currentUser.role] || currentUser.role;
             } else {
-                // ผู้ใช้ทั่วไป (Guest): ซ่อน Sidebar เพื่อให้แสดงผลเต็มจอ สวยงาม เหมาะกับการสแกน QR ผ่านมือถือ
-                sidebar.classList.add('hidden');
-                wrapper.classList.add('no-sidebar');
-                btnGroupGuest.style.display = 'block';
+                if (btnGroupGuest) btnGroupGuest.style.display = 'block';
+                const nameEl = document.getElementById('sidebarUserName');
+                const roleEl = document.getElementById('sidebarUserRole');
+                if (nameEl) nameEl.textContent = 'ผู้เยี่ยมชม (Guest)';
+                if (roleEl) roleEl.textContent = 'ผู้ใช้งานทั่วไป';
             }
         }
 

@@ -299,28 +299,91 @@
 
     <aside class="sidebar">
         <div class="brand-header">
-            <div class="brand-logo"><i class="fa-solid fa-boxes-stacked"></i> Asset Console</div>
+            <div class="brand-logo">
+                <i class="fa-solid fa-boxes-stacked"></i> Asset Console
+            </div>
+            <span class="version-tag">v3.4</span>
         </div>
-        <div class="nav-section">
+
+        <div class="sidebar-nav">
+            <div class="nav-section">
             <div class="nav-label">NAVIGATION</div>
             <ul class="nav-menu">
-                <li class="nav-item"><a href="dashboard.html"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</a></li>
-                <li class="nav-item active"><a href="asset-list.html"><i class="fa-solid fa-list"></i> รายการทรัพย์สินทั้งหมด</a></li>
-                <li class="nav-item"><a href="asset-detail.html"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูลอุปกรณ์</a></li>
-                <li class="nav-item"><a href="print-qr.html"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</a></li>
-                <li class="nav-item"><a href="borrow-return.html"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</a></li>
-                <li class="nav-item"><a href="maintenance.html"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</a></li>
-                <li class="nav-item"><a href="audit.html"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</a></li>
-                <li class="nav-item"><a href="recycle-bin.html"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</a></li>
+                <li class="nav-item">
+                    <a href="dashboard.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="print-qr.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="asset-list.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-list"></i> รายการทรัพย์สินทั้งหมด</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="asset-detail.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="borrow-return.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</span>
+                        <span class="badge-count danger" id="badgeBorrowed">—</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="maintenance.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</span>
+                        <span class="badge-count" id="badgeMaintenance">—</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="audit.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="recycle-bin.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</span>
+                        <span class="badge-count" id="badgeTrash" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red);">0</span>
+                    </a>
+                </li>
             </ul>
         </div>
+
         <div class="nav-section">
             <div class="nav-label">MANAGEMENT</div>
             <ul class="nav-menu">
-                <li class="nav-item"><a href="account.html"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</a></li>
-                <li class="nav-item"><a href="settings.html"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้</a></li>
-                <li class="nav-item"><a href="backup.html"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</a></li>
+                <li class="nav-item">
+                    <a href="account.html"><span class="nav-link-content"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="settings.html"><span class="nav-link-content"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="backup.html"><span class="nav-link-content"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</span></a>
+                </li>
             </ul>
+                    </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-footer-profile">
+                <div class="sidebar-footer-avatar">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div style="overflow:hidden;min-width:0;flex:1;">
+                    <div id="sidebarUserName" style="font-weight:600;color:var(--text-title);font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Admin</div>
+                    <div id="sidebarUserRole" style="font-size:0.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ผู้ดูแลระบบ</div>
+                </div>
+            </div>
+            <button onclick="handleLogout()" class="btn-sidebar-logout">
+                <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+            </button>
         </div>
     </aside>
 

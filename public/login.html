@@ -117,7 +117,8 @@
             position: relative;
         }
 
-        /* ── Login Header ── */
+        /* ── Login Header: High-specificity rules scoped to .login-card ── */
+        /* These override any global theme.css .brand-header rules */
         .login-card .brand-header {
             display: flex !important;
             flex-direction: column !important;
@@ -126,12 +127,15 @@
             text-align: center !important;
             margin-bottom: 28px !important;
             width: 100% !important;
+            height: auto !important;
+            min-height: auto !important;
             padding: 0 !important;
             border-bottom: none !important;
             box-sizing: border-box !important;
             gap: 8px !important;
         }
 
+        /* Title text */
         .login-card .brand-title {
             font-size: 1.85rem !important;
             font-weight: 800 !important;
@@ -142,6 +146,7 @@
             text-align: center !important;
         }
 
+        /* Subtitle */
         .login-card .brand-subtitle {
             font-size: 0.88rem !important;
             color: var(--text-muted) !important;
@@ -177,6 +182,17 @@
             .login-card .brand-subtitle {
                 font-size: 0.8rem !important;
             }
+
+            .oauth-login-buttons {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
         }
 
         /* Form Controls */
@@ -210,7 +226,7 @@
             background-color: var(--bg-input);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 12px 14px 12px 48px !important;
+            padding: 12px 14px 12px 42px;
             color: var(--text-title);
             font-size: 0.9rem;
             outline: none;
@@ -221,6 +237,7 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
 
+        /* Password Toggle Eye Icon */
         .toggle-password {
             position: absolute;
             right: 14px;
@@ -233,6 +250,7 @@
             color: var(--text-title);
         }
 
+        /* Remember & Options Row */
         .form-options {
             display: flex;
             align-items: center;
@@ -266,6 +284,7 @@
             text-decoration: underline;
         }
 
+        /* Submit Button */
         .btn-submit {
             width: 100%;
             background-color: var(--primary-color, #2563eb);
@@ -289,6 +308,7 @@
             box-shadow: 0 6px 16px var(--primary-glow, rgba(37, 99, 235, 0.35));
         }
 
+        /* OAuth Social Login */
         .oauth-divider {
             display: flex;
             align-items: center;
@@ -297,8 +317,7 @@
             font-size: 0.82rem;
         }
 
-        .oauth-divider::before,
-        .oauth-divider::after {
+        .oauth-divider::before, .oauth-divider::after {
             content: '';
             flex: 1;
             border-bottom: 1px solid var(--border-color);
@@ -321,9 +340,9 @@
             justify-content: center;
             gap: 10px;
             width: 100%;
-            background-color: var(--bg-input);
+            background-color: var(--input-bg);
             border: 1px solid var(--border-color);
-            color: var(--text-title);
+            color: var(--text-main);
             padding: 11px 16px;
             border-radius: 10px;
             font-size: 0.92rem;
@@ -341,6 +360,7 @@
             box-shadow: 0 4px 12px rgba(234, 67, 53, 0.12);
         }
 
+        /* Footer Info */
         .login-footer {
             text-align: center;
             margin-top: 24px;
@@ -358,9 +378,8 @@
     <div class="glow-bg"></div>
     <div class="glow-bg-bottom"></div>
 
-    <!-- Theme Switcher Controls -->
-    <div
-        style="position: absolute; top: 24px; right: 24px; display: flex; align-items: center; gap: 8px; z-index: 100;">
+    <!-- Theme Switcher & Color Picker Controls -->
+    <div style="position: absolute; top: 24px; right: 24px; display: flex; align-items: center; gap: 8px; z-index: 100;">
         <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
             <i class="fa-solid fa-moon" id="themeIcon"></i>
         </button>
@@ -369,14 +388,7 @@
     <!-- Login Container Box -->
     <div class="login-card">
         <div class="brand-header">
-            <!-- จัดโครงสร้างไอคอนและชื่อเว็บให้อยู่คู่กันแบบแนวนอน ไม่ทับซ้อน -->
-            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
-                <div
-                    style="width: 44px; height: 44px; background: rgba(37, 99, 235, 0.15); border: 1px solid var(--border-color); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent-blue); font-size: 1.3rem; flex-shrink: 0;">
-                    <i class="fa-solid fa-boxes-stacked"></i>
-                </div>
-                <h1 class="brand-title">Asset Console</h1>
-            </div>
+            <h1 class="brand-title">Asset Console</h1>
             <p class="brand-subtitle">ระบบบริหารจัดการทรัพย์สินองค์กร Enterprise v3.4</p>
         </div>
 
@@ -430,6 +442,7 @@
 
     <!-- JavaScript Functions -->
     <script>
+        // 1. ฟังก์ชันสำหรับการเข้าสู่ระบบและการจดจำรหัสผ่าน (Remember Me)
         async function handleLogin(e) {
             e.preventDefault();
 
@@ -443,6 +456,7 @@
                 return;
             }
 
+            // UI: Loading state
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเข้าสู่ระบบ...';
             hideError();
@@ -456,6 +470,7 @@
                 const data = await r.json();
 
                 if (r.ok && data.success) {
+                    // Save token
                     localStorage.setItem('auth_token', data.token);
                     localStorage.setItem('auth_user', JSON.stringify(data.user));
 
@@ -467,6 +482,7 @@
                         localStorage.removeItem('remember_me');
                     }
 
+                    // Redirect to dashboard
                     window.location.href = 'dashboard.html';
                 } else {
                     showError(data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
@@ -498,6 +514,8 @@
             if (el) el.style.display = 'none';
         }
 
+
+        // 2. ฟังก์ชันซ่อน/แสดงรหัสผ่าน
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('password');
             const toggleBtn = document.getElementById('togglePasswordBtn');
@@ -511,11 +529,16 @@
             }
         }
 
+        // ── Theme: จัดการโดย theme.js กลางใน <head> (window.toggleTheme) ──
+
+        // 4. โหลดข้อมูลเมื่อเปิดหน้าเว็บ (ดึงรหัสผ่านที่เคยจำไว้)
         window.onload = async function () {
+            // ปรับแต่งลิงก์ OAuth ให้ชี้ไปยัง Backend Server ตาม API_BASE_URL
             const clientOriginParam = `&client_origin=${encodeURIComponent(window.location.origin)}`;
             const googleBtn = document.getElementById('btnGoogleLogin');
             if (googleBtn) googleBtn.href = getApiUrl(`/api/auth/google?return_to=/dashboard.html${clientOriginParam}`);
 
+            // ตรวจสอบ query string สำหรับ OAuth callback และข้อผิดพลาด
             const params = new URLSearchParams(window.location.search);
             const oauthToken = params.get('oauth_token');
             const oauthError = params.get('error');
@@ -528,23 +551,24 @@
                         const data = await r.json();
                         localStorage.setItem('auth_user', JSON.stringify(data.user));
                     }
-                } catch (e) { }
+                } catch(e) {}
                 window.location.href = 'dashboard.html';
                 return;
             }
 
             if (oauthError) {
                 const errorMsgMap = {
-                    google_oauth_not_configured: 'Google OAuth ยังไม่ได้ตั้งค่า',
-                    oauth_disabled: 'ระบบ Social Login ยังไม่ได้ตั้งค่า Client ID / Secret',
-                    oauth_failed: 'การเข้าสู่ระบบผ่านผู้ให้บริการภายนอกไม่สำเร็จ',
-                    token_failed: 'ไม่สามารถยืนยันตัวตนกับผู้ให้บริการ OAuth ได้',
-                    no_code: 'ไม่พบรหัสยืนยันตัวตนจากผู้ให้บริการ'
+                    google_oauth_not_configured: 'Google OAuth ยังไม่ได้ตั้งค่า (โปรดใส่ GOOGLE_CLIENT_ID และ GOOGLE_CLIENT_SECRET ใน oauth.config.js หรือไฟล์ .env)',
+                    oauth_disabled: 'ระบบ Social Login ยังไม่ได้ตั้งค่า Client ID / Secret ใน oauth.config.js หรือไฟล์ .env',
+                    oauth_failed:   'การเข้าสู่ระบบผ่านผู้ให้บริการภายนอกไม่สำเร็จ',
+                    token_failed:   'ไม่สามารถยืนยันตัวตนกับผู้ให้บริการ OAuth ได้',
+                    no_code:        'ไม่พบรหัสยืนยันตัวตนจากผู้ให้บริการ'
                 };
-                showError(errorMsgMap[oauthError] || `เกิดข้อผิดพลาด (${oauthError})`);
+                showError(errorMsgMap[oauthError] || `เกิดข้อผิดพลาด (${oauthError}) กรุณาลองใหม่อีกครั้ง`);
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
 
+            // ถ้ามี token ให้ตรวจสอบ session ก่อน – ถ้ายังใช้ได้ให้ redirect ไป dashboard
             const token = localStorage.getItem('auth_token');
             if (token) {
                 try {
@@ -553,17 +577,20 @@
                         window.location.href = 'dashboard.html';
                         return;
                     }
-                } catch (e) { }
+                } catch(e) {}
+                // Token หมดอายุ – ลบออก
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('auth_user');
             }
 
+            // ดึงข้อมูล Remember Me (ชื่อผู้ใช้เท่านั้น ไม่เก็บรหัสผ่าน)
             const isRemembered = localStorage.getItem('remember_me') === 'true';
             if (isRemembered) {
                 document.getElementById('username').value = localStorage.getItem('saved_username') || '';
                 document.getElementById('rememberMe').checked = true;
             }
         };
+
     </script>
 </body>
 

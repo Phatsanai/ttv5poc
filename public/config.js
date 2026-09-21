@@ -81,4 +81,55 @@
     };
 
     console.log(`[Config] Asset Console API_BASE_URL: "${window.API_BASE_URL || '(same-origin)'}"`);
+
+    /**
+     * Universal Logout Helper (shared across all pages)
+     */
+    window.handleLogout = async function () {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+            try {
+                await fetch(window.getApiUrl('/api/logout'), {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (e) {}
+        }
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        window.location.href = 'index.html';
+    };
+    window.logout = window.handleLogout;
+
+    // Automated user profile & sidebar role sync across all pages
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            const userStr = localStorage.getItem('auth_user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                const nameEls = ['sidebarUserName', 'topbarUserName', 'topUserName'];
+                const roleEls = ['sidebarUserRole', 'topbarUserRole'];
+                nameEls.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = user.name || user.username || 'Admin';
+                });
+                roleEls.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        const roleName = user.role === 'admin' ? 'ผู้ดูแลระบบ (Admin)' :
+                                         user.role === 'editor' ? 'ผู้แก้ไขข้อมูล (Editor)' :
+                                         user.role === 'manager' ? 'ผู้จัดการทรัพย์สิน (Manager)' : 'ผู้เข้าชม (Viewer)';
+                        el.textContent = roleName;
+                    }
+                });
+                const avatarEls = ['topbarAvatar', 'topAvatar'];
+                avatarEls.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && !el.querySelector('i')) {
+                        el.textContent = (user.name || user.username || 'A').charAt(0).toUpperCase();
+                    }
+                });
+            }
+        } catch (e) {}
+    });
 })();

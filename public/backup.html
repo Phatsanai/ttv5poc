@@ -102,7 +102,7 @@
             margin: 16px 12px 8px 12px;
         }
 
-        .nav-links {
+        .nav-menu {
             list-style: none;
             display: flex;
             flex-direction: column;
@@ -138,6 +138,7 @@
             min-width: 0;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
         }
 
         .topbar {
@@ -148,6 +149,28 @@
             justify-content: space-between;
             padding: 0 32px;
             background-color: var(--bg-sidebar);
+            flex-shrink: 0;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .page-title {
+            font-size: 1.15rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
         }
 
         .btn-back {
@@ -156,10 +179,12 @@
             gap: 8px;
             color: var(--text-muted);
             text-decoration: none;
-            font-size: 0.9rem;
-            padding: 8px 16px;
+            font-size: 0.88rem;
+            padding: 7px 14px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
+            background: transparent;
+            transition: 0.2s;
         }
 
         .btn-back:hover {
@@ -167,45 +192,90 @@
             color: var(--text-main);
         }
 
-        .user-nav {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .theme-toggle {
-            cursor: pointer;
+        .theme-toggle-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
             width: 36px;
             height: 36px;
-            border-radius: 50%;
-            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-muted);
+            transition: 0.2s;
         }
 
-        .content-area {
+        .theme-toggle-btn:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), #1d4ed8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 7px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            transition: 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .content-container {
             padding: 32px;
-            max-width: 1200px;
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .page-header {
-            margin-bottom: 24px;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .page-header h1 {
-            font-size: 1.5rem;
+            font-size: 1.45rem;
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 12px;
+            color: var(--text-title, #f9fafb);
         }
 
         .page-header p {
             color: var(--text-muted);
             font-size: 0.9rem;
-            margin-top: 4px;
+            margin-top: 6px;
         }
 
         /* Card System */
@@ -382,56 +452,123 @@
 
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
-        <div class="brand">
-            <i class="fa-solid fa-boxes-stacked"></i>
-            <span>Asset Console</span>
-            <span class="badge">v3.4</span>
+        <div class="brand-header">
+            <div class="brand-logo">
+                <i class="fa-solid fa-boxes-stacked"></i> Asset Console
+            </div>
+            <span class="version-tag">v3.4</span>
         </div>
 
-        <div class="nav-section">NAVIGATION</div>
-        <ul class="nav-links">
-            <li class="nav-item"><a href="dashboard.html"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</a></li>
-            <li class="nav-item"><a href="asset-list.html"><i class="fa-solid fa-list-check"></i> รายการทรัพย์สินทั้งหมด</a></li>
-            <li class="nav-item"><a href="asset-detail.html"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</a></li>
-            <li class="nav-item"><a href="print-qr.html"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</a></li>
-            <li class="nav-item"><a href="borrow-return.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> ระบบยืม - คืน</a></li>
-            <li class="nav-item"><a href="maintenance.html"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</a></li>
-            <li class="nav-item"><a href="audit.html"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</a></li>
-            <li class="nav-item"><a href="recycle-bin.html"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</a></li>
-        </ul>
+        <div class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-label">NAVIGATION</div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="dashboard.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="print-qr.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="asset-list.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-list"></i> รายการทรัพย์สินทั้งหมด</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="asset-detail.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="borrow-return.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</span>
+                            <span class="badge-count danger" id="badgeBorrowed">—</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="maintenance.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</span>
+                            <span class="badge-count" id="badgeMaintenance">—</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="audit.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="recycle-bin.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</span>
+                            <span class="badge-count" id="badgeTrash" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red);">0</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
 
-        <div class="nav-section">MANAGEMENT</div>
-        <ul class="nav-links">
-            <li class="nav-item"><a href="account.html"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</a></li>
-            <li class="nav-item"><a href="settings.html"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้</a></li>
-            <li class="nav-item active"><a href="backup.html"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</a></li>
-        </ul>
+            <div class="nav-section">
+                <div class="nav-label">MANAGEMENT</div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="account.html"><span class="nav-link-content"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="settings.html"><span class="nav-link-content"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้</span></a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="backup.html"><span class="nav-link-content"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</span></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-footer-profile">
+                <div class="sidebar-footer-avatar">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div style="overflow:hidden;min-width:0;flex:1;">
+                    <div id="sidebarUserName" style="font-weight:600;color:var(--text-title);font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Admin</div>
+                    <div id="sidebarUserRole" style="font-size:0.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ผู้ดูแลระบบ</div>
+                </div>
+            </div>
+            <button onclick="handleLogout()" class="btn-sidebar-logout">
+                <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+            </button>
+        </div>
     </aside>
 
     <!-- Main Content Area -->
     <div class="main-wrapper">
         <!-- Topbar -->
         <header class="topbar">
-            <a href="dashboard.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด</a>
-            <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
-                <button class="btn-theme-toggle" id="themeBtn" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
+            <div class="topbar-left">
+                <a href="dashboard.html" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
+                </a>
+                <span class="page-title"><i class="fa-solid fa-database" style="color:var(--accent-blue);"></i> สำรอง &amp; ฟื้นฟูฐานข้อมูล</span>
+            </div>
+            <div class="topbar-right">
+                <button class="theme-toggle-btn" id="themeBtn" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
                     <i class="fa-solid fa-moon" id="themeIcon"></i>
                 </button>
                 <div class="user-info">
-                    <div class="user-avatar">A</div>
+                    <div class="user-avatar" id="topAvatar">A</div>
                     <span id="topUserName" class="user-name-label">Admin User</span>
                 </div>
-                <button class="btn-logout" onclick="logout()">
+                <button class="btn-logout" onclick="handleLogout()">
                     <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
                 </button>
             </div>
         </header>
 
         <!-- Page Content -->
-        <main class="content-area">
+        <main class="content-container">
             <div class="page-header">
-                <h1><i class="fa-solid fa-database" style="color:var(--accent-blue);"></i> สำรอง & ฟื้นฟูฐานข้อมูล
-                    (Database Backup & Restore)</h1>
+                <h1><i class="fa-solid fa-database" style="color:var(--accent-blue);"></i> สำรอง &amp; ฟื้นฟูฐานข้อมูล (Database Backup &amp; Restore)</h1>
                 <p>จัดการสำรองไฟล์ฐานข้อมูล SQLite เพื่อป้องกันข้อมูลสูญหาย หรือนำเข้าข้อมูลเดิมกลับคืนระบบ</p>
             </div>
 
@@ -558,14 +695,18 @@
         }
 
         // ── Refresh button handler with visual spinner ─────────────
-        function refreshLogs(btn) {
+        async function refreshLogs(btn) {
+            const button = btn || document.getElementById('btnRefreshLogs');
             const icon = document.getElementById('refreshIcon');
-            if (btn) btn.disabled = true;
-            if (icon) { icon.classList.add('fa-spin'); }
-            loadBackupHistory().finally(() => {
-                if (btn) btn.disabled = false;
-                if (icon) { icon.classList.remove('fa-spin'); }
-            });
+            if (button) button.disabled = true;
+            if (icon) icon.classList.add('fa-spin');
+
+            try {
+                await loadBackupHistory();
+            } finally {
+                if (button) button.disabled = false;
+                if (icon) icon.classList.remove('fa-spin');
+            }
         }
 
         // ── Download .db Database Backup ──────────────────────────
@@ -695,14 +836,38 @@
             const tbody = document.getElementById('backupLogTable');
             if (!tbody) return;
 
+            if (!token) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--accent-yellow);">
+                    <i class="fa-solid fa-lock" style="margin-right:8px;"></i>กรุณาเข้าสู่ระบบก่อนดูประวัติกิจกรรม
+                    <br><button onclick="window.location.href='index.html'" class="btn-action btn-primary" style="margin-top:10px; display:inline-flex; padding:6px 16px; font-size:0.85rem;">เข้าสู่ระบบ</button>
+                </td></tr>`;
+                return;
+            }
+
             // Show loading state
             tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">
                 <i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;"></i>กำลังโหลดประวัติ...</td></tr>`;
 
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
             try {
                 const res = await fetch(getApiUrl('/api/audit-logs?limit=50'), {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
+
+                if (res.status === 401) {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('auth_user');
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--accent-yellow);">
+                        <i class="fa-solid fa-triangle-exclamation" style="margin-right:8px;"></i>เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่
+                        <br><button onclick="window.location.href='index.html'" class="btn-action btn-primary" style="margin-top:10px; display:inline-flex; padding:6px 16px; font-size:0.85rem;">เข้าสู่ระบบ</button>
+                    </td></tr>`;
+                    return;
+                }
+
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 const logs = Array.isArray(data.data) ? data.data : [];
@@ -714,12 +879,13 @@
                 }
 
                 tbody.innerHTML = logs.map(item => {
-                    let actionBadge = `<span style="color:var(--accent-blue); font-weight:600;">${item.action}</span>`;
-                    if (item.action && item.action.includes('BACKUP')) {
+                    const actionStr = String(item.action || '').toUpperCase();
+                    let actionBadge = `<span style="color:var(--accent-blue); font-weight:600;">${item.action || '-'}</span>`;
+                    if (actionStr.includes('BACKUP')) {
                         actionBadge = `<span style="color:var(--accent-green); font-weight:600;"><i class="fa-solid fa-download"></i> ${item.action}</span>`;
-                    } else if (item.action && item.action.includes('RESTORE')) {
+                    } else if (actionStr.includes('RESTORE')) {
                         actionBadge = `<span style="color:var(--accent-yellow); font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> ${item.action}</span>`;
-                    } else if (item.action && item.action.includes('DELETE')) {
+                    } else if (actionStr.includes('DELETE')) {
                         actionBadge = `<span style="color:var(--accent-red); font-weight:600;"><i class="fa-solid fa-trash"></i> ${item.action}</span>`;
                     }
 
@@ -735,19 +901,104 @@
                     `;
                 }).join('');
             } catch (err) {
+                clearTimeout(timeoutId);
                 console.warn('Failed to load audit logs:', err);
+                const isTimeout = err.name === 'AbortError';
+                const errMsg = isTimeout ? 'หมดเวลาเชื่อมต่อ (Request Timeout)' : err.message;
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--accent-red);">
-                    <i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i>ไม่สามารถโหลดประวัติได้ (${err.message})
-                    <br><small style="color:var(--text-muted); margin-top:6px; display:block;">ตรวจสอบการเชื่อมต่อหรือกดรีเฟรชอีกครั้ง</small></td></tr>`;
+                    <i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i>ไม่สามารถโหลดประวัติได้ (${errMsg})
+                    <br><button type="button" onclick="refreshLogs()" class="btn-action btn-secondary" style="margin-top:10px; display:inline-flex; padding:4px 12px; font-size:0.8rem;"><i class="fa-solid fa-rotate"></i> ลองใหม่อีกครั้ง</button></td></tr>`;
             }
         }
 
+        // ── Admin Role Guard ──────────────────────────────────────
+        async function checkAdminGuard() {
+            const token = requireAuth();
+            if (!token) return false;
+
+            let user = {};
+            try {
+                user = JSON.parse(localStorage.getItem('auth_user') || '{}');
+            } catch (e) {}
+
+            // หากไม่มีข้อมูล user.role ใน localStorage ให้ดึงจาก /api/me
+            if (!user.role) {
+                try {
+                    const r = await fetch(getApiUrl('/api/me'), {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (r.ok) {
+                        const data = await r.json();
+                        if (data && data.user) {
+                            user = data.user;
+                            localStorage.setItem('auth_user', JSON.stringify(user));
+                        }
+                    }
+                } catch (err) {}
+            }
+
+            // ตรวจสอบสิทธิ์: หากไม่ใช่ admin ให้แสดงหน้าล็อคแจ้งเตือน และเด้งกลับ dashboard.html ทันที
+            if (user.role !== 'admin') {
+                const mainWrapper = document.querySelector('.main-wrapper') || document.body;
+                mainWrapper.innerHTML = `
+                    <div style="min-height:85vh; display:flex; align-items:center; justify-content:center; padding:32px;">
+                        <div style="background:var(--bg-card, #121721); border:1px solid var(--border-color, rgba(255,255,255,0.1)); border-radius:16px; padding:44px 36px; max-width:520px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.5);">
+                            <div style="width:76px; height:76px; background:rgba(239,68,68,0.15); color:#ef4444; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin:0 auto 20px;">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <h2 style="font-size:1.4rem; font-weight:700; color:var(--text-title, #f9fafb); margin-bottom:12px;">
+                                เฉพาะผู้ดูแลระบบ (Admin Only)
+                            </h2>
+                            <p style="color:var(--text-muted, #9ca3af); font-size:0.95rem; line-height:1.6; margin-bottom:24px;">
+                                คุณกำลังเข้าสู่ระบบในฐานะ <strong>${user.name || user.username || 'ผู้ใช้'}</strong> (ระดับสิทธิ์: <strong>${user.role || 'ไม่มีสิทธิ์'}</strong>)<br>
+                                หน้านี้สงวนไว้สำหรับ <strong>ผู้ดูแลระบบ (Admin)</strong> เท่านั้น เพื่อความปลอดภัยของฐานข้อมูล
+                            </p>
+                            <div style="display:flex; gap:12px; justify-content:center;">
+                                <a href="dashboard.html" class="btn-action btn-primary" style="display:inline-flex; align-items:center; gap:8px; padding:10px 22px; text-decoration:none; border-radius:8px; font-weight:500; font-size:0.92rem; background:var(--accent-blue, #2563eb); color:#fff;">
+                                    <i class="fa-solid fa-house"></i> กลับสู่หน้าแดชบอร์ด
+                                </a>
+                            </div>
+                            <div style="margin-top:18px; font-size:0.82rem; color:var(--text-muted);">
+                                กำลังพาคุณกลับไปหน้าแดชบอร์ดอัตโนมัติใน <span id="redirectCountdown" style="font-weight:700; color:#ef4444;">3</span> วินาที...
+                            </div>
+                        </div>
+                    </div>
+                `;
+                let sec = 3;
+                const timer = setInterval(() => {
+                    sec--;
+                    const cdEl = document.getElementById('redirectCountdown');
+                    if (cdEl) cdEl.textContent = sec;
+                    if (sec <= 0) {
+                        clearInterval(timer);
+                        window.location.href = 'dashboard.html';
+                    }
+                }, 1000);
+                return false;
+            }
+            return true;
+        }
+
         // Init
-        window.addEventListener('DOMContentLoaded', function() {
-            requireAuth();
+        window.addEventListener('DOMContentLoaded', async function() {
+            const isAdmin = await checkAdminGuard();
+            if (!isAdmin) return;
+
             const displayApi = window.API_BASE_URL ? window.API_BASE_URL : '(Same Origin / Cloudflare Proxy)';
             const apiTextEl = document.getElementById('currentApiBaseText');
             if (apiTextEl) apiTextEl.textContent = displayApi;
+
+            // Sync user labels from auth_user
+            try {
+                const user = JSON.parse(localStorage.getItem('auth_user') || '{}');
+                if (user.name || user.username) {
+                    const topUserName = document.getElementById('topUserName');
+                    if (topUserName) topUserName.textContent = user.name || user.username;
+                    const avatarEl = document.querySelector('.user-avatar');
+                    if (avatarEl) avatarEl.textContent = (user.name || user.username).charAt(0).toUpperCase();
+                }
+            } catch (e) {}
+
             loadBackupHistory();
         });
     </script>

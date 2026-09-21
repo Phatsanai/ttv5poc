@@ -711,7 +711,8 @@
             <span class="version-tag">v3.4</span>
         </div>
 
-        <div class="nav-section">
+        <div class="sidebar-nav">
+            <div class="nav-section">
             <div class="nav-label">NAVIGATION</div>
             <ul class="nav-menu">
                 <li class="nav-item active">
@@ -773,17 +774,20 @@
                     <a href="backup.html"><span class="nav-link-content"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</span></a>
                 </li>
             </ul>
+                    </div>
         </div>
 
         <div class="sidebar-footer">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                <div style="width:32px;height:32px;background:rgba(59,130,246,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent-blue);font-size:0.85rem;"><i class="fa-solid fa-user"></i></div>
-                <div>
-                    <div style="font-weight:500;color:var(--text-title);font-size:0.82rem;" id="sidebarUserName">Admin</div>
-                    <div style="font-size:0.72rem;color:var(--text-muted);" id="sidebarUserRole">ผู้ดูแลระบบ</div>
+            <div class="sidebar-footer-profile">
+                <div class="sidebar-footer-avatar">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div style="overflow:hidden;min-width:0;flex:1;">
+                    <div id="sidebarUserName" style="font-weight:600;color:var(--text-title);font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Admin</div>
+                    <div id="sidebarUserRole" style="font-size:0.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ผู้ดูแลระบบ</div>
                 </div>
             </div>
-            <button onclick="handleLogout()" style="width:100%;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);padding:7px;border-radius:6px;cursor:pointer;font-size:0.82rem;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;">
+            <button onclick="handleLogout()" class="btn-sidebar-logout">
                 <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
             </button>
         </div>
@@ -978,6 +982,11 @@
         let activeTabStatus = 'ALL';
 
         function requireAuth() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramToken = urlParams.get('oauth_token');
+            if (paramToken) {
+                localStorage.setItem('auth_token', paramToken);
+            }
             const token = localStorage.getItem('auth_token');
             if (!token) { window.location.href = 'index.html'; return null; }
             return token;
@@ -1221,6 +1230,28 @@
                 document.getElementById('themeIcon').className = 'fa-solid fa-sun';
             }
 
+            // Handle OAuth token if redirected from Google/Facebook login
+            const urlParams = new URLSearchParams(window.location.search);
+            const oauthToken = urlParams.get('oauth_token');
+            if (oauthToken) {
+                localStorage.setItem('auth_token', oauthToken);
+                try {
+                    const r = await fetch(getApiUrl('/api/me'), {
+                        headers: { 'Authorization': `Bearer ${oauthToken}` }
+                    });
+                    if (r.ok) {
+                        const data = await r.json();
+                        if (data && data.user) {
+                            localStorage.setItem('auth_user', JSON.stringify(data.user));
+                        }
+                    }
+                } catch (e) {
+                    console.warn('OAuth fetch user profile notice:', e);
+                }
+                // Clean URL query parameters so token is not exposed in address bar
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             // Auth guard
             const token = requireAuth();
             if (!token) return;
@@ -1233,7 +1264,14 @@
                     const nameEls = ['topbarUserName','sidebarUserName'];
                     const roleEls = ['topbarUserRole','sidebarUserRole'];
                     nameEls.forEach(id => { const el=document.getElementById(id); if(el) el.textContent = user.name || user.username; });
-                    roleEls.forEach(id => { const el=document.getElementById(id); if(el) el.textContent = user.role==='admin'?'ผู้ดูแลระบบ (Admin)': (user.role==='editor'?'ผู้แก้ไข (Editor)':'ผู้เข้าชม (Viewer)'); });
+                    roleEls.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.textContent = user.role === 'admin' ? 'ผู้ดูแลระบบ (Admin)' :
+                                             user.role === 'manager' ? 'ผู้จัดการทรัพย์สิน (Manager)' :
+                                             user.role === 'editor' ? 'ผู้แก้ไขข้อมูล (Editor)' : 'ผู้เข้าชม (Viewer)';
+                        }
+                    });
                     const av = document.getElementById('topbarAvatar');
                     if (av) av.textContent = (user.name||user.username||'A').charAt(0).toUpperCase();
                 }
