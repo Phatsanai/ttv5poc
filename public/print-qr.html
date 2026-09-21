@@ -454,7 +454,7 @@
         }
 
         /* ==========================================
-           PRINT STYLES
+            PRINT STYLES
         ========================================== */
         @page {
             size: A4 portrait;
@@ -599,90 +599,74 @@
 
     <!-- Sidebar Menu -->
     <aside class="sidebar">
-        <div class="brand-header">
-            <div class="brand-logo">
-                <i class="fa-solid fa-boxes-stacked"></i> Asset Console
-            </div>
-            <span class="version-tag">v3.4</span>
+        <div class="brand">
+            <i class="fa-solid fa-boxes-stacked"></i> Asset Console
+            <span class="version">v3.4</span>
         </div>
+        <div class="nav-group-label">NAVIGATION</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</div>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="print-qr.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-list.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-list"></i> รายการทรัพย์สินทั้งหมด</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-detail.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="borrow-return.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="maintenance.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม &amp; บำรุงรักษา</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="audit.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="recycle-bin.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</div>
+                    <span class="badge badge-danger">0</span>
+                </a>
+            </li>
+        </ul>
 
-        <div class="sidebar-nav">
-            <div class="nav-section">
-            <div class="nav-label">NAVIGATION</div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="dashboard.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</span>
-                    </a>
-                </li>
-                <li class="nav-item active">
-                    <a href="print-qr.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="asset-list.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-list"></i> รายการทรัพย์สินทั้งหมด</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="asset-detail.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="borrow-return.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="maintenance.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม &amp; บำรุงรักษา</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="audit.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="recycle-bin.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <div class="nav-section">
-            <div class="nav-label">MANAGEMENT</div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="account.html"><span class="nav-link-content"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="settings.html"><span class="nav-link-content"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ &amp; สิทธิ์ผู้ใช้</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="backup.html"><span class="nav-link-content"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</span></a>
-                </li>
-            </ul>
+        <div class="nav-group-label">MANAGEMENT</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="account.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="settings.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ &amp; สิทธิ์ผู้ใช้
                     </div>
-        </div>
-
-        <div class="sidebar-footer">
-            <div class="sidebar-footer-profile">
-                <div class="sidebar-footer-avatar">
-                    <i class="fa-solid fa-user"></i>
-                </div>
-                <div style="overflow:hidden;min-width:0;flex:1;">
-                    <div id="sidebarUserName" style="font-weight:600;color:var(--text-title);font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Admin</div>
-                    <div id="sidebarUserRole" style="font-size:0.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ผู้ดูแลระบบ</div>
-                </div>
-            </div>
-            <button onclick="handleLogout()" class="btn-sidebar-logout">
-                <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
-            </button>
-        </div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="backup.html">
+                    <div class="nav-item-content"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</div>
+                </a>
+            </li>
+        </ul>
     </aside>
 
     <!-- Main Wrapper -->
@@ -690,19 +674,12 @@
 
         <!-- Topbar -->
         <header class="topbar">
-            <div>
-                <a href="dashboard.html" class="btn-back">
-                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
-                </a>
-            </div>
-            <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
-                <button class="btn-theme-toggle" onclick="toggleTheme()" title="สลับธีม สว่าง/มืด">
-                    <i class="fa-solid fa-moon" id="themeIcon"></i>
-                </button>
-                <div class="user-info">
-                    <div class="user-avatar" id="avatarIcon">A</div>
-                    <span id="userName" style="color: #f0f6fc; font-size: 0.9rem;" class="user-name-label">Admin User</span>
-                </div>
+            <a href="dashboard.html" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
+            </a>
+            <div class="user-info">
+                <div class="user-avatar" id="avatarIcon">A</div>
+                <span id="userName" style="color: #f0f6fc; font-size: 0.9rem;">Admin User</span>
                 <button class="btn-logout" onclick="logout()">
                     <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
                 </button>
@@ -731,7 +708,6 @@
                     <div class="form-group" id="groupPrefix">
                         <label>เริ่มจากหมวดอักษร</label>
                         <select class="form-control" id="prefixSelect" onchange="generatePreview()">
-                            <!-- สร้างรายการ A - Z -->
                             <script>
                                 for (let i = 65; i <= 90; i++) {
                                     let char = String.fromCharCode(i);
@@ -901,8 +877,6 @@
             updateGlobalLayout();
         }
 
-        // ── Duplicate Print Prevention & Debounce ──────────────────
-        let _registeredCodes = null;
         let _previewSeq = 0;
         let _debounceTimer = null;
 
@@ -932,10 +906,6 @@
             const printType = document.querySelector('input[name="printType"]:checked').value;
             const container = document.getElementById('previewContainer');
 
-            // Remove old warning banner if any
-            const oldWarn = document.getElementById('duplicateWarnBanner');
-            if (oldWarn) oldWarn.remove();
-
             let codesToPrint = [];
             let skippedCodes = [];
 
@@ -945,7 +915,6 @@
                 const count = parseInt(document.getElementById('printCount').value) || 1;
 
                 try {
-                    // เรียก API ดึงรหัสที่ข้ามรหัสที่ถูกลงทะเบียนแล้ว และรันลำดับถัดไปเติมจนครบตามจำนวน count เป๊ะๆ
                     const res = await fetch(getApiUrl(`/api/assets/available-codes?prefix=${encodeURIComponent(prefix)}&start=${startNum}&count=${count}`));
                     if (res.ok) {
                         const data = await res.json();
@@ -958,7 +927,6 @@
                     console.warn('API available-codes error, using client fallback:', e);
                 }
 
-                // Client-side fallback เผื่อกรณี Network ขัดข้อง: วนลูปเติมจนครบตามจำนวน count เป๊ะๆ
                 if (codesToPrint.length === 0) {
                     let currentPrefixCode = prefix.charCodeAt(0);
                     let currentNum = startNum;
@@ -990,19 +958,13 @@
                     if (existingInDB.length > 0) {
                         skippedCodes = existingInDB;
                     }
-                    // ในโหมดกำหนดรหัสเอง ให้พิมพ์ครบตามรหัสที่ผู้ใช้ระบุ ไม่ตัดยอดทิ้ง
                     codesToPrint = allCodes;
                 }
             }
 
-            // ถ้ามีคำขอที่ใหม่กว่า ให้ข้ามเพื่อป้องกัน race condition
             if (currentSeq !== _previewSeq) return;
 
             container.innerHTML = '';
-
-            // ซ่อน/ยกเลิก Mockup warning banner ทั้งหมดตามข้อกำหนด ให้แสดงเฉพาะตารางพิมพ์รหัสตามจำนวนที่ระบุ
-            // รหัสที่ลงทะเบียนแล้วถูกข้ามเงียบๆ และรันลำดับถัดไปเติมจนครบถ้วนเรียบร้อยแล้ว
-
             document.getElementById('btnCountLabel').innerText = codesToPrint.length;
             document.getElementById('totalPreviewCount').innerText = codesToPrint.length;
 
@@ -1076,7 +1038,7 @@
         async function logout() {
             const token = localStorage.getItem('auth_token');
             if (token) {
-                try { await fetch(getApiUrl('/api/logout'), { method:'POST', headers:{'Authorization':`Bearer ${token}`} }); } catch(e){}
+                try { await fetch(getApiUrl('/api/logout'), { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } }); } catch (e) { }
             }
             localStorage.removeItem('auth_token');
             localStorage.removeItem('auth_user');
@@ -1084,7 +1046,6 @@
         }
 
         window.onload = function () {
-            // Auth guard
             if (!localStorage.getItem('auth_token')) {
                 window.location.href = 'index.html';
                 return;
@@ -1096,12 +1057,11 @@
                     document.getElementById('userName').innerText = name;
                     document.getElementById('avatarIcon').innerText = name.charAt(0).toUpperCase();
                 }
-            } catch(e) {}
+            } catch (e) { }
 
             loadSavedConfig();
             generatePreview();
         };
-
     </script>
 </body>
 

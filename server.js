@@ -2070,13 +2070,14 @@ app.get('/api/auth/google/callback', async (req, res) => {
 
 // ── Facebook OAuth ───────────────────────────────────────────
 app.get('/api/auth/facebook', (req, res) => {
-  if (!FB_APP_ID)
+  const oauth = getResolvedOAuthConfig();
+  if (!oauth.fbAppId)
     return res.status(503).json({ success: false, message: 'Facebook OAuth ยังไม่ได้ตั้งค่า (โปรดใส่ FB_APP_ID ใน oauth.config.js)' });
   const returnTo = req.query.return_to || '/account.html';
   const clientOrigin = req.query.client_origin || req.headers.origin || (req.headers.referer ? new URL(req.headers.referer).origin : '');
   const params = new URLSearchParams({
-    client_id:     FB_APP_ID,
-    redirect_uri:  `${OAUTH_BASE_URL}/api/auth/facebook/callback`,
+    client_id:     oauth.fbAppId,
+    redirect_uri:  `${oauth.baseUrl}/api/auth/facebook/callback`,
     scope:         'email,public_profile',
     state:         Buffer.from(JSON.stringify({ token: req.query.token || '', returnTo, clientOrigin })).toString('base64')
   });
@@ -2084,6 +2085,7 @@ app.get('/api/auth/facebook', (req, res) => {
 });
 
 app.get('/api/auth/facebook/callback', async (req, res) => {
+  const oauth = getResolvedOAuthConfig();
   let clientBase = '';
   try {
     const { code, state } = req.query;
@@ -2092,15 +2094,15 @@ app.get('/api/auth/facebook/callback', async (req, res) => {
     const { token: sessToken, returnTo = '/account.html', clientOrigin = '' } = stateObj;
     clientBase = clientOrigin ? clientOrigin.replace(/\/+$/, '') : '';
 
-    if (!FB_APP_ID)
+    if (!oauth.fbAppId)
       return res.redirect(`${clientBase}/account.html?error=oauth_disabled`);
     if (!code) return res.redirect(`${clientBase}/account.html?error=no_code`);
 
     // แลก code -> access_token
     const tokenUrl = `https://graph.facebook.com/v18.0/oauth/access_token?` + new URLSearchParams({
-      client_id: FB_APP_ID,
-      client_secret: FB_APP_SECRET,
-      redirect_uri: `${OAUTH_BASE_URL}/api/auth/facebook/callback`,
+      client_id: oauth.fbAppId,
+      client_secret: oauth.fbSecret,
+      redirect_uri: `${oauth.baseUrl}/api/auth/facebook/callback`,
       code
     });
     const tokenRes = await fetch(tokenUrl);
