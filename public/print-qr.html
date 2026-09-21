@@ -674,9 +674,15 @@
 
         <!-- Topbar -->
         <header class="topbar">
-            <a href="dashboard.html" class="btn-back">
+            
+            <div class="topbar-left" style="display:flex;align-items:center;gap:12px;">
+                <button class="btn-mobile-toggle" onclick="toggleMobileSidebar()" aria-label="เปิด/ปิดเมนู">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <a href="dashboard.html" class="btn-back">
                 <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
             </a>
+            </div>
             <div class="user-info">
                 <div class="user-avatar" id="avatarIcon">A</div>
                 <span id="userName" style="color: #f0f6fc; font-size: 0.9rem;">Admin User</span>

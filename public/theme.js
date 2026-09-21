@@ -236,7 +236,7 @@
 
     // ── Mobile Responsive Sidebar Drawer Manager ────────────────
     function initMobileSidebar() {
-        const sidebar = document.querySelector('.sidebar');
+        const sidebar = document.querySelector('.sidebar, aside.sidebar');
         if (!sidebar) return;
 
         // Ensure backdrop exists
@@ -248,6 +248,7 @@
             document.body.appendChild(backdrop);
         }
 
+        backdrop.removeEventListener('click', closeMobileSidebar);
         backdrop.addEventListener('click', closeMobileSidebar);
 
         // Inject close button in sidebar header if not present
@@ -262,17 +263,41 @@
             brandHeader.appendChild(closeBtn);
         }
 
+        // Attach click listeners to all close buttons
+        sidebar.querySelectorAll('.btn-sidebar-close').forEach(btn => {
+            btn.removeAttribute('onclick');
+            btn.onclick = (e) => {
+                if (e) e.stopPropagation();
+                closeMobileSidebar();
+            };
+        });
+
+        // Attach click listeners to all existing .btn-mobile-toggle buttons
+        const existingToggles = document.querySelectorAll('.btn-mobile-toggle');
+        existingToggles.forEach(btn => {
+            btn.setAttribute('aria-label', 'เปิด/ปิดเมนู');
+            btn.setAttribute('aria-expanded', 'false');
+            btn.removeAttribute('onclick');
+            btn.onclick = (e) => {
+                if (e) e.stopPropagation();
+                toggleMobileSidebar();
+            };
+        });
+
         // Find topbar and inject mobile toggle if not present
         const topbar = document.querySelector('.topbar');
         if (topbar && !topbar.querySelector('.btn-mobile-toggle')) {
             const toggleBtn = document.createElement('button');
             toggleBtn.className = 'btn-mobile-toggle';
             toggleBtn.type = 'button';
-            toggleBtn.setAttribute('aria-label', 'เปิดเมนู');
+            toggleBtn.setAttribute('aria-label', 'เปิด/ปิดเมนู');
+            toggleBtn.setAttribute('aria-expanded', 'false');
             toggleBtn.innerHTML = '<i class="fa-solid fa-bars"></i>';
-            toggleBtn.addEventListener('click', toggleMobileSidebar);
+            toggleBtn.onclick = (e) => {
+                if (e) e.stopPropagation();
+                toggleMobileSidebar();
+            };
 
-            // Put it at the beginning of topbar or inside topbar-left
             const topbarLeft = topbar.querySelector('.topbar-left');
             if (topbarLeft) {
                 topbarLeft.insertBefore(toggleBtn, topbarLeft.firstChild);
@@ -281,10 +306,10 @@
             }
         }
 
-        // Close sidebar when clicking any nav-item link on mobile
+        // Close sidebar when clicking any nav link on mobile/tablet
         sidebar.querySelectorAll('.nav-menu a, .nav-item a').forEach(link => {
             link.addEventListener('click', () => {
-                if (window.innerWidth <= 768) {
+                if (window.innerWidth <= 992) {
                     closeMobileSidebar();
                 }
             });
@@ -292,25 +317,60 @@
 
         // Close on Escape key
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && document.body.classList.contains('sidebar-open')) {
+            if (e.key === 'Escape' && (document.body.classList.contains('sidebar-open') || sidebar.classList.contains('active'))) {
                 closeMobileSidebar();
             }
         });
     }
 
+    let lastToggleTimestamp = 0;
+
     function toggleMobileSidebar() {
-        document.body.classList.toggle('sidebar-open');
+        const now = Date.now();
+        if (now - lastToggleTimestamp < 250) return;
+        lastToggleTimestamp = now;
+
+        const sidebar = document.querySelector('.sidebar, aside.sidebar');
+        const isOpen = document.body.classList.toggle('sidebar-open');
+        if (sidebar) {
+            sidebar.classList.toggle('active', isOpen);
+        }
+        document.querySelectorAll('.btn-mobile-toggle').forEach(btn => {
+            btn.setAttribute('aria-expanded', String(isOpen));
+        });
+        if (window.innerWidth <= 992) {
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+        }
     }
 
     function closeMobileSidebar() {
+        const sidebar = document.querySelector('.sidebar, aside.sidebar');
         document.body.classList.remove('sidebar-open');
+        if (sidebar) {
+            sidebar.classList.remove('active');
+        }
+        document.querySelectorAll('.btn-mobile-toggle').forEach(btn => {
+            btn.setAttribute('aria-expanded', 'false');
+        });
+        document.body.style.overflow = '';
     }
 
     function openMobileSidebar() {
+        const sidebar = document.querySelector('.sidebar, aside.sidebar');
         document.body.classList.add('sidebar-open');
+        if (sidebar) {
+            sidebar.classList.add('active');
+        }
+        document.querySelectorAll('.btn-mobile-toggle').forEach(btn => {
+            btn.setAttribute('aria-expanded', 'true');
+        });
+        if (window.innerWidth <= 992) {
+            document.body.style.overflow = 'hidden';
+        }
     }
 
     window.toggleMobileSidebar = toggleMobileSidebar;
+    window.toggleSidebar = toggleMobileSidebar;
     window.closeMobileSidebar = closeMobileSidebar;
     window.openMobileSidebar = openMobileSidebar;
 

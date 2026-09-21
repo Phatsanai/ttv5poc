@@ -455,8 +455,9 @@
         <div class="brand-header">
             <div class="brand-logo">
                 <i class="fa-solid fa-boxes-stacked"></i> Asset Console
-            </div>
+        </div>
             <span class="version-tag">v3.4</span>
+            <button class="btn-sidebar-close" onclick="closeMobileSidebar()" aria-label="ปิดเมนู"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
         <div class="sidebar-nav">
@@ -546,6 +547,9 @@
         <!-- Topbar -->
         <header class="topbar">
             <div class="topbar-left">
+                <button class="btn-mobile-toggle" onclick="toggleMobileSidebar()" aria-label="เปิด/ปิดเมนู">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <a href="dashboard.html" class="btn-back">
                     <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
                 </a>
