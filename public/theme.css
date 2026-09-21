@@ -1857,75 +1857,254 @@ body.light-mode .btn-sidebar-close {
         overflow-x: hidden !important;
     }
 
-    /* ── Topbar Mobile Overhaul ─────────────────────────────── */
-    .topbar {
-        padding: 8px 12px !important;
-        min-height: 54px !important;
-        height: auto !important;
+    /* ── Topbar Mobile Overhaul (< 768px / max-width: 992px) ── */
+    .topbar,
+    header.topbar {
+        display: flex !important;
+        flex-direction: row !important;
         flex-wrap: wrap !important;
-        gap: 8px !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 8px 12px !important;
+        min-height: 52px !important;
+        height: auto !important;
+        max-height: none !important;
+        gap: 6px 8px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 900 !important;
+        overflow-x: hidden !important;
     }
 
+    /* Left Group: Hamburger + Back Button + Page Title */
     .topbar-left {
         display: flex !important;
         align-items: center !important;
-        gap: 8px !important;
-        flex-shrink: 1 !important;
+        gap: 6px !important;
+        flex: 1 1 auto !important;
         min-width: 0 !important;
-        max-width: calc(100% - 140px) !important;
+        max-width: calc(100% - 130px) !important;
+        overflow: hidden !important;
+    }
+
+    .topbar-left .btn-mobile-toggle,
+    .btn-mobile-toggle {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+        padding: 0 !important;
+        font-size: 0.95rem !important;
+        flex-shrink: 0 !important;
+        border-radius: 6px !important;
+        cursor: pointer !important;
+    }
+
+    .topbar-left .btn-back,
+    .btn-back {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        padding: 5px 8px !important;
+        height: 34px !important;
+        font-size: 0.78rem !important;
+        border-radius: 6px !important;
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+    }
+
+    .topbar-left .btn-back .btn-back-text,
+    .btn-back .btn-back-text {
+        display: none !important;
+    }
+
+    .btn-back::after {
+        content: "กลับ" !important;
+        font-size: 0.78rem !important;
+        font-weight: 500 !important;
     }
 
     .topbar-left .page-title,
+    .topbar-left #pageTitle,
     .topbar-left span.page-title {
-        font-size: 0.95rem !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        min-width: 0 !important;
+        flex: 0 1 auto !important;
+        margin: 0 !important;
     }
 
-    .topbar-left .btn-back {
-        padding: 6px 10px !important;
-        font-size: 0.78rem !important;
-        gap: 5px !important;
-    }
-
+    /* Right Group: Action buttons container */
     .topbar-right,
     .topbar-actions {
         display: flex !important;
         align-items: center !important;
-        gap: 6px !important;
+        justify-content: flex-end !important;
+        gap: 5px !important;
         margin-left: auto !important;
         flex-shrink: 0 !important;
+        min-width: 0 !important;
+        max-width: 65% !important;
+        flex-wrap: nowrap !important;
     }
 
-    .search-box {
+    /* Theme Toggle */
+    .topbar .btn-theme-toggle,
+    .topbar .theme-toggle-btn,
+    .topbar-actions .btn-theme-toggle,
+    .topbar-actions .theme-toggle-btn,
+    .topbar-right .btn-theme-toggle,
+    .topbar-right .theme-toggle-btn {
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+        max-width: 34px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 6px !important;
+        font-size: 0.85rem !important;
+        flex-shrink: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Scan QR Button */
+    .topbar .btn-secondary,
+    .topbar-right .btn-secondary,
+    button[onclick*="scanAssetCode"] {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        padding: 5px 8px !important;
+        height: 34px !important;
+        font-size: 0.78rem !important;
+        font-weight: 500 !important;
+        border-radius: 6px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Login Link Button */
+    .topbar .btn-login-link,
+    .topbar-right .btn-login-link,
+    #btnGroupGuest .btn-login-link {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        padding: 5px 8px !important;
+        height: 34px !important;
+        font-size: 0.78rem !important;
+        font-weight: 500 !important;
+        border-radius: 6px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Logout Button in Topbar */
+    .topbar .btn-logout,
+    .topbar-right .btn-logout,
+    .topbar-actions .btn-logout {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        padding: 5px 8px !important;
+        height: 34px !important;
+        font-size: 0.78rem !important;
+        border-radius: 6px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Primary Button in Topbar (e.g. "+ เพิ่มอุปกรณ์ใหม่") */
+    .topbar .btn-primary,
+    .topbar-actions .btn-primary {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        padding: 5px 8px !important;
+        height: 34px !important;
+        font-size: 0.78rem !important;
+        border-radius: 6px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Action Button Groups in Asset Detail (only when visible) */
+    #btnGroupGuest:not([style*="none"]),
+    #btnGroupView:not([style*="none"]),
+    #btnGroupEdit:not([style*="none"]) {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        flex-shrink: 0 !important;
+    }
+    #btnGroupView button,
+    #btnGroupEdit button {
+        padding: 5px 8px !important;
+        height: 34px !important;
+        font-size: 0.78rem !important;
+        border-radius: 6px !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Search Box Row on Mobile */
+    .topbar .search-box {
         width: 100% !important;
         max-width: 100% !important;
         order: 10 !important;
-        margin-top: 4px !important;
+        margin: 4px 0 2px 0 !important;
+        flex-basis: 100% !important;
     }
-
-    .search-box input {
+    .topbar .search-box input {
         width: 100% !important;
-        padding: 8px 12px 8px 34px !important;
-        font-size: 0.85rem !important;
+        height: 36px !important;
+        padding: 6px 12px 6px 34px !important;
+        font-size: 0.82rem !important;
+        box-sizing: border-box !important;
+    }
+    .topbar .search-box i {
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        left: 11px !important;
+        font-size: 0.8rem !important;
     }
 
     /* User Profile Compact Mode on Mobile */
-    .user-profile {
-        padding-left: 6px !important;
-        gap: 6px !important;
-        border-left: none !important;
+    .topbar .user-profile {
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        background: transparent !important;
     }
-
-    .user-profile > div:not(.avatar) {
-        display: none !important;
-    }
-
-    .avatar {
+    .topbar .user-profile .avatar,
+    .topbar .avatar {
         width: 32px !important;
         height: 32px !important;
-        font-size: 0.8rem !important;
+        min-width: 32px !important;
+        font-size: 0.78rem !important;
+    }
+    .topbar .user-profile > div:not(.avatar) {
+        display: none !important;
     }
 
     /* ── Page Headers & Action Bars ─────────────────────────── */
@@ -2162,18 +2341,98 @@ body.light-mode .btn-sidebar-close {
         grid-template-columns: 1fr !important;
     }
 
-    .btn-back span,
-    .topbar-left .btn-back span {
-        display: none !important;
+    /* Ultra-compact Left side: icon-only back button */
+    .topbar-left {
+        max-width: calc(100% - 115px) !important;
     }
 
+    .topbar-left .btn-back::after,
     .btn-back::after {
-        content: "กลับ";
+        display: none !important;
     }
 
-    .topbar-actions .btn-primary span,
-    .topbar-actions .btn-secondary span {
+    .topbar-left .btn-back,
+    .btn-back {
+        width: 34px !important;
+        min-width: 34px !important;
+        max-width: 34px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+    }
+
+    /* Ultra-compact Right side: icon-only buttons */
+    .topbar-right,
+    .topbar-actions {
+        gap: 4px !important;
+    }
+
+    .topbar .btn-logout .btn-logout-text,
+    .topbar-right .btn-logout .btn-logout-text,
+    .topbar-actions .btn-logout .btn-logout-text {
         display: none !important;
+    }
+
+    .topbar .btn-logout,
+    .topbar-right .btn-logout,
+    .topbar-actions .btn-logout {
+        width: 34px !important;
+        min-width: 34px !important;
+        max-width: 34px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+    }
+
+    .topbar-actions .btn-primary .btn-text,
+    .topbar-actions .btn-primary span {
+        display: none !important;
+    }
+
+    .topbar-actions .btn-primary {
+        width: 34px !important;
+        min-width: 34px !important;
+        max-width: 34px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+    }
+
+    .btn-secondary .btn-scan-text,
+    button[onclick*="scanAssetCode"] .btn-scan-text {
+        display: none !important;
+    }
+
+    .btn-secondary,
+    button[onclick*="scanAssetCode"] {
+        width: 34px !important;
+        min-width: 34px !important;
+        max-width: 34px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+    }
+
+    .btn-login-link .btn-login-text {
+        display: none !important;
+    }
+
+    .btn-login-link {
+        width: 34px !important;
+        min-width: 34px !important;
+        max-width: 34px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+    }
+
+    #btnGroupView button span,
+    #btnGroupEdit button span {
+        display: none !important;
+    }
+
+    #btnGroupView button,
+    #btnGroupEdit button {
+        width: 34px !important;
+        min-width: 34px !important;
+        max-width: 34px !important;
+        padding: 0 !important;
+        justify-content: center !important;
     }
 
     .oauth-login-buttons {
@@ -2244,6 +2503,13 @@ body {
         display: flex !important;
         flex-direction: column !important;
         min-height: 100vh !important;
+    }
+
+    .topbar .search-box {
+        margin-right: auto !important;
+        margin-left: 0 !important;
+        width: 380px !important;
+        max-width: 380px !important;
     }
 }
 

@@ -801,15 +801,15 @@
 
         <!-- TOPBAR -->
         <header class="topbar">
-            
-            <div class="topbar-left" style="display:flex;align-items:center;gap:12px;">
+            <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
                 <button class="btn-mobile-toggle" onclick="toggleMobileSidebar()" aria-label="เปิด/ปิดเมนู">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-<div class="search-box">
+            </div>
+
+            <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" placeholder="ค้นหาอุปกรณ์, Serial Number, ชื่อพนักงาน...">
-            </div>
             </div>
 
             <div class="topbar-actions">
@@ -818,15 +818,18 @@
                     <i class="fa-solid fa-moon" id="themeIcon"></i>
                 </button>
 
-                <a href="asset-list.html" class="btn-primary">
-                    <i class="fa-solid fa-plus"></i> เพิ่มอุปกรณ์ใหม่
+                <a href="asset-list.html" class="btn-primary" title="เพิ่มอุปกรณ์ใหม่">
+                    <i class="fa-solid fa-plus"></i> <span class="btn-text">เพิ่มอุปกรณ์ใหม่</span>
                 </a>
 
-                <div class="user-profile">
-                    <div class="avatar" id="topbarAvatar">A</div>
+                <!-- User Profile -->
+                <div class="user-profile" id="userProfile" style="display:flex;align-items:center;gap:10px;padding-left:14px;border-left:1px solid var(--border-color);">
+                    <div class="avatar" id="topbarAvatar" style="width:34px;height:34px;border-radius:50%;background-color:var(--accent-blue);color:white;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.85rem;">
+                        ผ
+                    </div>
                     <div>
-                        <div style="font-weight: 500; color: var(--text-title); font-size: 0.85rem;" id="topbarUserName">Admin User</div>
-                        <div style="font-size: 0.7rem; color: var(--text-muted);" id="topbarUserRole">Administrator</div>
+                        <div id="topbarUserName" style="font-weight:600;color:var(--text-title);font-size:0.85rem;line-height:1.2;">ผู้ดูแลระบบ</div>
+                        <div id="topbarUserRole" style="font-size:0.72rem;color:var(--text-muted);">ผู้ดูแลระบบ (Admin)</div>
                     </div>
                 </div>
             </div>

@@ -959,13 +959,21 @@
                 overflow-x: hidden;
             }
 
+            .topbar {
+                height: auto;
+                min-height: 52px;
+                padding: 8px 12px;
+                gap: 6px 8px;
+            }
+
             .topbar-right {
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
                 gap: 6px;
             }
 
             .topbar-left {
-                max-width: calc(100% - 130px);
+                min-width: 0;
+                flex: 1 1 auto;
             }
 
             .detail-card,
@@ -1147,22 +1155,16 @@
                 <button class="btn-mobile-toggle" onclick="toggleMobileSidebar()" aria-label="เปิด/ปิดเมนู">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <a href="dashboard.html" class="btn-back" id="btnBack">
-                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับไปแดชบอร์ด
-                </a>
+                <a href="dashboard.html" class="btn-back" id="btnBack" title="ย้อนกลับไปแดชบอร์ด"><i class="fa-solid fa-arrow-left"></i> <span class="btn-back-text">ย้อนกลับไปแดชบอร์ด</span></a>
                 <span class="page-title" id="pageTitle">รายละเอียดทรัพย์สิน</span>
             </div>
             <div class="topbar-right">
                 <button class="btn-theme-toggle" onclick="toggleTheme()" title="เปลี่ยนธีมสี">
                     <i class="fa-solid fa-moon" id="themeIcon"></i>
                 </button>
-                <button class="btn-secondary" onclick="scanAssetCode()" style="display:inline-flex; align-items:center; gap:6px; background:rgba(37,99,235,0.15); color:var(--accent-blue); border:1px solid rgba(37,99,235,0.3); padding:7px 14px; border-radius:8px; cursor:pointer; font-weight:500; font-size:0.875rem;" title="เปิดกล้องสแกน QR Code">
-                    <i class="fa-solid fa-camera"></i> สแกน QR
-                </button>
+                <button class="btn-secondary" onclick="scanAssetCode()" id="btnScanQR" title="เปิดกล้องสแกน QR Code"><i class="fa-solid fa-camera"></i> <span class="btn-scan-text">สแกน QR</span></button>
                 <div id="btnGroupGuest" style="display:none;">
-                    <a href="index.html" class="btn-login-link">
-                        <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ
-                    </a>
+                    <a href="index.html" class="btn-login-link" title="เข้าสู่ระบบ"><i class="fa-solid fa-right-to-bracket"></i> <span class="btn-login-text">เข้าสู่ระบบ</span></a>
                 </div>
                 <!-- Edit / Delete buttons for Admin / Editor -->
                 <div id="btnGroupView" style="display:none; gap:8px; align-items:center;">
@@ -1902,9 +1904,7 @@
                     <h2 style="color:var(--text-title); margin-bottom:8px;">เปิดกล้องสแกน หรือระบุรหัสทรัพย์สิน</h2>
                     <p style="color:var(--text-muted); margin-bottom:24px;">สแกน QR Code หรือ Barcode บนตัวอุปกรณ์เพื่อดูรายละเอียดทันที</p>
                     <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
-                        <button onclick="scanAssetCode()" style="display:inline-flex; align-items:center; gap:8px; background:var(--accent-blue); color:white; padding:12px 28px; border:none; border-radius:8px; font-size:1rem; cursor:pointer; font-weight:600; box-shadow:0 4px 12px rgba(37,99,235,0.35);">
-                            <i class="fa-solid fa-camera"></i> เปิดกล้องสแกน QR / Barcode
-                        </button>
+                        <button class="btn-secondary" onclick="scanAssetCode()" id="btnScanQR" title="เปิดกล้องสแกน QR Code"><i class="fa-solid fa-camera"></i> <span class="btn-scan-text">สแกน QR</span></button>
                         <a href="asset-list.html" style="display:inline-flex; align-items:center; gap:8px; background:var(--bg-card); color:var(--text-title); border:1px solid var(--border-color); padding:12px 24px; border-radius:8px; text-decoration:none; font-size:1rem;">
                             <i class="fa-solid fa-list"></i> ไปยังรายการทรัพย์สิน
                         </a>
