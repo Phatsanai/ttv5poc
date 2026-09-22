@@ -1796,8 +1796,9 @@ body.light-mode .btn-sidebar-close {
         color: var(--primary-color, #2563eb) !important;
     }
 
-    /* Show close button in sidebar header on mobile/tablet */
-    .btn-sidebar-close {
+    /* Show close button in sidebar header on mobile/tablet (only within actual sidebars) */
+    .sidebar .btn-sidebar-close,
+    aside .btn-sidebar-close {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -1813,10 +1814,17 @@ body.light-mode .btn-sidebar-close {
         flex-shrink: 0 !important;
     }
 
-    .btn-sidebar-close:hover {
+    .sidebar .btn-sidebar-close:hover,
+    aside .btn-sidebar-close:hover {
         background-color: rgba(239, 68, 68, 0.2) !important;
         color: #ef4444 !important;
         border-color: #ef4444 !important;
+    }
+
+    /* Never show sidebar close button inside login cards or standalone pages */
+    .login-card .btn-sidebar-close,
+    body.login-body .btn-sidebar-close {
+        display: none !important;
     }
 
     /* Backdrop overlay */

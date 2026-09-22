@@ -124,12 +124,40 @@
             align-items: center !important;
             justify-content: center !important;
             text-align: center !important;
-            margin-bottom: 28px !important;
+            margin-bottom: 24px !important;
             width: 100% !important;
             padding: 0 !important;
             border-bottom: none !important;
             box-sizing: border-box !important;
-            gap: 8px !important;
+            gap: 6px !important;
+        }
+
+        .brand-logo-wrap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+
+        .brand-icon-box {
+            width: 44px;
+            height: 44px;
+            background: rgba(37, 99, 235, 0.15);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+        }
+
+        /* Suppress close button in login screen */
+        .login-card .btn-sidebar-close {
+            display: none !important;
         }
 
         .login-card .brand-title {
@@ -168,6 +196,17 @@
             .login-card .brand-header {
                 margin-bottom: 20px !important;
                 gap: 6px !important;
+            }
+
+            .brand-logo-wrap {
+                gap: 10px;
+            }
+
+            .brand-icon-box {
+                width: 38px;
+                height: 38px;
+                font-size: 1.15rem;
+                border-radius: 10px;
             }
 
             .login-card .brand-title {
@@ -369,14 +408,10 @@
     <!-- Login Container Box -->
     <div class="login-card">
         <div class="brand-header">
-            <!-- จัดโครงสร้างไอคอนและชื่อเว็บให้อยู่คู่กันแบบแนวนอน ไม่ทับซ้อน -->
-            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
-                <div
-                    style="width: 44px; height: 44px; background: rgba(37, 99, 235, 0.15); border: 1px solid var(--border-color); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent-blue); font-size: 1.3rem; flex-shrink: 0;">
+            <div class="brand-logo-wrap">
+                <div class="brand-icon-box">
                     <i class="fa-solid fa-boxes-stacked"></i>
-        
-            <button class="btn-sidebar-close" onclick="closeMobileSidebar()" aria-label="ปิดเมนู"><i class="fa-solid fa-xmark"></i></button>
-</div>
+                </div>
                 <h1 class="brand-title">Asset Console</h1>
             </div>
             <p class="brand-subtitle">ระบบบริหารจัดการทรัพย์สินองค์กร Enterprise v3.4</p>
@@ -537,7 +572,7 @@
 
             if (oauthError) {
                 const errorMsgMap = {
-                    google_oauth_not_configured: 'Google OAuth ยังไม่ได้ตั้งค่า',
+                    google_oauth_not_configured: 'Google OAuth ยังไม่ได้ตั้งค่าบนเซิร์ฟเวอร์ (โปรดตรวจสอบ Environment Variables ใน Render หรือ .env)',
                     oauth_disabled: 'ระบบ Social Login ยังไม่ได้ตั้งค่า Client ID / Secret',
                     oauth_failed: 'การเข้าสู่ระบบผ่านผู้ให้บริการภายนอกไม่สำเร็จ',
                     token_failed: 'ไม่สามารถยืนยันตัวตนกับผู้ให้บริการ OAuth ได้',

@@ -1764,24 +1764,48 @@ function getResolvedOAuthConfig() {
     }
   }
 
-  // ลำดับการตรวจสอบอย่างยืดหยุ่น:
-  // 1. process.env
-  // 2. ตัวแปรในไฟล์ .env
-  // 3. ค่าที่ระบุใน oauth.config.js โดยตรง
-  const resolveKey = (key, fallbackVal) => {
-    if (process.env[key] && process.env[key].trim() !== '') return process.env[key].trim();
-    if (envVars[key] && envVars[key].trim() !== '') return envVars[key].trim();
-    if (fallbackVal && typeof fallbackVal === 'string' && fallbackVal.trim() !== '') return fallbackVal.trim();
-    return '';
+  const cleanVal = (val) => {
+    if (val === undefined || val === null) return '';
+    let str = String(val).trim();
+    if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
+      str = str.slice(1, -1).trim();
+    }
+    return str;
   };
 
-  const clientId = resolveKey('GOOGLE_CLIENT_ID', oauthModule.GOOGLE_CLIENT_ID);
-  const clientSecret = resolveKey('GOOGLE_CLIENT_SECRET', oauthModule.GOOGLE_CLIENT_SECRET);
-  const callbackUrl = resolveKey('GOOGLE_CALLBACK_URL', oauthModule.GOOGLE_CALLBACK_URL);
-  const baseUrl = resolveKey('OAUTH_BASE_URL', oauthModule.OAUTH_BASE_URL) || `http://127.0.0.1:${PORT}`;
+  // ลำดับการตรวจสอบอย่างยืดหยุ่น รองรับทั้ง process.env, .env, และ aliases ต่างๆ
+  const resolveKey = (keys, fallbackVal = '') => {
+    const keyList = Array.isArray(keys) ? keys : [keys];
+    for (const k of keyList) {
+      if (process.env[k] !== undefined && cleanVal(process.env[k]) !== '') return cleanVal(process.env[k]);
+    }
+    for (const k of keyList) {
+      if (envVars[k] !== undefined && cleanVal(envVars[k]) !== '') return cleanVal(envVars[k]);
+    }
+    return cleanVal(fallbackVal);
+  };
+
+  const normalizeBaseUrl = (rawUrl) => {
+    let url = cleanVal(rawUrl);
+    if (!url) return `http://127.0.0.1:${PORT}`;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      if (url.includes('localhost') || url.includes('127.0.0.1')) {
+        url = `http://${url}`;
+      } else {
+        url = `https://${url}`;
+      }
+    }
+    return url.replace(/\/+$/, '');
+  };
+
+  const clientId = resolveKey(['GOOGLE_CLIENT_ID', 'GOOGLE_ID', 'CLIENT_ID'], oauthModule.GOOGLE_CLIENT_ID);
+  const clientSecret = resolveKey(['GOOGLE_CLIENT_SECRET', 'GOOGLE_SECRET', 'CLIENT_SECRET'], oauthModule.GOOGLE_CLIENT_SECRET);
+  const callbackUrl = resolveKey(['GOOGLE_CALLBACK_URL', 'CALLBACK_URL'], oauthModule.GOOGLE_CALLBACK_URL);
+  const rawBase = resolveKey(['OAUTH_BASE_URL', 'RENDER_EXTERNAL_URL', 'BASE_URL'], oauthModule.OAUTH_BASE_URL) || `http://127.0.0.1:${PORT}`;
+  const baseUrl = normalizeBaseUrl(rawBase);
   const isMock = resolveKey('GOOGLE_MOCK_LOGIN', oauthModule.GOOGLE_MOCK_LOGIN ? 'true' : '') === 'true';
-  const fbAppId = resolveKey('FB_APP_ID', oauthModule.FB_APP_ID);
-  const fbSecret = resolveKey('FB_APP_SECRET', oauthModule.FB_APP_SECRET);
+  const fbAppId = resolveKey(['FB_APP_ID', 'FACEBOOK_APP_ID'], oauthModule.FB_APP_ID);
+  const fbSecret = resolveKey(['FB_APP_SECRET', 'FACEBOOK_APP_SECRET'], oauthModule.FB_APP_SECRET);
 
   // ตรวจสอบว่าได้กำหนดค่าทั้ง Client ID และ Secret หรือไม่
   const isGoogleConfigured = Boolean(
@@ -1791,7 +1815,7 @@ function getResolvedOAuthConfig() {
     !clientSecret.includes('YOUR_GOOGLE_CLIENT_SECRET')
   );
 
-  const redirectUri = callbackUrl || `${baseUrl.replace(/\/+$/, '')}/api/auth/google/callback`;
+  const redirectUri = callbackUrl || `${baseUrl}/api/auth/google/callback`;
 
   return {
     clientId,
@@ -1803,7 +1827,7 @@ function getResolvedOAuthConfig() {
     fbSecret,
     isGoogleConfigured,
     redirectUri,
-    errorMessage: isGoogleConfigured ? null : (isMock ? 'Google OAuth เปิดใช้งานในโหมดทดสอบ (Mock Login)' : 'Google OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน oauth.config.js หรือไฟล์ .env')
+    errorMessage: isGoogleConfigured ? null : (isMock ? 'Google OAuth เปิดใช้งานในโหมดทดสอบ (Mock Login)' : 'Google OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน Environment Variables หรือไฟล์ .env')
   };
 }
 
@@ -2569,5 +2593,18 @@ app.use((err, _req, res, _next) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n✅ Asset Console Enterprise v3.4`);
   console.log(`   http://127.0.0.1:${PORT}`);
-  console.log(`   Default login: admin / admin1234\n`);
+  console.log(`   Default login: admin / admin1234`);
+  try {
+    const oauth = getResolvedOAuthConfig();
+    if (oauth.isGoogleConfigured) {
+      const maskedId = oauth.clientId.length > 16 ? `${oauth.clientId.slice(0, 8)}...${oauth.clientId.slice(-8)}` : oauth.clientId;
+      console.log(`   🔑 Google OAuth: พร้อมใช้งาน (Client ID: ${maskedId})`);
+      console.log(`   🔗 Google Callback URL: ${oauth.redirectUri}`);
+    } else if (oauth.isMock) {
+      console.log(`   🧪 Google OAuth: โหมดทดสอบ (Mock Login Mode)`);
+    } else {
+      console.log(`   ⚠️ Google OAuth: ยังไม่ได้ตั้งค่า (Client ID & Secret ยังไม่ถูกกำหนดใน Environment Variables หรือ .env)`);
+    }
+  } catch (_) {}
+  console.log('');
 });
