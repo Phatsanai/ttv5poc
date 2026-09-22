@@ -137,7 +137,7 @@
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .card-header {
@@ -201,9 +201,20 @@
             font-weight: 500;
         }
 
-        .role-admin  { background-color: rgba(56,139,253,0.15); color: var(--accent-blue); }
-        .role-editor { background-color: rgba(63,185,80,0.15);  color: #3fb950; }
-        .role-viewer { background-color: rgba(139,148,158,0.15);color: var(--text-secondary); }
+        .role-admin {
+            background-color: rgba(56, 139, 253, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .role-editor {
+            background-color: rgba(63, 185, 80, 0.15);
+            color: #3fb950;
+        }
+
+        .role-viewer {
+            background-color: rgba(139, 148, 158, 0.15);
+            color: var(--text-secondary);
+        }
 
         /* OAuth Provider Cards */
         .oauth-list {
@@ -280,7 +291,7 @@
             align-items: center;
             gap: 10px;
             text-decoration: none;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
 
         .btn-connect-google:hover {
@@ -387,7 +398,7 @@
             color: var(--text-primary);
             padding: 12px 20px;
             border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -395,41 +406,62 @@
             animation: slideIn 0.3s ease;
         }
 
-        .toast.success { border-left: 4px solid var(--accent-green); }
-        .toast.error   { border-left: 4px solid var(--accent-red); }
-        .toast.info    { border-left: 4px solid var(--accent-blue); }
+        .toast.success {
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .toast.info {
+            border-left: 4px solid var(--accent-blue);
+        }
 
         @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to   { transform: translateX(0); opacity: 1; }
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         @media (max-width: 768px) {
             body {
                 overflow-x: hidden;
             }
+
             .main-wrapper {
                 margin-left: 0;
                 width: 100%;
                 max-width: 100vw;
             }
+
             .content-container {
                 padding: 14px 12px;
             }
+
             .oauth-item {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 10px;
             }
+
             .profile-hero {
                 flex-direction: column;
                 text-align: center;
                 gap: 12px;
             }
+
             .card {
                 padding: 16px;
                 border-radius: 8px;
             }
+
             .form-grid {
                 grid-template-columns: 1fr;
                 gap: 12px;
@@ -445,72 +477,80 @@
         <div class="brand-header">
             <div class="brand-logo">
                 <i class="fa-solid fa-boxes-stacked"></i> Asset Console
-        </div>
+            </div>
             <span class="version-tag">v3.4</span>
-            <button class="btn-sidebar-close" onclick="closeMobileSidebar()" aria-label="ปิดเมนู"><i class="fa-solid fa-xmark"></i></button>
+            <button class="btn-sidebar-close" onclick="closeMobileSidebar()" aria-label="ปิดเมนู"><i
+                    class="fa-solid fa-xmark"></i></button>
         </div>
 
         <div class="sidebar-nav">
             <div class="nav-section">
-            <div class="nav-label">NAVIGATION</div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="dashboard.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="print-qr.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="asset-list.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-list"></i> รายการทรัพย์สินทั้งหมด</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="asset-detail.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="borrow-return.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="maintenance.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม &amp; บำรุงรักษา</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="audit.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="recycle-bin.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+                <div class="nav-label">NAVIGATION</div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="dashboard.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="print-qr.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="asset-list.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-list"></i>
+                                รายการทรัพย์สินทั้งหมด</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="asset-detail.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="borrow-return.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="maintenance.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม &amp;
+                                บำรุงรักษา</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="audit.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก
+                                (Audit)</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="recycle-bin.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle
+                                Bin)</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
 
-        <div class="nav-section">
-            <div class="nav-label">MANAGEMENT</div>
-            <ul class="nav-menu">
-                <li class="nav-item active">
-                    <a href="account.html"><span class="nav-link-content"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</span></a>
-                </li>
-                <li class="nav-item" id="navSettingsItem">
-                    <a href="settings.html"><span class="nav-link-content"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ &amp; สิทธิ์ผู้ใช้</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="backup.html"><span class="nav-link-content"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</span></a>
-                </li>
-            </ul>
-                    </div>
+            <div class="nav-section">
+                <div class="nav-label">MANAGEMENT</div>
+                <ul class="nav-menu">
+                    <li class="nav-item active">
+                        <a href="account.html"><span class="nav-link-content"><i class="fa-solid fa-id-card"></i>
+                                บัญชีของฉัน</span></a>
+                    </li>
+                    <li class="nav-item" id="navSettingsItem">
+                        <a href="settings.html"><span class="nav-link-content"><i class="fa-solid fa-sliders"></i>
+                                ตั้งค่าระบบ &amp; สิทธิ์ผู้ใช้</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="backup.html"><span class="nav-link-content"><i class="fa-solid fa-database"></i>
+                                สำรองฐานข้อมูล</span></a>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         <div class="sidebar-footer">
@@ -519,8 +559,12 @@
                     <i class="fa-solid fa-user"></i>
                 </div>
                 <div style="overflow:hidden;min-width:0;flex:1;">
-                    <div id="sidebarUserName" style="font-weight:600;color:var(--text-title);font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Admin</div>
-                    <div id="sidebarUserRole" style="font-size:0.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ผู้ดูแลระบบ</div>
+                    <div id="sidebarUserName"
+                        style="font-weight:600;color:var(--text-title);font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        Admin</div>
+                    <div id="sidebarUserRole"
+                        style="font-size:0.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ผู้ดูแลระบบ</div>
                 </div>
             </div>
             <button onclick="handleLogout()" class="btn-sidebar-logout">
@@ -536,8 +580,10 @@
                 <button class="btn-mobile-toggle" onclick="toggleMobileSidebar()" aria-label="เปิด/ปิดเมนู">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <a href="dashboard.html" class="btn-back" title="ย้อนกลับไปแดชบอร์ด"><i class="fa-solid fa-arrow-left"></i> <span class="btn-back-text">ย้อนกลับไปแดชบอร์ด</span></a>
-                <span class="page-title"><i class="fa-solid fa-id-card"></i> ข้อมูลบัญชีผู้ใช้ & บัญชีที่เชื่อมต่อ</span>
+                <a href="dashboard.html" class="btn-back" title="ย้อนกลับไปแดชบอร์ด"><i
+                        class="fa-solid fa-arrow-left"></i> <span class="btn-back-text">ย้อนกลับไปแดชบอร์ด</span></a>
+                <span class="page-title"><i class="fa-solid fa-id-card"></i> ข้อมูลบัญชีผู้ใช้ &
+                    บัญชีที่เชื่อมต่อ</span>
             </div>
             <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
                 <button class="theme-toggle-btn" onclick="toggleTheme()" title="เปลี่ยนธีมสี">
@@ -547,7 +593,9 @@
                     <div class="user-avatar" id="topAvatar">A</div>
                     <span id="topUserName" class="user-name-label">User</span>
                 </div>
-                <button class="btn-logout" onclick="handleLogout()" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i> <span class="btn-logout-text">ออกจากระบบ</span></button>
+                <button class="btn-logout" onclick="handleLogout()" title="ออกจากระบบ"><i
+                        class="fa-solid fa-right-from-bracket"></i> <span
+                        class="btn-logout-text">ออกจากระบบ</span></button>
             </div>
         </header>
 
@@ -563,7 +611,8 @@
                         <h3 id="userDisplayName">กำลังโหลดข้อมูล...</h3>
                         <div class="username" id="userUsername">@loading</div>
                         <div id="userRoleBadge">
-                            <span class="role-badge role-viewer"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด...</span>
+                            <span class="role-badge role-viewer"><i class="fa-solid fa-spinner fa-spin"></i>
+                                กำลังโหลด...</span>
                         </div>
                     </div>
                 </div>
@@ -572,10 +621,12 @@
             <!-- OAuth Linked Accounts Card -->
             <div class="card">
                 <div class="card-header">
-                    <h2><i class="fa-solid fa-link" style="color:var(--accent-blue);"></i> บัญชีภายนอกที่เชื่อมต่อ (OAuth Accounts)</h2>
+                    <h2><i class="fa-solid fa-link" style="color:var(--accent-blue);"></i> บัญชีภายนอกที่เชื่อมต่อ
+                        (OAuth Accounts)</h2>
                 </div>
                 <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:20px;">
-                    เชื่อมต่ออีเมลของคุณกับ Google หรือ Facebook เพื่อความสะดวกรวดเร็วในการเข้าสู่ระบบ และอนุญาตให้คุณเข้าถึงระบบได้ด้วยอีเมลอื่นๆ ของคุณ
+                    เชื่อมต่ออีเมลของคุณกับ Google หรือ Facebook เพื่อความสะดวกรวดเร็วในการเข้าสู่ระบบ
+                    และอนุญาตให้คุณเข้าถึงระบบได้ด้วยอีเมลอื่นๆ ของคุณ
                 </p>
 
                 <div class="oauth-list">
@@ -613,9 +664,11 @@
                 </div>
 
                 <!-- Helper Note -->
-                <div style="margin-top:20px; padding:14px 18px; background:rgba(56,139,253,0.08); border:1px solid rgba(56,139,253,0.2); border-radius:8px; font-size:0.85rem; color:var(--text-secondary);">
+                <div
+                    style="margin-top:20px; padding:14px 18px; background:rgba(56,139,253,0.08); border:1px solid rgba(56,139,253,0.2); border-radius:8px; font-size:0.85rem; color:var(--text-secondary);">
                     <i class="fa-solid fa-circle-info" style="color:var(--accent-blue);"></i>
-                    สามารถกำหนด Client ID & Secret ของ Google หรือ Facebook ได้ในไฟล์ <code>oauth.config.js</code> เพื่อเปิดใช้งานระบบ OAuth จริงอย่างสมบูรณ์
+                    สามารถกำหนด Client ID & Secret ของ Google หรือ Facebook ได้ในไฟล์ <code>oauth.config.js</code>
+                    เพื่อเปิดใช้งานระบบ OAuth จริงอย่างสมบูรณ์
                 </div>
             </div>
 
@@ -631,9 +684,11 @@
                     </div>
                     <div class="form-group">
                         <label for="confirmPassword">ยืนยันรหัสผ่านใหม่อีกครั้ง</label>
-                        <input type="password" id="confirmPassword" class="form-control" placeholder="••••••••" required>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="••••••••"
+                            required>
                     </div>
-                    <div id="pwdError" style="color:var(--accent-red); font-size:0.85rem; margin-bottom:12px; display:none;"></div>
+                    <div id="pwdError"
+                        style="color:var(--accent-red); font-size:0.85rem; margin-bottom:12px; display:none;"></div>
                     <button type="submit" class="btn-submit" id="btnSubmitPwd">
                         <i class="fa-solid fa-floppy-disk"></i> อัปเดตรหัสผ่าน
                     </button>
@@ -648,7 +703,7 @@
 
     <script>
         const TOKEN = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
-        const API   = window.API_BASE_URL || '';
+        const API = window.API_BASE_URL || '';
         let currentUser = null;
 
         // ── Theme: ใช้จาก theme.js กลาง (window.toggleTheme / window.updateThemeIcons) ──
@@ -689,9 +744,9 @@
 
                 // Role Badge
                 const roleMap = {
-                    admin:  ['fa-shield',    'role-admin',  'ผู้ดูแลระบบ (Admin)'],
+                    admin: ['fa-shield', 'role-admin', 'ผู้ดูแลระบบ (Admin)'],
                     editor: ['fa-pen-ruler', 'role-editor', 'ผู้แก้ไข (Editor)'],
-                    viewer: ['fa-eye',       'role-viewer', 'ผู้ชม (Viewer)']
+                    viewer: ['fa-eye', 'role-viewer', 'ผู้ชม (Viewer)']
                 };
                 const [icon, cls, label] = roleMap[currentUser.role] || ['fa-circle-user', 'role-viewer', currentUser.role];
                 document.getElementById('userRoleBadge').innerHTML = `
@@ -720,7 +775,7 @@
                 const json = await res.json();
                 const linkedAccounts = json.data || [];
 
-                const googleAcc   = linkedAccounts.find(a => a.provider === 'google');
+                const googleAcc = linkedAccounts.find(a => a.provider === 'google');
                 const facebookAcc = linkedAccounts.find(a => a.provider === 'facebook');
 
                 // Render Google UI
@@ -794,10 +849,10 @@
         // ── Change Password ────────────────────────────────────
         async function handleChangePassword(e) {
             e.preventDefault();
-            const newPwd     = document.getElementById('newPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
             const confirmPwd = document.getElementById('confirmPassword').value;
-            const errEl      = document.getElementById('pwdError');
-            const btnEl      = document.getElementById('btnSubmitPwd');
+            const errEl = document.getElementById('pwdError');
+            const btnEl = document.getElementById('btnSubmitPwd');
 
             errEl.style.display = 'none';
 
@@ -842,7 +897,7 @@
                         method: 'POST',
                         headers: { Authorization: `Bearer ${TOKEN}` }
                     });
-                } catch(e) {}
+                } catch (e) { }
             }
             localStorage.removeItem('auth_token');
             localStorage.removeItem('authToken');

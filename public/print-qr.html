@@ -343,7 +343,7 @@
             border-radius: 8px;
             padding: 16px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: var(--sticker-gap-v, 12px) 16px;
             max-width: 100%;
         }
@@ -458,7 +458,7 @@
         ========================================== */
         @page {
             size: A4 portrait;
-            margin: var(--page-padding, 5mm);
+            margin: 5mm 6mm;
         }
 
         @media print {
@@ -472,16 +472,37 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 overflow: visible !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
+            /* ซ่อนแถบเมนูด้านบน (Navbar), หัวข้อ, ปุ่มกลับ, ข้อมูลผู้ใช้ และเมนูข้างทั้งหมด */
+            header,
+            aside,
+            nav,
             .sidebar,
             .topbar,
+            .topbar-left,
+            .btn-back,
+            .btn-back-text,
+            .btn-mobile-toggle,
+            .user-info,
+            .user-avatar,
+            #avatarIcon,
+            #userName,
+            .btn-logout,
             .card-box,
             .slider-panel,
             .preview-header,
             .page-title,
-            .individual-controls {
+            .individual-controls,
+            .btn-print {
                 display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
             }
 
             .main-wrapper,
@@ -494,11 +515,12 @@
                 overflow: visible !important;
             }
 
+            /* เลย์เอาต์ 2 คอลัมน์ 10 แถว (รวม 20 ชิ้นพอดีต่อ 1 หน้ากระดาษ A4) */
             .sticker-sheet {
                 background: transparent !important;
                 border: none !important;
                 padding: 0 !important;
-                margin: 0 !important;
+                margin: 0 auto !important;
                 display: grid !important;
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: var(--sticker-gap-v, 2mm) 4mm !important;
@@ -513,6 +535,12 @@
                 margin: 0 !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
+            }
+
+            /* บังคับตัดหน้ากระดาษเมื่อครบ 20 ป้ายพอดี (2 คอลัมน์ x 10 แถว) */
+            .sticker-card-wrapper:nth-child(20n):not(:last-child) {
+                page-break-after: always !important;
+                break-after: page !important;
             }
 
             .sticker-item {
@@ -547,7 +575,7 @@
         }
 
         /* Mobile Responsive Media Queries */
-        @media (max-width: 768px) {
+        @media screen and (max-width: 768px) {
             body {
                 overflow-x: hidden;
             }
