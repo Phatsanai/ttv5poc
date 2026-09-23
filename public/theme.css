@@ -333,12 +333,14 @@ body.light-mode .btn-logout:hover {
 }
 
 @media (max-width: 768px) {
+
     .user-info span,
     .user-name-label,
     #topUserName,
     #topbarUserName {
         max-width: 85px !important;
     }
+
     .btn-logout {
         padding: 7px 8px !important;
     }
@@ -956,7 +958,13 @@ body.light-mode .bar-label {
 }
 
 /* Smooth transition for theme toggle */
-body, .sidebar, .topbar, .card-box, .stat-card, .slider-panel, .form-control {
+body,
+.sidebar,
+.topbar,
+.card-box,
+.stat-card,
+.slider-panel,
+.form-control {
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
@@ -965,19 +973,33 @@ body, .sidebar, .topbar, .card-box, .stat-card, .slider-panel, .form-control {
    ============================================================ */
 
 /* ── 1. Font Family Presets ── */
-html[data-font="kanit"], body[data-font="kanit"], [data-font="kanit"] {
+html[data-font="kanit"],
+body[data-font="kanit"],
+[data-font="kanit"] {
     --font-family-base: 'Kanit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
-html[data-font="prompt"], body[data-font="prompt"], [data-font="prompt"] {
+
+html[data-font="prompt"],
+body[data-font="prompt"],
+[data-font="prompt"] {
     --font-family-base: 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
-html[data-font="sarabun"], body[data-font="sarabun"], [data-font="sarabun"] {
+
+html[data-font="sarabun"],
+body[data-font="sarabun"],
+[data-font="sarabun"] {
     --font-family-base: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
-html[data-font="inter"], body[data-font="inter"], [data-font="inter"] {
+
+html[data-font="inter"],
+body[data-font="inter"],
+[data-font="inter"] {
     --font-family-base: 'Inter', 'Kanit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
-html[data-font="noto"], body[data-font="noto"], [data-font="noto"] {
+
+html[data-font="noto"],
+body[data-font="noto"],
+[data-font="noto"] {
     --font-family-base: 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -986,14 +1008,17 @@ html[data-font-size="small"] {
     --font-size-base: 13.5px;
     font-size: 13.5px;
 }
+
 html[data-font-size="normal"] {
     --font-size-base: 15px;
     font-size: 15px;
 }
+
 html[data-font-size="large"] {
     --font-size-base: 16.5px;
     font-size: 16.5px;
 }
+
 html[data-font-size="xlarge"] {
     --font-size-base: 18px;
     font-size: 18px;
@@ -1012,18 +1037,41 @@ body {
 }
 
 /* Universal text elements inheritance */
-input, button, select, textarea, optgroup, .form-input, .form-select, .form-textarea {
+input,
+button,
+select,
+textarea,
+optgroup,
+.form-input,
+.form-select,
+.form-textarea {
     font-family: var(--font-family-base, 'Kanit', sans-serif) !important;
 }
 
 /* Protect Font Awesome Icons from font-family override */
-.fa, .fas, .far, .fal, .fad, .fab, .fa-solid, .fa-regular, .fa-brands, [class^="fa-"], [class*=" fa-"] {
+.fa,
+.fas,
+.far,
+.fal,
+.fad,
+.fab,
+.fa-solid,
+.fa-regular,
+.fa-brands,
+[class^="fa-"],
+[class*=" fa-"] {
     font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", FontAwesome !important;
 }
 
 /* ── 4. Responsive Layout & Anti-Overflow Rules ── */
 /* Prevent buttons, inputs, badges and tables from overflowing on larger font sizes */
-button, .btn, .btn-primary, .btn-secondary, .btn-cancel, .btn-submit, .btn-save {
+button,
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-cancel,
+.btn-submit,
+.btn-save {
     min-height: 38px;
     height: auto;
     white-space: normal;
@@ -1044,7 +1092,8 @@ table {
     border-collapse: collapse;
 }
 
-table th, table td {
+table th,
+table td {
     word-break: normal;
     overflow-wrap: break-word;
     vertical-align: middle;
@@ -1059,7 +1108,8 @@ table th, table td {
     white-space: nowrap;
 }
 
-.card-title, .page-title {
+.card-title,
+.page-title {
     flex-wrap: wrap;
     gap: 12px;
 }
@@ -1197,7 +1247,7 @@ aside.sidebar .nav-item a,
 
 .nav-item-content i,
 .nav-link-content i,
-.nav-item a > i {
+.nav-item a>i {
     width: 16px !important;
     font-size: 0.92rem !important;
     text-align: center !important;
@@ -1207,7 +1257,7 @@ aside.sidebar .nav-item a,
 
 .nav-item.active .nav-item-content i,
 .nav-item.active .nav-link-content i,
-.nav-item.active a > i {
+.nav-item.active a>i {
     color: var(--accent-blue) !important;
 }
 
@@ -1565,7 +1615,7 @@ aside .brand-header {
 }
 
 .brand-logo,
-.brand > a,
+.brand>a,
 .brand-title-wrap {
     display: inline-flex !important;
     align-items: center !important;
@@ -1583,7 +1633,7 @@ aside .brand-header {
 aside.sidebar .brand-icon,
 .sidebar .brand-logo i,
 .brand-logo i,
-.brand > i {
+.brand>i {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1681,8 +1731,10 @@ body.light-mode .btn-sidebar-close {
    10. Comprehensive Mobile & Tablet Responsive System (max-width: 992px)
    ============================================================ */
 @media (max-width: 992px) {
+
     /* ── Global Viewport Protection ─────────────────────────── */
-    html, body {
+    html,
+    body {
         overflow-x: hidden !important;
         width: 100% !important;
         max-width: 100vw !important;
@@ -2065,6 +2117,7 @@ body.light-mode .btn-sidebar-close {
         gap: 4px !important;
         flex-shrink: 0 !important;
     }
+
     #btnGroupView button,
     #btnGroupEdit button {
         padding: 5px 8px !important;
@@ -2083,6 +2136,7 @@ body.light-mode .btn-sidebar-close {
         margin: 4px 0 2px 0 !important;
         flex-basis: 100% !important;
     }
+
     .topbar .search-box input {
         width: 100% !important;
         height: 36px !important;
@@ -2090,6 +2144,7 @@ body.light-mode .btn-sidebar-close {
         font-size: 0.82rem !important;
         box-sizing: border-box !important;
     }
+
     .topbar .search-box i {
         top: 50% !important;
         transform: translateY(-50%) !important;
@@ -2104,6 +2159,7 @@ body.light-mode .btn-sidebar-close {
         border: none !important;
         background: transparent !important;
     }
+
     .topbar .user-profile .avatar,
     .topbar .avatar {
         width: 32px !important;
@@ -2111,7 +2167,8 @@ body.light-mode .btn-sidebar-close {
         min-width: 32px !important;
         font-size: 0.78rem !important;
     }
-    .topbar .user-profile > div:not(.avatar) {
+
+    .topbar .user-profile>div:not(.avatar) {
         display: none !important;
     }
 
@@ -2344,6 +2401,7 @@ body.light-mode .btn-sidebar-close {
    11. Extra Small Screens (max-width: 480px)
    ============================================================ */
 @media (max-width: 480px) {
+
     .stats-grid,
     .dashboard-grid {
         grid-template-columns: 1fr !important;
@@ -2468,6 +2526,7 @@ body {
 
 /* ── Desktop View (min-width: 993px): Fixed 260px Sidebar ──── */
 @media (min-width: 993px) {
+
     aside.sidebar,
     .sidebar {
         width: 260px !important;
@@ -2695,7 +2754,7 @@ aside.sidebar .sidebar-footer-profile,
     overflow: hidden !important;
 }
 
-.sidebar-footer-profile > div:first-child,
+.sidebar-footer-profile>div:first-child,
 .sidebar-footer-profile .sidebar-footer-avatar,
 .sidebar-footer-avatar {
     width: 28px !important;
@@ -2769,21 +2828,43 @@ aside.sidebar::-webkit-scrollbar,
 .sidebar-nav::-webkit-scrollbar {
     width: 4px !important;
 }
+
 aside.sidebar::-webkit-scrollbar-track,
 .sidebar::-webkit-scrollbar-track,
 .sidebar-nav::-webkit-scrollbar-track {
     background: transparent !important;
 }
+
 aside.sidebar::-webkit-scrollbar-thumb,
 .sidebar::-webkit-scrollbar-thumb,
 .sidebar-nav::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.12) !important;
     border-radius: 4px !important;
 }
+
 aside.sidebar::-webkit-scrollbar-thumb:hover,
 .sidebar::-webkit-scrollbar-thumb:hover,
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* ============================================================
+   12. Global Print Media Overrides
+   ============================================================ */
+@media print {
+
+    .sidebar-backdrop,
+    .btn-mobile-toggle,
+    .btn-sidebar-close,
+    .btn-theme-toggle,
+    .theme-toggle-btn {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
 }
 
 /* End of Theme Stylesheet */

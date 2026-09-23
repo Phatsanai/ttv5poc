@@ -458,7 +458,7 @@
         ========================================== */
         @page {
             size: A4 portrait;
-            margin: 5mm 6mm;
+            margin: 4mm 5mm;
         }
 
         @media print {
@@ -469,23 +469,31 @@
                 color: #000000 !important;
                 width: 100% !important;
                 height: auto !important;
+                min-height: 0 !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                display: block !important;
+                position: static !important;
                 overflow: visible !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
 
-            /* ซ่อนแถบเมนูด้านบน (Navbar), หัวข้อ, ปุ่มกลับ, ข้อมูลผู้ใช้ และเมนูข้างทั้งหมด */
+            /* ซ่อนแถบเมนูด้านบน, เมนูข้าง, ตัวควบคุม, ข้อมูลผู้ใช้ และแผงปรับแต่งทั้งหมด */
             header,
             aside,
             nav,
             .sidebar,
+            .sidebar-backdrop,
             .topbar,
             .topbar-left,
             .btn-back,
             .btn-back-text,
             .btn-mobile-toggle,
+            .btn-sidebar-close,
+            .btn-theme-toggle,
+            .theme-toggle,
+            .theme-toggle-btn,
             .user-info,
             .user-avatar,
             #avatarIcon,
@@ -496,13 +504,18 @@
             .preview-header,
             .page-title,
             .individual-controls,
-            .btn-print {
+            .btn-print,
+            .glow-bg,
+            .glow-bg-bottom {
                 display: none !important;
                 visibility: hidden !important;
                 height: 0 !important;
+                min-height: 0 !important;
+                max-height: 0 !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 border: none !important;
+                overflow: hidden !important;
             }
 
             .main-wrapper,
@@ -511,7 +524,9 @@
                 margin: 0 !important;
                 width: 100% !important;
                 height: auto !important;
+                min-height: 0 !important;
                 display: block !important;
+                position: static !important;
                 overflow: visible !important;
             }
 
@@ -525,7 +540,11 @@
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: var(--sticker-gap-v, 2mm) 4mm !important;
                 width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
                 overflow: visible !important;
+                page-break-before: avoid !important;
+                break-before: avoid !important;
             }
 
             .sticker-card-wrapper {
@@ -533,20 +552,27 @@
                 border: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                display: block !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
             }
 
             /* บังคับตัดหน้ากระดาษเมื่อครบ 20 ป้ายพอดี (2 คอลัมน์ x 10 แถว) */
-            .sticker-card-wrapper:nth-child(20n):not(:last-child) {
+            .sticker-card-wrapper:nth-child(20n) {
                 page-break-after: always !important;
                 break-after: page !important;
+            }
+
+            /* ป้องกันไม่ให้แผ่นสุดท้ายถูกสั่งตัดขึ้นหน้าใหม่เป็นกระดาษเปล่า */
+            .sticker-card-wrapper:last-child {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
             }
 
             .sticker-item {
                 border: 1.5px solid #000000 !important;
                 border-radius: 6px !important;
-                padding: 4px 8px !important;
+                padding: 3.5px 7px !important;
                 width: var(--item-w, var(--sticker-width-mm, 95mm)) !important;
                 height: var(--item-h, var(--sticker-height-mm, 24.5mm)) !important;
                 box-sizing: border-box !important;
@@ -561,7 +587,7 @@
 
             .sticker-code {
                 font-size: 0.7rem !important;
-                font-weight: 300 !important;
+                font-weight: 400 !important;
                 color: #000000 !important;
             }
 
@@ -570,7 +596,7 @@
             }
 
             .sticker-line+.sticker-line {
-                margin-top: 20px !important;
+                margin-top: 18px !important;
             }
         }
 
@@ -702,12 +728,13 @@
 
         <!-- Topbar -->
         <header class="topbar">
-            
+
             <div class="topbar-left" style="display:flex;align-items:center;gap:12px;">
                 <button class="btn-mobile-toggle" onclick="toggleMobileSidebar()" aria-label="เปิด/ปิดเมนู">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <a href="dashboard.html" class="btn-back" title="ย้อนกลับไปแดชบอร์ด"><i class="fa-solid fa-arrow-left"></i> <span class="btn-back-text">ย้อนกลับไปแดชบอร์ด</span></a>
+                <a href="dashboard.html" class="btn-back" title="ย้อนกลับไปแดชบอร์ด"><i
+                        class="fa-solid fa-arrow-left"></i> <span class="btn-back-text">ย้อนกลับไปแดชบอร์ด</span></a>
             </div>
             <div class="user-info">
                 <div class="user-avatar" id="avatarIcon">A</div>
