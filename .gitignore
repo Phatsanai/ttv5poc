@@ -15,6 +15,9 @@ yarn-error.log*
 # assets.db
 # assets.db-wal
 # assets.db-shm
+backup/
+backups/
+*.db.bak
 
 # Uploaded user images (should be stored on persistent disk in production)
 # uploads/*

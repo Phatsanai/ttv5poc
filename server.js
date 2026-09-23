@@ -168,17 +168,52 @@ async function processAndSaveImage(buffer, originalName) {
 }
 
 // ── SQLite DB (better-sqlite3 – High Reliability & Crash-Resistant) ──
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'assets.db');
+// ตรวจสอบและกำหนดพาธของไฟล์ฐานข้อมูล assets.db ให้ชี้มาที่โฟลเดอร์หลักของโปรเจกต์
+function resolveDbPath() {
+  const configured = process.env.DB_PATH;
+  const defaultPath = path.join(__dirname, 'assets.db');
+
+  // ป้องกันค่าตกค้างที่ชี้ไปที่ไดรฟ์ Z: หรือค่าว่าง ให้ใช้ assets.db ในโฟลเดอร์หลักเสมอ
+  if (!configured || /^[zZ]:/i.test(configured.trim())) {
+    return defaultPath;
+  }
+
+  // แปลง Relative path ให้เป็น Absolute path อิงจาก __dirname ของโปรเจกต์
+  return path.isAbsolute(configured) ? configured : path.resolve(__dirname, configured);
+}
+
+let DB_PATH = resolveDbPath();
 
 function initDatabase() {
-  const dbDir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+  const localDefaultPath = path.join(__dirname, 'assets.db');
+  let activePath = DB_PATH;
+
+  // ตรวจสอบและสร้างโฟลเดอร์ปลายทางหากจำเป็น
+  try {
+    const dbDir = path.dirname(activePath);
+    if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+  } catch (dirErr) {
+    console.warn(`⚠️ Cannot access directory for ${activePath}: ${dirErr.message}. Falling back to ${localDefaultPath}`);
+    activePath = localDefaultPath;
+    DB_PATH = localDefaultPath;
+  }
 
   // Open Database with busy timeout (15 seconds) to prevent immediate "disk I/O error (10)" or "database is locked"
-  const instance = new Database(DB_PATH, {
-    timeout: 15000,
-    fileMustExist: false
-  });
+  let instance;
+  try {
+    instance = new Database(activePath, {
+      timeout: 15000,
+      fileMustExist: false
+    });
+  } catch (openErr) {
+    console.warn(`⚠️ Failed to open database at ${activePath}: ${openErr.message}. Falling back to default local DB: ${localDefaultPath}`);
+    activePath = localDefaultPath;
+    DB_PATH = localDefaultPath;
+    instance = new Database(activePath, {
+      timeout: 15000,
+      fileMustExist: false
+    });
+  }
 
   try {
     // 1. Set busy timeout in SQLite engine (wait up to 15,000ms for file locks to release)
@@ -1757,7 +1792,9 @@ function getResolvedOAuthConfig() {
               val = val.slice(1, -1);
             }
             envVars[key] = val;
-            process.env[key] = val;
+            if (val !== '' || !process.env[key]) {
+              process.env[key] = val;
+            }
           }
         });
       } catch (_) {}
@@ -1807,12 +1844,20 @@ function getResolvedOAuthConfig() {
   const fbAppId = resolveKey(['FB_APP_ID', 'FACEBOOK_APP_ID'], oauthModule.FB_APP_ID);
   const fbSecret = resolveKey(['FB_APP_SECRET', 'FACEBOOK_APP_SECRET'], oauthModule.FB_APP_SECRET);
 
+  const isPlaceholder = (id, secret) => {
+    const sId = String(id || '').toLowerCase();
+    const sSec = String(secret || '').toLowerCase();
+    return sId.includes('your_google_client_id') ||
+           sSec.includes('your_google_client_secret') ||
+           sId.startsWith('your_') ||
+           sSec.startsWith('your_');
+  };
+
   // ตรวจสอบว่าได้กำหนดค่าทั้ง Client ID และ Secret หรือไม่
   const isGoogleConfigured = Boolean(
     clientId &&
     clientSecret &&
-    !clientId.includes('YOUR_GOOGLE_CLIENT_ID') &&
-    !clientSecret.includes('YOUR_GOOGLE_CLIENT_SECRET')
+    !isPlaceholder(clientId, clientSecret)
   );
 
   const redirectUri = callbackUrl || `${baseUrl}/api/auth/google/callback`;

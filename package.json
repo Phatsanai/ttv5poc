@@ -5,7 +5,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "init-db": "node init-db.js",
+    "backup-db": "node backup-db.js",
+    "backup": "node backup-db.js"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",

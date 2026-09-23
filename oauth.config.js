@@ -25,7 +25,9 @@ function readEnvFile() {
             val = val.slice(1, -1);
           }
           envVars[key] = val;
-          process.env[key] = val;
+          if (val !== '' || !process.env[key]) {
+            process.env[key] = val;
+          }
         }
       });
     } catch (_) {}
@@ -112,11 +114,19 @@ function getGoogleAuthStatus() {
   const callbackUrl = resolveKey(['GOOGLE_CALLBACK_URL', 'CALLBACK_URL'], config.GOOGLE_CALLBACK_URL, env);
   const redirectUri = callbackUrl || `${baseUrl}/api/auth/google/callback`;
 
+  const isPlaceholder = (id, secret) => {
+    const sId = String(id || '').toLowerCase();
+    const sSec = String(secret || '').toLowerCase();
+    return sId.includes('your_google_client_id') ||
+           sSec.includes('your_google_client_secret') ||
+           sId.startsWith('your_') ||
+           sSec.startsWith('your_');
+  };
+
   const isConfigured = Boolean(
     clientId &&
     clientSecret &&
-    !clientId.includes('YOUR_GOOGLE_CLIENT_ID') &&
-    !clientSecret.includes('YOUR_GOOGLE_CLIENT_SECRET')
+    !isPlaceholder(clientId, clientSecret)
   );
 
   return {
