@@ -809,7 +809,7 @@
 
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" placeholder="ค้นหาอุปกรณ์, Serial Number, ชื่อพนักงาน...">
+                <input type="text" id="topbarSearchInput" placeholder="ค้นหาอุปกรณ์, Serial Number, ชื่อพนักงาน..." onkeydown="handleTopbarSearch(event)">
             </div>
 
             <div class="topbar-actions">
@@ -847,15 +847,17 @@
                     <p>ข้อมูลสถิติทรัพย์สิน อุปกรณ์ส่งซ่อม และการยืมคืนแบบเรียลไทม์</p>
                 </div>
                 <div class="filter-selectors">
-                    <select class="select-control">
-                        <option>สำนักงานใหญ่ (HQ)</option>
-                        <option>สาขาบางนา</option>
+                    <select class="select-control" id="dashboardCategoryFilter" onchange="handleDashboardCategoryFilter(this.value)">
+                        <option value="">ทุกหมวดหมู่ (All Categories)</option>
                     </select>
-                    <select class="select-control">
-                        <option>ไตรมาส 3 / 2569</option>
-                        <option>ไตรมาส 2 / 2569</option>
+                    <select class="select-control" id="dashboardStatusFilter" onchange="handleDashboardStatusFilter(this.value)">
+                        <option value="">ทุกสถานะ (All Status)</option>
+                        <option value="active">ใช้งานปกติ (Active)</option>
+                        <option value="borrowed">ถูกยืมออก (Borrowed)</option>
+                        <option value="maintenance">ส่งซ่อม (Maintenance)</option>
+                        <option value="disposed">ตัดจำหน่าย (Disposed)</option>
                     </select>
-                    <button class="btn-action" style="padding: 6px 12px;"><i class="fa-solid fa-download"></i>
+                    <button class="btn-action" style="padding: 6px 12px;" onclick="exportDashboardReport()"><i class="fa-solid fa-download"></i>
                         ส่งออกรายงาน</button>
                 </div>
             </div>
@@ -1052,6 +1054,18 @@
                 // Render Dynamic Category Breakdown
                 renderCategoryChart(data.categoryStats || [], data.totalAssets || 0);
 
+                // Populate category filter dropdown
+                const catFilterEl = document.getElementById('dashboardCategoryFilter');
+                if (catFilterEl && data.categoryStats) {
+                    const curVal = catFilterEl.value;
+                    let opts = '<option value="">ทุกหมวดหมู่ (All Categories)</option>';
+                    data.categoryStats.forEach(c => {
+                        opts += `<option value="${escHtml(c.category)}">${escHtml(c.category)} (${c.cnt})</option>`;
+                    });
+                    catFilterEl.innerHTML = opts;
+                    if (curVal) catFilterEl.value = curVal;
+                }
+
                 // Render Dynamic 6-Month Trends
                 renderMonthlyTrends(data.monthlyTrends || []);
 
@@ -1144,6 +1158,74 @@
             renderFilteredRecentTable();
         }
 
+        let selectedCategoryFilter = '';
+        let selectedStatusFilter = '';
+
+        function handleDashboardCategoryFilter(cat) {
+            selectedCategoryFilter = cat;
+            renderFilteredRecentTable();
+        }
+
+        function handleDashboardStatusFilter(st) {
+            selectedStatusFilter = st;
+            renderFilteredRecentTable();
+        }
+
+        function handleTopbarSearch(e) {
+            if (e.key === 'Enter') {
+                const val = (document.getElementById('topbarSearchInput')?.value || '').trim();
+                if (val) {
+                    window.location.href = `asset-list.html?search=${encodeURIComponent(val)}`;
+                }
+            }
+        }
+
+        async function exportDashboardReport() {
+            const token = localStorage.getItem('auth_token');
+            try {
+                const res = await fetch(getApiUrl('/api/backup/export-json'), {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const dateStr = new Date().toISOString().slice(0, 10);
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `asset-report-backup-${dateStr}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    return;
+                }
+            } catch (e) {}
+            // Fallback export CSV
+            exportRecentTableToCSV();
+        }
+
+        function exportRecentTableToCSV() {
+            if (!cachedRecentAssets || cachedRecentAssets.length === 0) {
+                alert('ไม่มีข้อมูลสำหรับส่งออกรายงาน');
+                return;
+            }
+            const headers = ['รหัสทรัพย์สิน', 'ชื่ออุปกรณ์', 'Serial Number', 'หมวดหมู่', 'ผู้ครอบครอง/แผนก', 'สถานะ'];
+            const rows = cachedRecentAssets.map(a => [
+                `"${a.asset_code || ''}"`,
+                `"${(a.name || '').replace(/"/g, '""')}"`,
+                `"${a.serial_number || ''}"`,
+                `"${a.category || ''}"`,
+                `"${a.holder || a.department || ''}"`,
+                `"${a.status || ''}"`
+            ]);
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `assets-summary-${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
         function renderFilteredRecentTable() {
             const tbody = document.getElementById('recentAssetsBody');
             if (!tbody) return;
@@ -1156,11 +1238,17 @@
             if (activeTabStatus !== 'ALL') {
                 list = list.filter(a => a.status === activeTabStatus);
             }
+            if (selectedCategoryFilter) {
+                list = list.filter(a => a.category === selectedCategoryFilter);
+            }
+            if (selectedStatusFilter) {
+                list = list.filter(a => a.status === selectedStatusFilter);
+            }
 
             if (list.length === 0) {
                 const msg = cachedRecentAssets.length === 0
                     ? '<i class="fa-solid fa-boxes-stacked" style="font-size:1.6rem; margin-bottom:10px; display:block; opacity:0.5;"></i>ยังไม่มีข้อมูลทรัพย์สินในระบบ (สามารถเพิ่มได้ที่ปุ่ม "จัดการทรัพย์สิน" ด้านบน)'
-                    : 'ไม่มีรายการทรัพย์สินในสถานะนี้';
+                    : 'ไม่มีรายการทรัพย์สินตามเงื่อนไขที่เลือก';
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:36px; color:var(--text-muted);">${msg}</td></tr>`;
                 return;
             }

@@ -456,10 +456,10 @@
                         <div class="form-group">
                             <label>สถานะ (Status)</label>
                             <select id="assetStatus" class="form-control">
-                                <option value="active">พร้อมใช้งาน (Active)</option>
-                                <option value="in_use">กำลังใช้งาน (In Use)</option>
+                                <option value="active">ใช้งานปกติ (Active)</option>
+                                <option value="borrowed">ถูกยืมออก (Borrowed)</option>
                                 <option value="maintenance">ส่งซ่อม (Maintenance)</option>
-                                <option value="retired">จำหน่ายออก (Retired)</option>
+                                <option value="disposed">ตัดจำหน่าย (Disposed)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -695,7 +695,15 @@
                     document.getElementById('assetSerial').value = a.serial_number || '';
                     document.getElementById('assetHolder').value = a.holder || '';
                     document.getElementById('assetDept').value = a.department || '';
-                    document.getElementById('assetStatus').value = a.status || 'active';
+                    const statusNormalizeMap = {
+                        'ใช้งานปกติ': 'active',
+                        'ถูกยืม': 'borrowed',
+                        'ส่งซ่อม': 'maintenance',
+                        'ตัดจำหน่าย': 'disposed',
+                        'in_use': 'borrowed',
+                        'retired': 'disposed'
+                    };
+                    document.getElementById('assetStatus').value = statusNormalizeMap[a.status] || a.status || 'active';
                     document.getElementById('assetDate').value = a.received_date || '';
                     document.getElementById('assetNotes').value = a.notes || '';
                     photosList = Array.isArray(a.photos) ? [...a.photos] : (a.image ? [a.image] : []);

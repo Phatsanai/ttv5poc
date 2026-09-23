@@ -817,9 +817,10 @@
                 <div class="form-group">
                     <label>สถานะ</label>
                     <select class="form-control" id="edit-status">
-                        <option value="ใช้งานปกติ">ใช้งานปกติ</option>
-                        <option value="ส่งซ่อม">ส่งซ่อม</option>
-                        <option value="ถูกยืม">ถูกยืม</option>
+                        <option value="active">ใช้งานปกติ (Active)</option>
+                        <option value="borrowed">ถูกยืมออก (Borrowed)</option>
+                        <option value="maintenance">ส่งซ่อม (Maintenance)</option>
+                        <option value="disposed">ตัดจำหน่าย (Disposed)</option>
                     </select>
                 </div>
                 <div class="modal-footer">
@@ -1174,8 +1175,16 @@
                 catSelect.value = category || '';
             }
 
-            document.getElementById('edit-owner').value = owner;
-            document.getElementById('edit-status').value = status;
+            document.getElementById('edit-owner').value = owner || '';
+            const statusNormalizeMap = {
+                'ใช้งานปกติ': 'active',
+                'ถูกยืม': 'borrowed',
+                'ส่งซ่อม': 'maintenance',
+                'ตัดจำหน่าย': 'disposed',
+                'in_use': 'borrowed',
+                'retired': 'disposed'
+            };
+            document.getElementById('edit-status').value = statusNormalizeMap[status] || status || 'active';
             document.getElementById('editAssetModal').style.display = 'flex';
         }
 

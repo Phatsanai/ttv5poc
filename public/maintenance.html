@@ -844,6 +844,10 @@
                 actions += `<a href="asset-detail.html?id=${encodeURIComponent(item.asset_code)}" class="action-btn" style="text-decoration:none;" title="ดูข้อมูลทรัพย์สิน"><i class="fa-regular fa-eye"></i> ดู</a>`;
                 actions += `<a href="print-qr.html?code=${encodeURIComponent(item.asset_code)}" class="action-btn" style="text-decoration:none;" title="พิมพ์ป้าย QR Code"><i class="fa-solid fa-qrcode"></i> พิมพ์</a>`;
 
+                if (item.status === 'pending' && canEdit) {
+                    actions += `<button class="action-btn" onclick="startRepair(${item.id})" title="บันทึกว่าเริ่มดำเนินการซ่อมแล้ว" style="color:#2563eb; border-color:#93c5fd;"><i class="fa-solid fa-play"></i> เริ่มซ่อม</button>`;
+                }
+
                 if (item.status !== 'completed' && canEdit) {
                     actions += `<button class="action-btn" onclick="completeRepair(${item.id})" title="บันทึกว่าซ่อมเสร็จสิ้นแล้ว" style="color:#16a34a; border-color:#86efac;"><i class="fa-solid fa-check"></i> เสร็จสิ้น</button>`;
                 }
@@ -865,6 +869,26 @@
                     <td>${actions}</td>
                 </tr>`;
             }).join('');
+        }
+
+        async function startRepair(id) {
+            const user = getCurrentUser();
+            if (!['admin', 'editor'].includes(user.role)) {
+                alert('สิทธิ์ไม่เพียงพอ: ต้องเป็น Admin หรือ Editor เท่านั้น');
+                return;
+            }
+            const token = requireAuth();
+            try {
+                const r = await fetch(getApiUrl(`/api/maintenance/${id}/start`), {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await r.json();
+                if (!r.ok || !data.success) throw new Error(data.message || 'เกิดข้อผิดพลาด');
+                loadMaintenanceFromAPI();
+            } catch(err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
         }
 
         async function completeRepair(id) {

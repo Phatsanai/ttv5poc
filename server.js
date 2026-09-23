@@ -1360,7 +1360,7 @@ app.put('/api/borrows/:id/return', async (req, res) => {
     if (!borrow) return res.status(404).json({ success: false, message: 'ไม่พบรายการยืมนี้' });
     const returnDate = req.body.return_date || new Date().toISOString().slice(0,10);
     await dbRun(`UPDATE borrows SET status='returned', return_date=? WHERE id=?`, [returnDate, borrow.id]);
-    await dbRun(`UPDATE assets SET status='active', updated_at=datetime('now','localtime') WHERE id=?`, [borrow.asset_id]);
+    await dbRun(`UPDATE assets SET status='active', holder='', updated_at=datetime('now','localtime') WHERE id=?`, [borrow.asset_id]);
     return res.json({ success: true, message: 'บันทึกการคืนอุปกรณ์แล้ว' });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
@@ -1449,6 +1449,23 @@ app.post('/api/maintenance', async (req, res) => {
   }
 });
 
+// เริ่มดำเนินการซ่อม (in_progress)
+app.put('/api/maintenance/:id/start', async (req, res) => {
+  const sess = await authenticate(req, res);
+  if (!sess) return;
+  if (!['admin', 'manager', 'editor'].includes(sess.role)) {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin, Manager หรือ Editor)' });
+  }
+  try {
+    const rec = await dbGet('SELECT * FROM maintenance WHERE id=?', [parseInt(req.params.id)]);
+    if (!rec) return res.status(404).json({ success: false, message: 'ไม่พบรายการซ่อมนี้' });
+    await dbRun(`UPDATE maintenance SET status='in_progress' WHERE id=?`, [rec.id]);
+    return res.json({ success: true, message: 'บันทึกเริ่มดำเนินการซ่อมแล้ว' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
+  }
+});
+
 app.put('/api/maintenance/:id/complete', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
@@ -1523,7 +1540,7 @@ app.post('/api/audits', async (req, res) => {
     const year = new Date().getFullYear();
     const audit_code = `#AUD-${year}-${codeNum}`;
 
-    const totalAssetsRow = await dbGet('SELECT COUNT(*) as cnt FROM assets');
+    const totalAssetsRow = await dbGet('SELECT COUNT(*) as cnt FROM assets WHERE (is_deleted = 0 OR is_deleted IS NULL)');
     const total_items = totalAssetsRow ? totalAssetsRow.cnt : 0;
 
     const result = await dbRun(
@@ -1552,8 +1569,14 @@ app.post('/api/audits/:id/scan', async (req, res) => {
 
     const audit = await dbGet('SELECT * FROM audits WHERE id = ?', [auditId]);
     if (!audit) return res.status(404).json({ success: false, message: 'ไม่พบรอบตรวจนับนี้' });
-    const asset = await dbGet('SELECT * FROM assets WHERE UPPER(asset_code) = ?', [cleanCode]);
-    if (!asset) return res.status(404).json({ success: false, message: `ไม่พบทรัพย์สินรหัส "${cleanCode}" ในระบบ` });
+    const asset = await dbGet('SELECT * FROM assets WHERE UPPER(asset_code) = ? AND (is_deleted = 0 OR is_deleted IS NULL)', [cleanCode]);
+    if (!asset) {
+      const inTrash = await dbGet('SELECT * FROM assets WHERE UPPER(asset_code) = ? AND is_deleted = 1', [cleanCode]);
+      if (inTrash) {
+        return res.status(400).json({ success: false, message: `ทรัพย์สินรหัส "${cleanCode}" อยู่ในถังขยะ ไม่สามารถตรวจนับได้` });
+      }
+      return res.status(404).json({ success: false, message: `ไม่พบทรัพย์สินรหัส "${cleanCode}" ในระบบ` });
+    }
 
     // Check if already scanned
     const already = await dbGet('SELECT id FROM audit_items WHERE audit_id = ? AND UPPER(asset_code) = ?', [auditId, cleanCode]);

@@ -901,8 +901,8 @@
                         <thead>
                             <tr>
                                 <th>ชื่อหัวข้อ / เมนูระบบ</th>
-                                <th style="text-align: center;">Viewer (คนดู)</th>
-                                <th style="text-align: center;">Manager (ผู้จัดการ)</th>
+                                <th style="text-align: center;">Viewer (ผู้ชม)</th>
+                                <th style="text-align: center;">Editor (ผู้แก้ไข)</th>
                                 <th style="text-align: center;">Admin (ผู้ดูแลระบบ)</th>
                             </tr>
                         </thead>
@@ -917,7 +917,7 @@
                                 <td><b>2. รายการทรัพย์สินทั้งหมด</b></td>
                                 <td style="text-align: center;"><input type="checkbox" checked disabled> ดูได้อย่างเดียว
                                 </td>
-                                <td style="text-align: center;"><input type="checkbox" checked> เพิ่ม/แก้ไข ได้</td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled> เพิ่ม/แก้ไข ได้</td>
                                 <td style="text-align: center;"><input type="checkbox" checked disabled>
                                     จัดการได้ทั้งหมด</td>
                             </tr>
@@ -925,7 +925,7 @@
                                 <td><b>3. ระบบยืม - คืน ทรัพย์สิน</b></td>
                                 <td style="text-align: center;"><input type="checkbox" checked disabled> ดูประวัติได้
                                 </td>
-                                <td style="text-align: center;"><input type="checkbox" checked> บันทึกยืม/รับคืน ได้
+                                <td style="text-align: center;"><input type="checkbox" checked disabled> บันทึกยืม/รับคืน ได้
                                 </td>
                                 <td style="text-align: center;"><input type="checkbox" checked disabled>
                                     จัดการได้ทั้งหมด</td>
@@ -934,7 +934,7 @@
                                 <td><b>4. ตรวจนับสต็อก (Audit)</b></td>
                                 <td style="text-align: center;"><input type="checkbox" checked disabled> ดูรายงานได้
                                 </td>
-                                <td style="text-align: center;"><input type="checkbox" checked> สร้างรอบตรวจนับได้</td>
+                                <td style="text-align: center;"><input type="checkbox" checked disabled> สร้างและสแกนตรวจนับได้</td>
                                 <td style="text-align: center;"><input type="checkbox" checked disabled>
                                     จัดการได้ทั้งหมด</td>
                             </tr>
@@ -948,10 +948,8 @@
                         </tbody>
                     </table>
                 </div>
-                <div style="margin-top: 20px; text-align: right;">
-                    <button class="btn-primary" onclick="alert('บันทึกการปรับเปลี่ยนสิทธิ์เรียบร้อยแล้ว!')">
-                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่าสิทธิ์
-                    </button>
+                <div style="margin-top: 18px; padding: 12px 16px; background: rgba(56,139,253,0.08); border: 1px solid rgba(56,139,253,0.25); border-radius: 8px; font-size: 0.85rem; color: var(--text-secondary);">
+                    <i class="fa-solid fa-circle-info" style="color: var(--accent-blue);"></i> ตารางข้างต้นแสดงโครงสร้างสิทธิ์การเข้าถึงระบบตามมาตรฐาน Role-Based Access Control (RBAC) สามารถกำหนดหรือเปลี่ยนระดับ Role ของผู้ใช้งานแต่ละท่านได้โดยตรงในแท็บ <b>"จัดการผู้ใช้"</b>
                 </div>
             </div>
 
