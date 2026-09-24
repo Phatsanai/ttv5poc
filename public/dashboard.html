@@ -1148,13 +1148,21 @@
             }).join('');
         }
 
-        function setDashboardTab(status) {
+        function setDashboardTab(status, btn) {
             activeTabStatus = status;
             const switcher = document.getElementById('dashboardTabSwitcher');
             if (switcher) {
-                switcher.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                const buttons = switcher.querySelectorAll('.tab-btn');
+                buttons.forEach(b => b.classList.remove('active'));
+                const targetBtn = btn || (typeof event !== 'undefined' && event && event.currentTarget);
+                if (targetBtn) {
+                    targetBtn.classList.add('active');
+                } else {
+                    buttons.forEach(b => {
+                        if (b.getAttribute('onclick')?.includes(`'${status}'`)) b.classList.add('active');
+                    });
+                }
             }
-            if (event && event.currentTarget) event.currentTarget.classList.add('active');
             renderFilteredRecentTable();
         }
 

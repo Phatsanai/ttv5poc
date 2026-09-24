@@ -605,6 +605,9 @@ function logAudit(action, entityType = '', entityId = '', details = '', req = nu
       if (req.user) {
         uName = uName || req.user.name || req.user.username;
         uId = req.user.id || req.user.user_id || 0;
+      } else if (req.session) {
+        uName = uName || req.session.name || req.session.username;
+        uId = req.session.user_id || 0;
       } else if (req.body && req.body.operator) {
         uName = uName || req.body.operator;
       }
@@ -628,21 +631,41 @@ function generateToken() {
 
 async function authenticate(req, res) {
   const authHeader = req.headers['authorization'] || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : req.query.token || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : (req.query ? req.query.token : '') || '';
   if (!token) {
-    res.status(401).json({ success: false, message: 'ไม่มี Token กรุณาเข้าสู่ระบบ' });
+    if (res) res.status(401).json({ success: false, message: 'ไม่มี Token กรุณาเข้าสู่ระบบ' });
     return null;
   }
   try {
     const sess = await dbGet('SELECT * FROM sessions WHERE token = ?', [token]);
     if (!sess || sess.expires_at < Date.now()) {
       if (sess) await dbRun('DELETE FROM sessions WHERE token = ?', [token]);
-      res.status(401).json({ success: false, message: 'Session หมดอายุ กรุณาเข้าสู่ระบบใหม่' });
+      if (res) res.status(401).json({ success: false, message: 'Session หมดอายุ กรุณาเข้าสู่ระบบใหม่' });
       return null;
+    }
+    if (req) {
+      req.session = sess;
+      req.user = { id: sess.user_id, username: sess.username, name: sess.name, role: sess.role };
     }
     return sess;
   } catch(e) {
-    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดด้าน Auth' });
+    if (res) res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดด้าน Auth' });
+    return null;
+  }
+}
+
+async function getOptionalUser(req) {
+  if (!req) return null;
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : (req.query ? req.query.token : '') || '';
+  if (!token) return null;
+  try {
+    const sess = await dbGet('SELECT * FROM sessions WHERE token = ?', [token]);
+    if (!sess || sess.expires_at < Date.now()) return null;
+    req.session = sess;
+    req.user = { id: sess.user_id, username: sess.username, name: sess.name, role: sess.role };
+    return sess;
+  } catch {
     return null;
   }
 }
@@ -685,6 +708,9 @@ app.post('/api/login', async (req, res) => {
     await dbRun('DELETE FROM sessions WHERE user_id = ?', [user.id]);
     await dbRun('INSERT INTO sessions (token,user_id,username,name,role,expires_at) VALUES (?,?,?,?,?,?)',
       [token, user.id, user.username, user.name, user.role, expiresAt]);
+
+    req.user = { id: user.id, username: user.username, name: user.name, role: user.role };
+    logAudit('LOGIN_PASSWORD', 'user', user.username, `เข้าสู่ระบบ: ${user.name} (${user.role})`, req, user.name);
 
     return res.json({ success: true, token, user: { id: user.id, username: user.username, name: user.name, role: user.role } });
   } catch (err) {
@@ -855,7 +881,8 @@ app.post('/api/assets', async (req, res) => {
     );
     const newAsset = await dbGet('SELECT * FROM assets WHERE id = ?', [result.lastID]);
 
-    const actor = req.body.operator || (req.headers.authorization ? 'User' : 'Guest');
+    const sess = await getOptionalUser(req);
+    const actor = sess ? (sess.name || sess.username) : (req.body.operator || 'Guest');
     logAudit('CREATE_ASSET', 'asset', asset_code, `เพิ่มทรัพย์สินใหม่: ${name||''} (${asset_code})`, req, actor);
 
     return res.status(201).json({ success: true, data: formatAssetOutput(newAsset) });
@@ -1343,6 +1370,7 @@ app.post('/api/borrows', async (req, res) => {
     );
     await dbRun(`UPDATE assets SET status='borrowed', holder=?, updated_at=datetime('now','localtime') WHERE id=?`, [borrower, asset.id]);
     const newBorrow = await dbGet('SELECT * FROM borrows WHERE id=?', [result.lastID]);
+    logAudit('BORROW_ASSET', 'asset', asset_code, `ยืมอุปกรณ์: ${asset.name || asset_code} โดย ${borrower}`, req, sess.name);
     return res.status(201).json({ success: true, data: newBorrow });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด: ' + err.message });
@@ -1360,7 +1388,8 @@ app.put('/api/borrows/:id/return', async (req, res) => {
     if (!borrow) return res.status(404).json({ success: false, message: 'ไม่พบรายการยืมนี้' });
     const returnDate = req.body.return_date || new Date().toISOString().slice(0,10);
     await dbRun(`UPDATE borrows SET status='returned', return_date=? WHERE id=?`, [returnDate, borrow.id]);
-    await dbRun(`UPDATE assets SET status='active', holder='', updated_at=datetime('now','localtime') WHERE id=?`, [borrow.asset_id]);
+    await dbRun(`UPDATE assets SET status='active', holder='', updated_at=datetime('now','localtime') WHERE id=? OR asset_code=?`, [borrow.asset_id, borrow.asset_code]);
+    logAudit('RETURN_ASSET', 'asset', borrow.asset_code, `คืนอุปกรณ์: ${borrow.asset_code} โดย ${borrow.borrower}`, req, sess.name);
     return res.json({ success: true, message: 'บันทึกการคืนอุปกรณ์แล้ว' });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
@@ -2610,15 +2639,44 @@ app.get('/api/audit-logs', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
   try {
-    const limit = Math.min(Number(req.query.limit) || 50, 200);
-    const filterAction = req.query.action ? String(req.query.action) : null;
+    const limit = Math.min(Number(req.query.limit) || 50, 500);
+    const filterAction = req.query.action ? String(req.query.action).trim() : null;
+    const entityId = req.query.entity_id ? String(req.query.entity_id).trim() : null;
+    const entityType = req.query.entity_type ? String(req.query.entity_type).trim() : null;
+    const category = req.query.category ? String(req.query.category).trim() : null;
+    const search = req.query.search ? String(req.query.search).trim() : null;
 
-    let logs;
+    let where = [];
+    let params = [];
+
     if (filterAction) {
-      logs = await dbAll('SELECT * FROM audit_logs WHERE action LIKE ? ORDER BY id DESC LIMIT ?', [`%${filterAction}%`, limit]);
-    } else {
-      logs = await dbAll('SELECT * FROM audit_logs ORDER BY id DESC LIMIT ?', [limit]);
+      where.push('action LIKE ?');
+      params.push(`%${filterAction}%`);
     }
+    if (entityId) {
+      where.push('UPPER(entity_id) = UPPER(?)');
+      params.push(entityId);
+    }
+    if (entityType) {
+      where.push('entity_type = ?');
+      params.push(entityType);
+    }
+    if (category === 'asset') {
+      where.push("(action LIKE '%ASSET%' OR entity_type = 'asset')");
+    } else if (category === 'backup') {
+      where.push("(action LIKE '%BACKUP%' OR action LIKE '%RESTORE%' OR action LIKE '%CHECKPOINT%')");
+    } else if (category === 'auth') {
+      where.push("(action LIKE '%LOGIN%' OR action LIKE '%OAUTH%')");
+    }
+    if (search) {
+      where.push('(action LIKE ? OR details LIKE ? OR user_name LIKE ? OR entity_id LIKE ?)');
+      const q = `%${search}%`;
+      params.push(q, q, q, q);
+    }
+
+    const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    params.push(limit);
+    const logs = await dbAll(`SELECT * FROM audit_logs ${whereClause} ORDER BY id DESC LIMIT ?`, params);
     return res.json({ success: true, data: logs });
   } catch (err) {
     console.error('/api/audit-logs error:', err);

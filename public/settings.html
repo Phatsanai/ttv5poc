@@ -1323,14 +1323,22 @@
         }
 
         // ── Tabs ───────────────────────────────────────────────
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        function switchTab(tabName, btn) {
+            const buttons = document.querySelectorAll('.tabs-header .tab-btn');
+            buttons.forEach(b => b.classList.remove('active'));
             document.getElementById('tab-users').style.display      = tabName === 'users'      ? 'block' : 'none';
             document.getElementById('tab-categories').style.display = tabName === 'categories' ? 'block' : 'none';
             document.getElementById('tab-typography').style.display = tabName === 'typography' ? 'block' : 'none';
             document.getElementById('tab-roles').style.display      = tabName === 'roles'      ? 'block' : 'none';
             document.getElementById('tab-api').style.display        = tabName === 'api'        ? 'block' : 'none';
-            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+            const targetBtn = btn || (typeof event !== 'undefined' && event && event.currentTarget);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            } else {
+                buttons.forEach(b => {
+                    if (b.getAttribute('onclick')?.includes(`'${tabName}'`)) b.classList.add('active');
+                });
+            }
             if (tabName === 'api') initApiTab();
             if (tabName === 'categories') loadCategories();
             if (tabName === 'typography') initTypographyTab();

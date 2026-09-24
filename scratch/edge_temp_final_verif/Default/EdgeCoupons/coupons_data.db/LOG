@@ -1,0 +1,5 @@
+2026/09/24-15:17:13.032 21c8 Creating DB C:\ttv5poc-main\scratch\edge_temp_final_verif\Default\EdgeCoupons/coupons_data.db since it was missing.
+2026/09/24-15:17:13.056 21c8 Reusing MANIFEST C:\ttv5poc-main\scratch\edge_temp_final_verif\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/09/24-15:17:13.209 6b28 Level-0 table #5: started
+2026/09/24-15:17:13.212 6b28 Level-0 table #5: 683273 bytes OK
+2026/09/24-15:17:13.213 6b28 Delete type=0 #3

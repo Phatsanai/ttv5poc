@@ -445,6 +445,30 @@
                 min-width: 600px;
             }
         }
+
+        .btn-filter {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 6px;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-filter:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-title);
+        }
+        .btn-filter.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: #ffffff;
+            font-weight: 500;
+        }
     </style>
 </head>
 
@@ -635,14 +659,33 @@
 
             <!-- Backup Log History Table -->
             <div class="card">
-                <div class="card-header" style="justify-content:space-between;">
+                <div class="card-header" style="justify-content:space-between; flex-wrap:wrap; gap:12px;">
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                        <div class="card-title">ประวัติกิจกรรมการสำรองข้อมูล (Audit Logs)</div>
+                        <i class="fa-solid fa-clock-rotate-left" style="color:var(--accent-blue);"></i>
+                        <div>
+                            <div class="card-title">ประวัติกิจกรรมและบันทึกระบบ (System Audit Logs)</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted); font-weight:400; margin-top:2px;">บันทึกการกระทำของผู้ใช้งาน การเพิ่ม/แก้ไข/ลบอุปกรณ์ และการสำรองข้อมูล</div>
+                        </div>
                     </div>
-                    <button type="button" id="btnRefreshLogs" onclick="refreshLogs(this)" style="background:none; border:1px solid var(--border-color); color:var(--text-muted); border-radius:6px; padding:4px 10px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:6px; transition:border-color 0.15s, color 0.15s;" onmouseover="this.style.borderColor='var(--accent-blue)';this.style.color='var(--accent-blue)'" onmouseout="this.style.borderColor='var(--border-color)';this.style.color='var(--text-muted)'">
-                        <i class="fa-solid fa-rotate" id="refreshIcon"></i> รีเฟรช
-                    </button>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button type="button" id="btnRefreshLogs" onclick="refreshLogs(this)" style="background:none; border:1px solid var(--border-color); color:var(--text-muted); border-radius:6px; padding:6px 12px; cursor:pointer; font-size:0.82rem; display:inline-flex; align-items:center; gap:6px; transition:all 0.15s;">
+                            <i class="fa-solid fa-rotate" id="refreshIcon"></i> รีเฟรช
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters & Search Toolbar -->
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:14px; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--border-color);">
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;" id="logFilterTabs">
+                        <button type="button" class="btn-filter active" onclick="setLogCategory('', this)">ทั้งหมด</button>
+                        <button type="button" class="btn-filter" onclick="setLogCategory('asset', this)"><i class="fa-solid fa-box"></i> อุปกรณ์ (Asset)</button>
+                        <button type="button" class="btn-filter" onclick="setLogCategory('backup', this)"><i class="fa-solid fa-database"></i> ฐานข้อมูล (DB)</button>
+                        <button type="button" class="btn-filter" onclick="setLogCategory('auth', this)"><i class="fa-solid fa-shield-halved"></i> การเข้าสู่ระบบ</button>
+                    </div>
+                    <div style="display:flex; align-items:center; position:relative;">
+                        <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:10px; color:var(--text-muted); font-size:0.82rem;"></i>
+                        <input type="text" id="logSearchInput" placeholder="ค้นหาบันทึกประวัติ..." oninput="handleLogSearch(this.value)" style="background:var(--bg-input, #0d1117); border:1px solid var(--border-color); border-radius:6px; padding:6px 10px 6px 30px; font-size:0.82rem; color:var(--text-title, #c9d1d9); width:200px; outline:none;">
+                    </div>
                 </div>
                 <table class="table-responsive">
                     <thead>
@@ -830,6 +873,109 @@
             }
         }
 
+        // ── Audit Log Filtering & Category State ──────────────────
+        let currentLogCategory = '';
+        let currentLogSearch = '';
+        let rawAuditLogs = [];
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function setLogCategory(cat, btn) {
+            currentLogCategory = cat;
+            document.querySelectorAll('#logFilterTabs .btn-filter').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            loadBackupHistory();
+        }
+
+        function handleLogSearch(query) {
+            currentLogSearch = (query || '').toLowerCase().trim();
+            filterAndRenderLogs();
+        }
+
+        function getActionBadge(action) {
+            const act = String(action || '').toUpperCase();
+            if (act === 'CREATE_ASSET') {
+                return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; background:rgba(16,185,129,0.15); color:#10b981;"><i class="fa-solid fa-plus-circle"></i> เพิ่มอุปกรณ์</span>`;
+            }
+            if (act === 'UPDATE_ASSET') {
+                return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; background:rgba(59,130,246,0.15); color:#3b82f6;"><i class="fa-solid fa-pen-to-square"></i> แก้ไขอุปกรณ์</span>`;
+            }
+            if (act === 'SOFT_DELETE_ASSET') {
+                return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; background:rgba(245,158,11,0.15); color:#f59e0b;"><i class="fa-solid fa-trash-can"></i> ย้ายลงถังขยะ</span>`;
+            }
+            if (act === 'RESTORE_ASSET') {
+                return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; background:rgba(20,184,166,0.15); color:#14b8a6;"><i class="fa-solid fa-trash-arrow-up"></i> กู้คืนอุปกรณ์</span>`;
+            }
+            if (act === 'HARD_DELETE_ASSET') {
+                return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; background:rgba(239,68,68,0.15); color:#ef4444;"><i class="fa-solid fa-skull"></i> ลบถาวร</span>`;
+            }
+            if (act === 'EMPTY_TRASH') {
+                return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; background:rgba(239,68,68,0.15); color:#ef4444;"><i class="fa-solid fa-fire"></i> ล้างถังขยะ</span>`;
+            }
+            if (act.includes('BACKUP')) {
+                return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; background:rgba(16,185,129,0.15); color:#10b981;"><i class="fa-solid fa-download"></i> สำรองฐานข้อมูล</span>`;
+            }
+            if (act.includes('RESTORE')) {
+                return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; background:rgba(245,158,11,0.15); color:#f59e0b;"><i class="fa-solid fa-rotate-left"></i> กู้คืนข้อมูล</span>`;
+            }
+            if (act.includes('LOGIN')) {
+                return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; background:rgba(139,92,246,0.15); color:#a855f7;"><i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ</span>`;
+            }
+            if (act.includes('CATEGORY')) {
+                return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; background:rgba(100,116,139,0.15); color:#94a3b8;"><i class="fa-solid fa-layer-group"></i> หมวดหมู่</span>`;
+            }
+            return `<span style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; background:rgba(56,139,253,0.15); color:#388bfd;">${action || '-'}</span>`;
+        }
+
+        function filterAndRenderLogs() {
+            const tbody = document.getElementById('backupLogTable');
+            if (!tbody) return;
+
+            let filtered = rawAuditLogs;
+            if (currentLogSearch) {
+                filtered = filtered.filter(item => {
+                    const str = `${item.action} ${item.entity_type} ${item.entity_id} ${item.details} ${item.user_name} ${item.ip_address}`.toLowerCase();
+                    return str.includes(currentLogSearch);
+                });
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">
+                    <i class="fa-solid fa-inbox" style="margin-right:8px;"></i>ไม่พบรายการบันทึกประวัติตามเงื่อนไขที่เลือก</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(item => {
+                const actionBadge = getActionBadge(item.action);
+                const userDisplay = `
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-circle-user" style="color:var(--accent-blue);"></i>
+                        <span style="font-weight:600; color:var(--text-title);">${escapeHtml(item.user_name || 'System')}</span>
+                        ${item.user_id ? `<span style="font-size:0.7rem; color:var(--text-muted); background:rgba(255,255,255,0.06); padding:1px 5px; border-radius:4px;">ID: ${item.user_id}</span>` : ''}
+                    </div>
+                `;
+
+                return `
+                    <tr>
+                        <td style="white-space:nowrap; font-size:0.83rem; color:var(--text-muted);">${item.created_at || '-'}</td>
+                        <td>${actionBadge}</td>
+                        <td><code style="font-size:0.82rem; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">${escapeHtml(item.entity_type || '-')}${item.entity_id ? ' (' + escapeHtml(item.entity_id) + ')' : ''}</code></td>
+                        <td style="font-size:0.85rem; color:var(--text-title);">${escapeHtml(item.details || '-')}</td>
+                        <td>${userDisplay}</td>
+                        <td style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(item.ip_address || '-')}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         // ── Load Backup History / Audit Logs ───────────────────────
         async function loadBackupHistory() {
             const token = localStorage.getItem('auth_token');
@@ -852,7 +998,12 @@
             const timeoutId = setTimeout(() => controller.abort(), 10000);
 
             try {
-                const res = await fetch(getApiUrl('/api/audit-logs?limit=50'), {
+                let url = '/api/audit-logs?limit=100';
+                if (currentLogCategory) {
+                    url += `&category=${encodeURIComponent(currentLogCategory)}`;
+                }
+
+                const res = await fetch(getApiUrl(url), {
                     headers: { 'Authorization': `Bearer ${token}` },
                     signal: controller.signal
                 });
@@ -870,36 +1021,9 @@
 
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                const logs = Array.isArray(data.data) ? data.data : [];
+                rawAuditLogs = Array.isArray(data.data) ? data.data : [];
 
-                if (logs.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">
-                        <i class="fa-solid fa-inbox" style="margin-right:8px;"></i>ยังไม่มีประวัติกิจกรรม</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = logs.map(item => {
-                    const actionStr = String(item.action || '').toUpperCase();
-                    let actionBadge = `<span style="color:var(--accent-blue); font-weight:600;">${item.action || '-'}</span>`;
-                    if (actionStr.includes('BACKUP')) {
-                        actionBadge = `<span style="color:var(--accent-green); font-weight:600;"><i class="fa-solid fa-download"></i> ${item.action}</span>`;
-                    } else if (actionStr.includes('RESTORE')) {
-                        actionBadge = `<span style="color:var(--accent-yellow); font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> ${item.action}</span>`;
-                    } else if (actionStr.includes('DELETE')) {
-                        actionBadge = `<span style="color:var(--accent-red); font-weight:600;"><i class="fa-solid fa-trash"></i> ${item.action}</span>`;
-                    }
-
-                    return `
-                        <tr>
-                            <td style="white-space:nowrap; font-size:0.85rem;">${item.created_at || '-'}</td>
-                            <td>${actionBadge}</td>
-                            <td><code style="font-size:0.85rem;">${item.entity_type || '-'}${item.entity_id ? ' (' + item.entity_id + ')' : ''}</code></td>
-                            <td style="font-size:0.85rem;">${item.details || '-'}</td>
-                            <td style="font-weight:500;">${item.user_name || 'System'}</td>
-                            <td style="font-size:0.8rem; color:var(--text-muted);">${item.ip_address || '-'}</td>
-                        </tr>
-                    `;
-                }).join('');
+                filterAndRenderLogs();
             } catch (err) {
                 clearTimeout(timeoutId);
                 console.warn('Failed to load audit logs:', err);
