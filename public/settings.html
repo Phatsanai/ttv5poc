@@ -355,9 +355,10 @@
             font-weight: 500;
         }
 
-        .role-admin  { background-color: rgba(56,139,253,0.15); color: var(--accent-blue); }
-        .role-editor { background-color: rgba(63,185,80,0.15);  color: #3fb950; }
-        .role-viewer { background-color: rgba(139,148,158,0.15);color: var(--text-secondary); }
+        .role-admin   { background-color: rgba(56,139,253,0.15); color: var(--accent-blue); }
+        .role-manager { background-color: rgba(163,113,247,0.15); color: #a371f7; }
+        .role-editor  { background-color: rgba(63,185,80,0.15);  color: #3fb950; }
+        .role-viewer  { background-color: rgba(139,148,158,0.15);color: var(--text-secondary); }
 
         .oauth-badge {
             display: inline-flex;
@@ -1259,7 +1260,8 @@
                     <select id="newRole" class="form-control" required>
                         <option value="viewer">Viewer — ดูข้อมูลได้อย่างเดียว</option>
                         <option value="editor">Editor — เพิ่ม/แก้ไขทรัพย์สินได้ (ลบไม่ได้)</option>
-                        <option value="admin">Admin — จัดการได้ทุกอย่าง</option>
+                        <option value="manager">Manager — จัดการทรัพย์สิน ดูรายชื่อผู้ใช้ (เพิ่ม/ลบผู้ใช้ไม่ได้)</option>
+                        <option value="admin">Admin — ผู้ดูแลระบบสูงสุด (จัดการได้ทุกอย่าง)</option>
                     </select>
                 </div>
                 <div id="addUserError" style="color:#ff7b72;font-size:0.85rem;margin-bottom:8px;display:none;"></div>
@@ -1285,8 +1287,9 @@
                 <label>เลือก Role ใหม่</label>
                 <select id="roleSelectNew" class="form-control">
                     <option value="viewer">Viewer — ดูข้อมูลได้อย่างเดียว</option>
-                    <option value="editor">Editor — เพิ่ม/แก้ไขทรัพย์สินได้</option>
-                    <option value="admin">Admin — จัดการได้ทุกอย่าง</option>
+                    <option value="editor">Editor — เพิ่ม/แก้ไขทรัพย์สินได้ (ลบไม่ได้)</option>
+                    <option value="manager">Manager — จัดการทรัพย์สิน ดูรายชื่อผู้ใช้ (เพิ่ม/ลบผู้ใช้ไม่ได้)</option>
+                    <option value="admin">Admin — ผู้ดูแลระบบสูงสุด (จัดการได้ทุกอย่าง)</option>
                 </select>
             </div>
             <input type="hidden" id="roleTargetId">
@@ -1469,7 +1472,22 @@
         }
 
         // ── Modals ─────────────────────────────────────────────
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function openAddUserModal() {
+            let curRole = '';
+            try { curRole = (JSON.parse(localStorage.getItem('auth_user') || '{}').role || '').toLowerCase(); } catch(e) {}
+            if (curRole !== 'admin') {
+                alert('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่มีสิทธิ์เพิ่มผู้ใช้งานใหม่');
+                return;
+            }
             document.getElementById('addUserForm').reset();
             document.getElementById('addUserError').style.display = 'none';
             document.getElementById('addUserModal').style.display = 'flex';
@@ -1479,9 +1497,10 @@
         // ── Role badge HTML ────────────────────────────────────
         function roleBadge(role) {
             const map = {
-                admin:  ['fa-shield',    'role-admin',  'Admin'],
-                editor: ['fa-pen-ruler', 'role-editor', 'Editor'],
-                viewer: ['fa-eye',       'role-viewer', 'Viewer']
+                admin:   ['fa-shield',   'role-admin',   'Admin'],
+                manager: ['fa-user-tie', 'role-manager', 'Manager'],
+                editor:  ['fa-pen-ruler','role-editor',  'Editor'],
+                viewer:  ['fa-eye',      'role-viewer',  'Viewer']
             };
             const [icon, cls, label] = map[role] || ['fa-circle-question', 'role-viewer', role];
             return `<span class="role-badge ${cls}"><i class="fa-solid ${icon}"></i> ${label}</span>`;
@@ -1495,14 +1514,24 @@
             wrapper.style.display = 'none';
 
             let curUsername = '';
+            let curUserRole = '';
             try {
                 const u = JSON.parse(localStorage.getItem('auth_user') || '{}');
                 curUsername = u.username || '';
+                curUserRole = (u.role || '').toLowerCase();
                 const nameEl = document.getElementById('topbarUserName');
                 if (nameEl) nameEl.textContent = u.name || u.username || 'Admin User';
                 const av = document.getElementById('topbarAvatar');
                 if (av) av.textContent = (u.name || u.username || 'A').charAt(0).toUpperCase();
             } catch(e) {}
+
+            const isAdmin = (curUserRole === 'admin');
+
+            // จัดการสิทธิ์การแสดงปุ่มเพิ่มผู้ใช้ (Admin เห็นได้, Manager และอื่นๆ ซ่อนปุ่ม)
+            const btnAddUser = document.getElementById('btnAddUser');
+            if (btnAddUser) {
+                btnAddUser.style.display = isAdmin ? 'inline-flex' : 'none';
+            }
 
             try {
                 const res = await fetch(getApiUrl('/api/users'), {
@@ -1525,21 +1554,37 @@
                         const icon = isGoogle ? 'fa-brands fa-google' : 'fa-brands fa-facebook';
                         const color = isGoogle ? '#ea4335' : '#1877f2';
                         const bg = isGoogle ? 'rgba(234,67,53,0.12)' : 'rgba(24,119,242,0.12)';
-                        return `<span class="oauth-badge" style="background:${bg}; color:${color};"><i class="${icon}"></i> ${o.email || o.display_name}</span>`;
+                        return `<span class="oauth-badge" style="background:${bg}; color:${color};"><i class="${icon}"></i> ${escapeHtml(o.email || o.display_name)}</span>`;
                     }).join('') || '<span style="color:var(--text-secondary);font-size:0.8rem;">—</span>';
 
                     const isSelf = (u.username === curUsername);
-                    tbody.innerHTML += `
-                    <tr>
-                        <td><b>${u.name || u.username}</b><br><span style="font-size:0.8rem;color:var(--text-secondary);">@${u.username}</span></td>
-                        <td>${roleBadge(u.role)}</td>
-                        <td>${oauthHtml}</td>
-                        <td style="font-size:0.82rem;color:var(--text-secondary);">${u.created_at||'—'}</td>
-                        <td style="display:flex;gap:6px;">
-                            <button class="btn-icon-only" title="กำหนด / เปลี่ยน Role" onclick="openChangeRoleModal(${u.id},'${u.name||u.username}','${u.role}')">
+
+                    // คอลัมน์จัดการ: Admin สามารถเปลี่ยน Role และลบผู้ใช้ได้
+                    // สำหรับ Manager จะถูกปิดการใช้งานและซ่อนปุ่มตามข้อกำหนด (Read-only view)
+                    let actionsHtml = '';
+                    if (isAdmin) {
+                        actionsHtml = `
+                            <button class="btn-icon-only" title="กำหนด / เปลี่ยน Role" onclick="openChangeRoleModal(${u.id},'${escapeHtml(u.name||u.username)}','${u.role}')">
                                 <i class="fa-solid fa-user-shield"></i> เปลี่ยน Role
                             </button>
-                            ${!isSelf ? `<button class="btn-icon-only" style="color:#ff7b72;" title="ลบผู้ใช้" onclick="deleteUser(${u.id},'${u.name||u.username}')"><i class="fa-solid fa-trash"></i></button>` : ''}
+                            ${!isSelf ? `<button class="btn-icon-only" style="color:#ff7b72;" title="ลบผู้ใช้" onclick="deleteUser(${u.id},'${escapeHtml(u.name||u.username)}')"><i class="fa-solid fa-trash"></i></button>` : ''}
+                        `;
+                    } else {
+                        actionsHtml = `
+                            <span style="color:var(--text-secondary);font-size:0.82rem;display:inline-flex;align-items:center;gap:5px;padding:6px 0;">
+                                <i class="fa-solid fa-lock" style="font-size:0.75rem;"></i> ดูได้อย่างเดียว
+                            </span>
+                        `;
+                    }
+
+                    tbody.innerHTML += `
+                    <tr>
+                        <td><b>${escapeHtml(u.name || u.username)}</b><br><span style="font-size:0.8rem;color:var(--text-secondary);">@${escapeHtml(u.username)}</span></td>
+                        <td>${roleBadge(u.role)}</td>
+                        <td>${oauthHtml}</td>
+                        <td style="font-size:0.82rem;color:var(--text-secondary);">${escapeHtml(u.created_at||'—')}</td>
+                        <td style="display:flex;gap:6px;align-items:center;">
+                            ${actionsHtml}
                         </td>
                     </tr>`;
                 });
@@ -1553,6 +1598,13 @@
         // ── Add User ───────────────────────────────────────────
         async function handleSaveUser(e) {
             e.preventDefault();
+            let curRole = '';
+            try { curRole = (JSON.parse(localStorage.getItem('auth_user') || '{}').role || '').toLowerCase(); } catch(e) {}
+            if (curRole !== 'admin') {
+                alert('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่มีสิทธิ์เพิ่มผู้ใช้งาน');
+                return;
+            }
+
             const errEl  = document.getElementById('addUserError');
             const btnEl  = document.getElementById('btnSaveUser');
             errEl.style.display = 'none';
@@ -1592,13 +1644,27 @@
 
         // ── Change Role ────────────────────────────────────────
         function openChangeRoleModal(id, name, currentRole) {
+            let curRole = '';
+            try { curRole = (JSON.parse(localStorage.getItem('auth_user') || '{}').role || '').toLowerCase(); } catch(e) {}
+            if (curRole !== 'admin') {
+                alert('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่มีสิทธิ์เปลี่ยนระดับสิทธิ์ (Role)');
+                return;
+            }
             document.getElementById('roleTargetId').value   = id;
             document.getElementById('roleTargetName').textContent = name;
             document.getElementById('roleSelectNew').value  = currentRole;
             document.getElementById('changeRoleError').style.display = 'none';
             document.getElementById('changeRoleModal').style.display = 'flex';
         }
+
         async function confirmChangeRole() {
+            let curRole = '';
+            try { curRole = (JSON.parse(localStorage.getItem('auth_user') || '{}').role || '').toLowerCase(); } catch(e) {}
+            if (curRole !== 'admin') {
+                alert('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่มีสิทธิ์เปลี่ยนระดับสิทธิ์ (Role)');
+                return;
+            }
+
             const id   = parseInt(document.getElementById('roleTargetId').value);
             const role = document.getElementById('roleSelectNew').value;
             const errEl = document.getElementById('changeRoleError');
@@ -1626,6 +1692,12 @@
 
         // ── Delete User ────────────────────────────────────────
         async function deleteUser(id, name) {
+            let curRole = '';
+            try { curRole = (JSON.parse(localStorage.getItem('auth_user') || '{}').role || '').toLowerCase(); } catch(e) {}
+            if (curRole !== 'admin') {
+                alert('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่มีสิทธิ์ลบผู้ใช้งาน');
+                return;
+            }
             if (!confirm(`ยืนยันลบผู้ใช้ "${name}" ออกจากระบบ?`)) return;
             try {
                 const res  = await fetch(getApiUrl(`/api/users/${id}`), {

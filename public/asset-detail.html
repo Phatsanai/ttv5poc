@@ -510,6 +510,64 @@
             color: var(--accent-blue);
         }
 
+        /* Photo Delete Button Styles */
+        .btn-delete-photo-main {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(220, 38, 38, 0.88);
+            backdrop-filter: blur(4px);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            z-index: 10;
+        }
+
+        .btn-delete-photo-main:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
+        }
+
+        .thumb-item {
+            position: relative;
+        }
+
+        .thumb-del-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(220, 38, 38, 0.95);
+            color: #ffffff;
+            border: 1.5px solid rgba(255, 255, 255, 0.6);
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            z-index: 5;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+            transition: transform 0.15s ease, background 0.2s;
+        }
+
+        .thumb-del-btn:hover {
+            background: #ef4444;
+            transform: scale(1.18);
+        }
+
         .gallery-info {
             padding: 16px;
             border-top: 1px solid var(--border-color);
@@ -1058,75 +1116,84 @@
         <div class="brand-header">
             <div class="brand-logo">
                 <i class="fa-solid fa-boxes-stacked"></i> Asset Console
-        </div>
+            </div>
             <span class="version-tag">v3.4</span>
-            <button class="btn-sidebar-close" onclick="closeMobileSidebar()" aria-label="ปิดเมนู"><i class="fa-solid fa-xmark"></i></button>
+            <button class="btn-sidebar-close" onclick="closeMobileSidebar()" aria-label="ปิดเมนู"><i
+                    class="fa-solid fa-xmark"></i></button>
         </div>
 
         <div class="sidebar-nav">
             <div class="nav-section">
-            <div class="nav-label">NAVIGATION</div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="dashboard.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="print-qr.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="asset-list.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-list"></i> รายการทรัพย์สินทั้งหมด</span>
-                    </a>
-                </li>
-                <li class="nav-item active">
-                    <a href="asset-detail.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="borrow-return.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</span>
-                        <span class="badge-count danger" id="badgeBorrowed">—</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="maintenance.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม & บำรุงรักษา</span>
-                        <span class="badge-count" id="badgeMaintenance">—</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="audit.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก (Audit)</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="recycle-bin.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle Bin)</span>
-                        <span class="badge-count" id="badgeTrash" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red);">0</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+                <div class="nav-label">NAVIGATION</div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="dashboard.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-chart-pie"></i> แดชบอร์ด</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="print-qr.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-qrcode"></i> พิมพ์ป้าย QR Code</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="asset-list.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-list"></i>
+                                รายการทรัพย์สินทั้งหมด</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="asset-detail.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-camera"></i> สแกน / ดูข้อมูล</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="borrow-return.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-right-left"></i> ระบบยืม - คืน</span>
+                            <span class="badge-count danger" id="badgeBorrowed">—</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="maintenance.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-wrench"></i> แจ้งซ่อม &
+                                บำรุงรักษา</span>
+                            <span class="badge-count" id="badgeMaintenance">—</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="audit.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-clipboard-check"></i> ตรวจนับสต็อก
+                                (Audit)</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="recycle-bin.html">
+                            <span class="nav-link-content"><i class="fa-solid fa-trash-can"></i> ถังขยะ (Recycle
+                                Bin)</span>
+                            <span class="badge-count" id="badgeTrash"
+                                style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red);">0</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
 
-        <div class="nav-section">
-            <div class="nav-label">MANAGEMENT</div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="account.html"><span class="nav-link-content"><i class="fa-solid fa-id-card"></i> บัญชีของฉัน</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="settings.html"><span class="nav-link-content"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & สิทธิ์ผู้ใช้</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="backup.html"><span class="nav-link-content"><i class="fa-solid fa-database"></i> สำรองฐานข้อมูล</span></a>
-                </li>
-            </ul>
-                    </div>
+            <div class="nav-section">
+                <div class="nav-label">MANAGEMENT</div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="account.html"><span class="nav-link-content"><i class="fa-solid fa-id-card"></i>
+                                บัญชีของฉัน</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="settings.html"><span class="nav-link-content"><i class="fa-solid fa-sliders"></i>
+                                ตั้งค่าระบบ & สิทธิ์ผู้ใช้</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="backup.html"><span class="nav-link-content"><i class="fa-solid fa-database"></i>
+                                สำรองฐานข้อมูล</span></a>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         <div class="sidebar-footer">
@@ -1135,8 +1202,12 @@
                     <i class="fa-solid fa-user"></i>
                 </div>
                 <div style="overflow:hidden;min-width:0;flex:1;">
-                    <div id="sidebarUserName" style="font-weight:600;color:var(--text-title);font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Admin</div>
-                    <div id="sidebarUserRole" style="font-size:0.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ผู้ดูแลระบบ</div>
+                    <div id="sidebarUserName"
+                        style="font-weight:600;color:var(--text-title);font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        Admin</div>
+                    <div id="sidebarUserRole"
+                        style="font-size:0.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ผู้ดูแลระบบ</div>
                 </div>
             </div>
             <button onclick="handleLogout()" class="btn-sidebar-logout">
@@ -1155,16 +1226,20 @@
                 <button class="btn-mobile-toggle" onclick="toggleMobileSidebar()" aria-label="เปิด/ปิดเมนู">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <a href="dashboard.html" class="btn-back" id="btnBack" title="ย้อนกลับไปแดชบอร์ด"><i class="fa-solid fa-arrow-left"></i> <span class="btn-back-text">ย้อนกลับไปแดชบอร์ด</span></a>
+                <a href="dashboard.html" class="btn-back" id="btnBack" title="ย้อนกลับไปแดชบอร์ด"><i
+                        class="fa-solid fa-arrow-left"></i> <span class="btn-back-text">ย้อนกลับไปแดชบอร์ด</span></a>
                 <span class="page-title" id="pageTitle">รายละเอียดทรัพย์สิน</span>
             </div>
             <div class="topbar-right">
                 <button class="btn-theme-toggle" onclick="toggleTheme()" title="เปลี่ยนธีมสี">
                     <i class="fa-solid fa-moon" id="themeIcon"></i>
                 </button>
-                <button class="btn-secondary" onclick="scanAssetCode()" id="btnScanQR" title="เปิดกล้องสแกน QR Code"><i class="fa-solid fa-camera"></i> <span class="btn-scan-text">สแกน QR</span></button>
+                <button class="btn-secondary" onclick="scanAssetCode()" id="btnScanQR" title="เปิดกล้องสแกน QR Code"><i
+                        class="fa-solid fa-camera"></i> <span class="btn-scan-text">สแกน QR</span></button>
                 <div id="btnGroupGuest" style="display:none;">
-                    <a href="index.html" class="btn-login-link" title="เข้าสู่ระบบ"><i class="fa-solid fa-right-to-bracket"></i> <span class="btn-login-text">เข้าสู่ระบบ</span></a>
+                    <a href="index.html" class="btn-login-link" title="เข้าสู่ระบบ"><i
+                            class="fa-solid fa-right-to-bracket"></i> <span
+                            class="btn-login-text">เข้าสู่ระบบ</span></a>
                 </div>
                 <!-- Edit / Delete buttons for Admin / Editor -->
                 <div id="btnGroupView" style="display:none; gap:8px; align-items:center;">
@@ -1209,39 +1284,51 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- Modal เลือกแหล่งรูปภาพ (Camera vs Gallery) -->
-    <div class="modal" id="photoSourceModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; width: 90%; max-width: 420px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+    <div class="modal" id="photoSourceModal"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div
+            style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; width: 90%; max-width: 420px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-title); font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-camera-rotate" style="color: var(--accent-blue);"></i> เลือกแหล่งที่มาของรูปภาพ
+                <h3
+                    style="margin: 0; font-size: 1.1rem; color: var(--text-title); font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-camera-rotate" style="color: var(--accent-blue);"></i>
+                    เลือกแหล่งที่มาของรูปภาพ
                 </h3>
-                <button type="button" onclick="closePhotoSourceModal()" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer;">&times;</button>
+                <button type="button" onclick="closePhotoSourceModal()"
+                    style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer;">&times;</button>
             </div>
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
                 เลือกวิธีเพิ่มรูปภาพสำหรับอุปกรณ์นี้ (รองรับการบีบอัดภาพอัตโนมัติ)
             </p>
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                <button type="button" onclick="chooseUploadSource('camera')" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-title); cursor: pointer; text-align: left; font-size: 0.95rem; font-weight: 500; transition: all 0.2s;">
-                    <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                <button type="button" onclick="chooseUploadSource('camera')"
+                    style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-title); cursor: pointer; text-align: left; font-size: 0.95rem; font-weight: 500; transition: all 0.2s;">
+                    <div
+                        style="width: 44px; height: 44px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
                         <i class="fa-solid fa-camera"></i>
                     </div>
                     <div>
                         <div style="font-weight: 600; color: var(--text-title);">ถ่ายรูปจากกล้องโดยตรง</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">เปิดกล้องบนมือถือหรือเว็บแคมเพื่อถ่ายภาพทันที</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">
+                            เปิดกล้องบนมือถือหรือเว็บแคมเพื่อถ่ายภาพทันที</div>
                     </div>
                 </button>
 
-                <button type="button" onclick="chooseUploadSource('gallery')" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-title); cursor: pointer; text-align: left; font-size: 0.95rem; font-weight: 500; transition: all 0.2s;">
-                    <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: var(--accent-green); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                <button type="button" onclick="chooseUploadSource('gallery')"
+                    style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-title); cursor: pointer; text-align: left; font-size: 0.95rem; font-weight: 500; transition: all 0.2s;">
+                    <div
+                        style="width: 44px; height: 44px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: var(--accent-green); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
                         <i class="fa-solid fa-images"></i>
                     </div>
                     <div>
                         <div style="font-weight: 600; color: var(--text-title);">เลือกจากคลังภาพ / ไฟล์ในเครื่อง</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">เลือกภาพ JPG, PNG, WEBP จากอัลบั้มหรือโฟลเดอร์</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">เลือกภาพ JPG, PNG, WEBP
+                            จากอัลบั้มหรือโฟลเดอร์</div>
                     </div>
                 </button>
             </div>
-            <button type="button" onclick="closePhotoSourceModal()" style="width: 100%; margin-top: 16px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.85rem;">ยกเลิก</button>
+            <button type="button" onclick="closePhotoSourceModal()"
+                style="width: 100%; margin-top: 16px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.85rem;">ยกเลิก</button>
         </div>
     </div>
 
@@ -1266,6 +1353,14 @@
         let galleryPhotos = [];
         let activePhotoIdx = 0;
         let availableCategories = [];
+
+        function canManagePhotos() {
+            // อนุญาตให้จัดการรูปภาพ (เพิ่ม/ลบ) เสมอเมื่อ:
+            // 1. กำลังลงทะเบียนทรัพย์สินใหม่ (ยังไม่มีในระบบ !currentAsset)
+            // 2. อยู่ในโหมดแก้ไขข้อมูล (isEditMode)
+            // 3. บัญชีที่ล็อกอินมีสิทธิ์ canEdit (Admin, Manager, Editor)
+            return !currentAsset || isEditMode || canEdit;
+        }
 
         async function loadCategories() {
             try {
@@ -1293,7 +1388,7 @@
                     await loadCategories();
                     const targetSelect = document.getElementById(targetSelectId);
                     if (targetSelect) {
-                        targetSelect.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>' + 
+                        targetSelect.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>' +
                             availableCategories.map(c => `<option value="${escapeHtml(c.category_name)}" ${c.category_name.toLowerCase() === name.trim().toLowerCase() ? 'selected' : ''}>${escapeHtml(c.category_name)}</option>`).join('');
                         targetSelect.value = data.category ? data.category.category_name : name.trim();
                     }
@@ -1356,7 +1451,7 @@
             await loadPage();
         });
 
-        window.goBack = function() {
+        window.goBack = function () {
             window.location.href = 'dashboard.html';
         };
 
@@ -1415,16 +1510,7 @@
             }
         }
 
-        function formatPhotoUrl(p) {
-            if (typeof window.formatPhotoUrl === 'function' && window.formatPhotoUrl !== formatPhotoUrl) {
-                return window.formatPhotoUrl(p);
-            }
-            if (!p) return '';
-            if (p.startsWith('http://') || p.startsWith('https://') || p.startsWith('data:')) {
-                return p;
-            }
-            return getApiUrl(p.startsWith('/') ? p : '/' + p);
-        }
+
 
         // ============================================================
         //  RENDER: DETAIL PAGE (สำหรับทรัพย์สินที่มีอยู่แล้วในระบบ)
@@ -1481,16 +1567,18 @@
                     <div class="gallery-panel">
                         <div class="gallery-main" id="galleryMain">
                             ${galleryPhotos.length > 0
-                    ? `<img src="${formatPhotoUrl(galleryPhotos[0])}" alt="ภาพอุปกรณ์" id="mainPhoto" onclick="openLightbox('${formatPhotoUrl(galleryPhotos[0])}')">`
+                    ? `<img src="${formatPhotoUrl(galleryPhotos[0])}" alt="ภาพอุปกรณ์" id="mainPhoto" onclick="openLightbox('${formatPhotoUrl(galleryPhotos[0])}')">
+                       ${canManagePhotos() ? `<button type="button" class="btn-delete-photo-main" onclick="confirmDeleteCurrentPhoto(event)" title="ลบรูปภาพนี้"><i class="fa-solid fa-trash-can"></i> ลบรูปนี้</button>` : ''}`
                     : `<div class="no-photo"><i class="fa-solid fa-image"></i><span>ยังไม่มีรูปถ่ายอุปกรณ์</span></div>`}
                         </div>
                         <div class="gallery-thumbnails" id="galleryThumbs">
                             ${galleryPhotos.map((p, i) => `
                                 <div class="thumb-item${i === 0 ? ' active' : ''}" onclick="selectPhoto(${i})" id="thumb-${i}">
                                     <img src="${formatPhotoUrl(p)}" alt="thumb">
+                                    ${canManagePhotos() ? `<button type="button" class="thumb-del-btn" onclick="confirmDeletePhotoAt(${i}, event)" title="ลบรูปนี้"><i class="fa-solid fa-xmark"></i></button>` : ''}
                                 </div>
                             `).join('')}
-                            ${canEdit && galleryPhotos.length < 5
+                            ${canManagePhotos() && galleryPhotos.length < 5
                     ? `<div class="thumb-add" onclick="triggerPhotoUpload()" title="อัปโหลดรูปภาพ"><i class="fa-solid fa-plus"></i></div>`
                     : ''}
                         </div>
@@ -1644,6 +1732,7 @@
             document.getElementById('btnGroupView').style.display = 'none';
             document.getElementById('btnGroupEdit').style.display = 'flex';
             document.getElementById('infoBody').innerHTML = renderInfoRows(currentAsset);
+            updateGalleryUI();
         }
 
         function cancelEdit() {
@@ -1651,6 +1740,7 @@
             document.getElementById('btnGroupView').style.display = 'flex';
             document.getElementById('btnGroupEdit').style.display = 'none';
             document.getElementById('infoBody').innerHTML = renderInfoRows(currentAsset);
+            updateGalleryUI();
         }
 
         async function saveEdit() {
@@ -1850,6 +1940,9 @@
                     </div>
                 </div>
             `;
+
+            // ซิงค์การแสดงผลแกลเลอรีรูปภาพและปุ่มลบในหน้าลงทะเบียน
+            updateGalleryUI();
         }
 
         // ============================================================
@@ -1900,23 +1993,7 @@
             }
         }
 
-        // ============================================================
-        //  RENDER: NOT FOUND (guest view)
-        // ============================================================
-        function renderNotFoundGuest() {
-            document.getElementById('pageContent').innerHTML = `
-                <div style="text-align:center; padding:80px 20px;">
-                    <div style="font-size:4rem; color:var(--text-muted); margin-bottom:20px; opacity:0.4;">
-                        <i class="fa-solid fa-circle-question"></i>
-                    </div>
-                    <h2 style="color:var(--text-title); margin-bottom:8px;">รหัส "${pageAssetCode}" ยังไม่ถูกลงทะเบียน</h2>
-                    <p style="color:var(--text-muted); font-size:0.9rem;">ทรัพย์สินนี้ยังไม่มีข้อมูลในระบบ กรุณาติดต่อผู้ดูแลระบบเพื่อลงทะเบียน</p>
-                    <a href="index.html" style="display:inline-flex; align-items:center; gap:8px; margin-top:24px; background:var(--accent-blue); color:white; padding:10px 24px; border-radius:8px; text-decoration:none; font-size:0.9rem;">
-                        <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบเพื่อลงทะเบียน
-                    </a>
-                </div>
-            `;
-        }
+
 
         function renderNoId() {
             return `
@@ -1941,14 +2018,63 @@
         function selectPhoto(idx) {
             activePhotoIdx = idx;
             const mainEl = document.getElementById('galleryMain') || document.getElementById('regGalleryMain');
-            if (mainEl && galleryPhotos[idx]) {
-                const photoSrc = formatPhotoUrl(galleryPhotos[idx]);
-                mainEl.innerHTML = `<img src="${photoSrc}" alt="ภาพอุปกรณ์" onclick="openLightbox('${photoSrc}')">`;
+            const allowDelete = canManagePhotos();
+            if (mainEl) {
+                if (galleryPhotos[idx]) {
+                    const photoSrc = formatPhotoUrl(galleryPhotos[idx]);
+                    mainEl.innerHTML = `
+                        <img src="${photoSrc}" alt="ภาพอุปกรณ์" onclick="openLightbox('${photoSrc}')">
+                        ${allowDelete ? `<button type="button" class="btn-delete-photo-main" onclick="confirmDeleteCurrentPhoto(event)" title="ลบรูปภาพนี้"><i class="fa-solid fa-trash-can"></i> ลบรูปนี้</button>` : ''}
+                    `;
+                } else {
+                    mainEl.innerHTML = `<div class="no-photo"><i class="fa-solid fa-image"></i><span>ยังไม่มีรูปถ่ายอุปกรณ์</span></div>`;
+                }
             }
             // Update active thumb
             document.querySelectorAll('.thumb-item').forEach((el, i) => {
                 el.classList.toggle('active', i === idx);
             });
+        }
+
+        async function confirmDeleteCurrentPhoto(event) {
+            if (event) event.stopPropagation();
+            return confirmDeletePhotoAt(activePhotoIdx, event);
+        }
+
+        async function confirmDeletePhotoAt(idx, event) {
+            if (event) event.stopPropagation();
+            if (idx < 0 || idx >= galleryPhotos.length) return;
+
+            const photoToDelete = galleryPhotos[idx];
+            if (!photoToDelete) return;
+
+            if (!confirm('ยืนยันการลบรูปภาพนี้ออกจากระบบหรือไม่?')) return;
+
+            showToast('info', 'กำลังลบรูปภาพ...');
+            try {
+                await window.deleteAssetImage(photoToDelete);
+            } catch (err) {
+                if (err.status === 403) {
+                    showToast('error', err.message || 'ไม่มีสิทธิ์ในการลบรูปภาพนี้');
+                    return;
+                }
+                console.warn('Delete photo API notice:', err.message);
+            }
+
+            // ลบรูปภาพออกจาก Array หน้าจอทันที (Reactive UI)
+            galleryPhotos.splice(idx, 1);
+            if (currentAsset) {
+                currentAsset.photos = galleryPhotos;
+                currentAsset.image = galleryPhotos.length > 0 ? galleryPhotos[0] : '';
+            }
+
+            // ปรับ active photo index
+            if (activePhotoIdx >= galleryPhotos.length) {
+                activePhotoIdx = Math.max(0, galleryPhotos.length - 1);
+            }
+
+            updateGalleryUI();
+            showToast('success', '✅ ลบรูปภาพออกจากรายการเรียบร้อยแล้ว');
         }
 
         function triggerPhotoUpload(mode) {
@@ -1986,37 +2112,39 @@
             const files = event.target.files;
             if (!files || files.length === 0) return;
 
-            const remainingSlots = 5 - galleryPhotos.length;
-            if (remainingSlots <= 0) { showToast('info', 'อัปโหลดได้สูงสุด 5 รูปต่ออุปกรณ์'); return; }
-
-            const filesToUpload = Array.from(files).slice(0, remainingSlots);
-            const formData = new FormData();
-            filesToUpload.forEach(f => formData.append('photos', f));
-
-            showToast('info', `กำลังบีบอัดและอัปโหลดรูปภาพ ${filesToUpload.length} รูป...`);
+            showToast('info', `กำลังบีบอัดและอัปโหลดรูปภาพ...`);
             try {
-                const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
-                const headers = {};
-                if (token) headers['Authorization'] = `Bearer ${token}`;
+                const urls = await window.uploadAssetPhotos(files, galleryPhotos.length, 5);
+                galleryPhotos = [...galleryPhotos, ...urls];
 
-                const r = await fetch(getApiUrl('/api/upload'), {
-                    method: 'POST',
-                    headers,
-                    body: formData
-                });
-
-                let data;
-                try { data = await r.json(); } catch (e) {
-                    throw new Error(`Server returned ${r.status}: ${r.statusText}`);
+                // หากกำลังดูทรัพย์สินที่มีอยู่แล้ว (และมีสิทธิ์ canEdit) ให้อัปเดต DB อัตโนมัติ
+                if (currentAsset && currentAsset.id && canEdit) {
+                    try {
+                        const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                        await fetch(getApiUrl(`/api/assets/${currentAsset.id}`), {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                            },
+                            body: JSON.stringify({
+                                ...currentAsset,
+                                photos: galleryPhotos,
+                                image: galleryPhotos[0] || ''
+                            })
+                        });
+                        currentAsset.photos = galleryPhotos;
+                        currentAsset.image = galleryPhotos[0] || '';
+                    } catch (syncErr) {
+                        console.warn('Sync uploaded photos warning:', syncErr);
+                    }
                 }
-                if (!r.ok || !data.success) throw new Error(data.message || 'อัปโหลดไม่สำเร็จ');
 
-                galleryPhotos = [...galleryPhotos, ...data.urls];
                 updateGalleryUI();
-                showToast('success', `✅ อัปโหลดรูปภาพ ${data.urls.length} รูปสำเร็จ (บีบอัดอัตโนมัติ)`);
+                showToast('success', `✅ อัปโหลดรูปภาพ ${urls.length} รูปสำเร็จ (บีบอัดอัตโนมัติ)`);
             } catch (err) {
                 console.error('Photo upload error:', err);
-                showToast('error', 'อัปโหลดไม่สำเร็จ: ' + err.message);
+                showToast('error', err.message || 'อัปโหลดไม่สำเร็จ');
             }
             // Reset both inputs so the same file can be re-selected if needed
             document.getElementById('photoUploadInput').value = '';
@@ -2026,19 +2154,27 @@
         function updateGalleryUI() {
             // Refresh thumbnails area
             const thumbsEl = document.getElementById('galleryThumbs') || document.getElementById('regGalleryThumbs');
-            if (!thumbsEl) return;
-            const canAddPhoto = galleryPhotos.length < 5 && (!currentAsset || isEditMode || canEdit);
-            thumbsEl.innerHTML = galleryPhotos.map((p, i) => `
-                <div class="thumb-item${i === activePhotoIdx ? ' active' : ''}" onclick="selectPhoto(${i})" id="thumb-${i}">
-                    <img src="${formatPhotoUrl(p)}" alt="thumb">
-                </div>
-            `).join('') + (canAddPhoto
-                    ? `<div class="thumb-add" onclick="triggerPhotoUpload()"><i class="fa-solid fa-plus"></i></div>`
-                    : '');
+            const allowDelete = canManagePhotos();
+            if (thumbsEl) {
+                const canAddPhoto = galleryPhotos.length < 5 && allowDelete;
+                thumbsEl.innerHTML = galleryPhotos.map((p, i) => `
+                    <div class="thumb-item${i === activePhotoIdx ? ' active' : ''}" onclick="selectPhoto(${i})" id="thumb-${i}">
+                        <img src="${formatPhotoUrl(p)}" alt="thumb">
+                        ${allowDelete ? `<button type="button" class="thumb-del-btn" onclick="confirmDeletePhotoAt(${i}, event)" title="ลบรูปนี้"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                    </div>
+                `).join('') + (canAddPhoto
+                        ? `<div class="thumb-add" onclick="triggerPhotoUpload()" title="อัปโหลดรูปภาพ"><i class="fa-solid fa-plus"></i></div>`
+                        : '');
+            }
 
-            // Show first photo if gallery empty
+            // Show photo or empty placeholder
             if (galleryPhotos.length > 0) {
                 selectPhoto(activePhotoIdx < galleryPhotos.length ? activePhotoIdx : 0);
+            } else {
+                const mainEl = document.getElementById('galleryMain') || document.getElementById('regGalleryMain');
+                if (mainEl) {
+                    mainEl.innerHTML = `<div class="no-photo"><i class="fa-solid fa-image"></i><span>ยังไม่มีรูปถ่ายอุปกรณ์</span></div>`;
+                }
             }
         }
 
@@ -2054,20 +2190,7 @@
             document.getElementById('lightbox').classList.remove('open');
         }
 
-        // ============================================================
-        //  AUTH
-        // ============================================================
-        async function handleLogout() {
-            const token = localStorage.getItem('auth_token');
-            if (token) {
-                try {
-                    await fetch(getApiUrl('/api/logout'), { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-                } catch (e) { }
-            }
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('auth_user');
-            window.location.href = 'index.html';
-        }
+
 
         // ============================================================
         //  HELPERS

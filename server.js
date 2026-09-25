@@ -910,12 +910,35 @@ app.put('/api/assets/:id', async (req, res) => {
     let primaryImage = asset.image || '';
 
     if (photos !== undefined || image !== undefined) {
+      const oldPhotos = safeParseJSON(asset.photos, []);
       const processedPhotos = await normalizePhotosInput(
-        photos !== undefined ? photos : safeParseJSON(asset.photos, []),
+        photos !== undefined ? photos : oldPhotos,
         image !== undefined ? image : asset.image
       );
       photosJson = JSON.stringify(processedPhotos);
       primaryImage = processedPhotos.length > 0 ? processedPhotos[0] : (image || '');
+
+      // เคลียร์ไฟล์รูปภาพเก่าที่ถูกลบออกจากทรัพย์สินนี้ (ถ้าไม่มีทรัพย์สินอื่นใช้งาน)
+      const removedPhotos = oldPhotos.filter(oldP => {
+        const oldFn = path.basename(oldP);
+        return !processedPhotos.some(newP => path.basename(newP) === oldFn || newP.includes(oldFn));
+      });
+      for (const rem of removedPhotos) {
+        const remFn = path.basename(rem);
+        if (!remFn || rem.startsWith('data:')) continue;
+        const otherUsing = await dbGet(
+          `SELECT id FROM assets WHERE id != ? AND (photos LIKE ? OR image LIKE ?) LIMIT 1`,
+          [asset.id, `%${remFn}%`, `%${remFn}%`]
+        );
+        if (!otherUsing) {
+          const filePath = path.join(UPLOADS_DIR, remFn);
+          try {
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+            }
+          } catch (_) {}
+        }
+      }
     }
 
     await dbRun(
@@ -942,6 +965,106 @@ app.put('/api/assets/:id', async (req, res) => {
   } catch (err) {
     console.error('/api/assets/:id PUT error:', err);
     return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด: ' + err.message });
+  }
+});
+
+// ============================================================
+//  IMAGE DELETION (ลบรูปภาพจากโฟลเดอร์ uploads และอัปเดต SQLite DB)
+// ============================================================
+app.delete(['/api/assets/images/:filename(*)', '/api/images/:filename(*)'], async (req, res) => {
+  try {
+    const rawParam = req.params.filename || req.params[0] || '';
+    const cleanFilename = path.basename(rawParam).trim();
+
+    if (!cleanFilename || cleanFilename === '.' || cleanFilename === '..') {
+      return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อไฟล์รูปภาพให้ถูกต้อง' });
+    }
+
+    // ตรวจสอบสิทธิ์ผู้ใช้งาน (ถ้ามี session token)
+    const sess = await getOptionalUser(req);
+    const isAdminOrEditor = sess && ['admin', 'manager', 'editor'].includes(sess.role);
+
+    // 1. ค้นหาทรัพย์สินในฐานข้อมูล SQLite ที่เชื่อมโยงกับรูปนี้
+    const matchingAssets = await dbAll(
+      `SELECT id, asset_code, name, photos, image FROM assets WHERE photos LIKE ? OR image LIKE ?`,
+      [`%${cleanFilename}%`, `%${cleanFilename}%`]
+    );
+
+    // หากรูปภาพนี้ผูกกับทรัพย์สินที่มีอยู่ในระบบแล้ว ผู้ลบจะต้องมีสิทธิ์ Admin, Manager หรือ Editor เท่านั้น
+    if (matchingAssets.length > 0 && !isAdminOrEditor) {
+      return res.status(403).json({
+        success: false,
+        message: 'ไม่มีสิทธิ์ในการลบรูปภาพของทรัพย์สินในระบบ (เฉพาะ Admin, Manager หรือ Editor)'
+      });
+    }
+
+    // 2. ลบไฟล์ทางกายภาพออกจากโฟลเดอร์ uploads
+    const filePath = path.join(UPLOADS_DIR, cleanFilename);
+    let fileDeleted = false;
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        fileDeleted = true;
+      }
+    } catch (fsErr) {
+      console.warn('⚠️ Warning deleting image file from disk:', fsErr.message);
+    }
+
+    // 3. ค้นหาและอัปเดตทรัพย์สินในฐานข้อมูล SQLite ที่เชื่อมโยงกับรูปนี้
+    let updatedAssetCount = 0;
+    const affectedCodes = [];
+
+    for (const asset of matchingAssets) {
+      const parsedPhotos = safeParseJSON(asset.photos, []);
+      const newPhotos = (Array.isArray(parsedPhotos) ? parsedPhotos : []).filter(p => {
+        return path.basename(p) !== cleanFilename && !p.includes(cleanFilename);
+      });
+
+      let newImage = asset.image || '';
+      if (path.basename(newImage) === cleanFilename || newImage.includes(cleanFilename)) {
+        newImage = newPhotos.length > 0 ? newPhotos[0] : '';
+      }
+
+      await dbRun(
+        `UPDATE assets SET photos = ?, image = ?, updated_at = datetime('now','localtime') WHERE id = ?`,
+        [JSON.stringify(newPhotos), newImage, asset.id]
+      );
+
+      updatedAssetCount++;
+      affectedCodes.push(asset.asset_code);
+
+      logAudit(
+        'DELETE_IMAGE',
+        'asset',
+        asset.asset_code,
+        `ลบรูปภาพ ${cleanFilename} ออกจากทรัพย์สิน ${asset.asset_code} (${asset.name || ''})`,
+        req,
+        sess ? (sess.name || sess.username) : 'Registrant'
+      );
+    }
+
+    if (matchingAssets.length === 0) {
+      logAudit(
+        'DELETE_IMAGE',
+        'image',
+        cleanFilename,
+        `ลบไฟล์รูปภาพ ${cleanFilename} ออกจากระบบ`,
+        req,
+        sess ? (sess.name || sess.username) : 'Guest/Registrant'
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: 'ลบรูปภาพและอัปเดตฐานข้อมูลเรียบร้อยแล้ว',
+      filename: cleanFilename,
+      fileDeleted,
+      updatedAssetCount,
+      affectedCodes
+    });
+  } catch (err) {
+    console.error('DELETE image error:', err);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการลบรูปภาพ: ' + err.message });
   }
 });
 
@@ -1260,6 +1383,19 @@ app.delete(['/api/trash/assets/:id', '/api/assets/:id/permanent'], async (req, r
     await dbRun('DELETE FROM audit_items WHERE asset_code = ?', [asset.asset_code]);
     await dbRun('DELETE FROM assets WHERE id = ?', [asset.id]);
 
+    // เคลียร์ไฟล์รูปภาพจริงออกจาก uploads (ถ้าไม่มีทรัพย์สินอื่นใช้งาน)
+    const assetPhotos = safeParseJSON(asset.photos, []);
+    if (asset.image && !assetPhotos.includes(asset.image)) assetPhotos.push(asset.image);
+    for (const p of assetPhotos) {
+      const fn = path.basename(p);
+      if (!fn || p.startsWith('data:')) continue;
+      const otherUsing = await dbGet('SELECT id FROM assets WHERE (photos LIKE ? OR image LIKE ?) LIMIT 1', [`%${fn}%`, `%${fn}%`]);
+      if (!otherUsing) {
+        const fp = path.join(UPLOADS_DIR, fn);
+        try { if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch (_) {}
+      }
+    }
+
     logAudit('HARD_DELETE_ASSET', 'asset', asset.asset_code, `ลบทรัพย์สินถาวร: ${asset.name} (${asset.asset_code})`, req, sess.name);
 
     return res.json({ success: true, message: `ลบทรัพย์สิน "${asset.asset_code}" ถาวรเรียบร้อยแล้ว` });
@@ -1276,7 +1412,7 @@ app.delete('/api/trash/empty', async (req, res) => {
   if (!['admin', 'manager'].includes(sess.role))
     return res.status(403).json({ success: false, message: 'เฉพาะ Admin หรือ Manager เท่านั้นจึงจะล้างถังขยะได้' });
   try {
-    const deletedAssets = await dbAll('SELECT id, asset_code, name FROM assets WHERE is_deleted = 1');
+    const deletedAssets = await dbAll('SELECT id, asset_code, name, photos, image FROM assets WHERE is_deleted = 1');
     const count = deletedAssets.length;
     if (count === 0) {
       return res.json({ success: true, message: 'ถังขยะว่างเปล่าอยู่แล้ว', count: 0 });
@@ -1286,6 +1422,18 @@ app.delete('/api/trash/empty', async (req, res) => {
       await dbRun('DELETE FROM borrows WHERE asset_id = ? OR asset_code = ?', [a.id, a.asset_code]);
       await dbRun('DELETE FROM maintenance WHERE asset_id = ? OR asset_code = ?', [a.id, a.asset_code]);
       await dbRun('DELETE FROM audit_items WHERE asset_code = ?', [a.asset_code]);
+
+      const assetPhotos = safeParseJSON(a.photos, []);
+      if (a.image && !assetPhotos.includes(a.image)) assetPhotos.push(a.image);
+      for (const p of assetPhotos) {
+        const fn = path.basename(p);
+        if (!fn || p.startsWith('data:')) continue;
+        const otherUsing = await dbGet('SELECT id FROM assets WHERE is_deleted = 0 AND (photos LIKE ? OR image LIKE ?) LIMIT 1', [`%${fn}%`, `%${fn}%`]);
+        if (!otherUsing) {
+          const fp = path.join(UPLOADS_DIR, fn);
+          try { if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch (_) {}
+        }
+      }
     }
     await dbRun('DELETE FROM assets WHERE is_deleted = 1');
 
@@ -1719,10 +1867,13 @@ app.get('/api/qr', (req, res) => {
 // ============================================================
 //  USERS MANAGEMENT
 // ============================================================
+// GET /api/users — ดูรายชื่อผู้ใช้งานทั้งหมด (Admin และ Manager)
 app.get('/api/users', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (sess.role !== 'admin') return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์' });
+  if (!['admin', 'manager'].includes(sess.role)) {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์เข้าถึงรายชื่อผู้ใช้ (เฉพาะ Admin และ Manager)' });
+  }
   try {
     const users = await dbAll('SELECT id,username,name,role,created_at FROM users');
     // แนบ oauth_accounts ให้แต่ละ user
@@ -1732,24 +1883,31 @@ app.get('/api/users', async (req, res) => {
     });
     return res.json({ success: true, data: result });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้: ' + err.message });
   }
 });
 
+// POST /api/users — เพิ่มผู้ใช้ใหม่ (เฉพาะ Admin เท่านั้น)
 app.post('/api/users', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (sess.role !== 'admin') return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์' });
+  if (sess.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์เพิ่มผู้ใช้งาน (เฉพาะ Admin เท่านั้น)' });
+  }
   try {
     const { username, password, name, role } = req.body;
     if (!username || !password) return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อผู้ใช้และรหัสผ่าน' });
     const existing = await dbGet('SELECT id FROM users WHERE username=?', [username]);
     if (existing) return res.status(409).json({ success: false, message: 'ชื่อผู้ใช้นี้มีอยู่แล้ว' });
+    const assignedRole = ['admin', 'manager', 'editor', 'viewer'].includes(role) ? role : 'viewer';
     const hash = crypto.createHash('sha256').update(String(password)).digest('hex');
-    const result = await dbRun('INSERT INTO users (username,password,name,role) VALUES (?,?,?,?)', [username, hash, name||'', role||'viewer']);
-    return res.status(201).json({ success: true, data: { id: result.lastID, username, name: name||'', role: role||'viewer' } });
+    const result = await dbRun('INSERT INTO users (username,password,name,role) VALUES (?,?,?,?)', [username, hash, name||'', assignedRole]);
+    
+    logAudit('CREATE_USER', 'user', username, `เพิ่มผู้ใช้งานใหม่: ${username} (Role: ${assignedRole}, ชื่อ: ${name || '-'})`, req, sess.name);
+
+    return res.status(201).json({ success: true, data: { id: result.lastID, username, name: name||'', role: assignedRole } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการเพิ่มผู้ใช้: ' + err.message });
   }
 });
 
@@ -1757,7 +1915,9 @@ app.post('/api/users', async (req, res) => {
 app.put('/api/users/:id/role', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (sess.role !== 'admin') return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์' });
+  if (sess.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์เปลี่ยนระดับสิทธิ์ผู้ใช้ (เฉพาะ Admin เท่านั้น)' });
+  }
   try {
     const targetId = parseInt(req.params.id);
     const { role } = req.body;
@@ -1768,9 +1928,12 @@ app.put('/api/users/:id/role', async (req, res) => {
     await dbRun('UPDATE users SET role=? WHERE id=?', [role, targetId]);
     // อัปเดต session ที่ยังค้างอยู่ด้วย
     await dbRun('UPDATE sessions SET role=? WHERE user_id=?', [role, targetId]);
+
+    logAudit('UPDATE_ROLE', 'user', target.username, `เปลี่ยนระดับสิทธิ์ของผู้ใช้ ${target.username} เป็น ${role}`, req, sess.name);
+
     return res.json({ success: true, message: `เปลี่ยน role ของ ${target.username} เป็น ${role} แล้ว` });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการเปลี่ยนระดับสิทธิ์: ' + err.message });
   }
 });
 
@@ -1778,19 +1941,24 @@ app.put('/api/users/:id/role', async (req, res) => {
 app.delete('/api/users/:id', async (req, res) => {
   const sess = await authenticate(req, res);
   if (!sess) return;
-  if (sess.role !== 'admin') return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์' });
+  if (sess.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ลบผู้ใช้งาน (เฉพาะ Admin เท่านั้น)' });
+  }
   try {
     const targetId = parseInt(req.params.id);
     if (sess.user_id === targetId)
       return res.status(400).json({ success: false, message: 'ไม่สามารถลบบัญชีของตัวเองได้' });
-    const target = await dbGet('SELECT id FROM users WHERE id=?', [targetId]);
+    const target = await dbGet('SELECT id,username FROM users WHERE id=?', [targetId]);
     if (!target) return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้' });
     await dbRun('DELETE FROM sessions WHERE user_id=?', [targetId]);
     await dbRun('DELETE FROM oauth_accounts WHERE user_id=?', [targetId]);
     await dbRun('DELETE FROM users WHERE id=?', [targetId]);
+
+    logAudit('DELETE_USER', 'user', target.username, `ลบผู้ใช้งาน ${target.username} ออกจากระบบ`, req, sess.name);
+
     return res.json({ success: true, message: 'ลบผู้ใช้เรียบร้อยแล้ว' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการลบผู้ใช้: ' + err.message });
   }
 });
 

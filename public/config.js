@@ -64,6 +64,75 @@
     };
 
     /**
+     * Shared helper to delete an image file from the server.
+     * Handles local/base64 check, authentication token attachment, and error extraction.
+     * @param {string} photoPath - e.g. 'uploads/photo-123.jpg'
+     * @returns {Promise<Object>} API response object
+     */
+    window.deleteAssetImage = async function (photoPath) {
+        if (!photoPath) return { success: false, message: 'ไม่พบชื่อรูปภาพ' };
+        if (photoPath.startsWith('data:')) {
+            return { success: true, isLocal: true, message: 'รูปภาพชั่วคราวถูกลบแล้ว' };
+        }
+        const cleanFilename = (photoPath.split('/').pop() || '').trim();
+        if (!cleanFilename) return { success: false, message: 'ชื่อไฟล์ไม่ถูกต้อง' };
+
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const res = await fetch(window.getApiUrl(`/api/assets/images/${encodeURIComponent(cleanFilename)}`), {
+            method: 'DELETE',
+            headers
+        });
+        let data = {};
+        try { data = await res.json(); } catch (_) { }
+        if (!res.ok || !data.success) {
+            const err = new Error(data.message || 'ลบรูปภาพไม่สำเร็จ');
+            err.status = res.status;
+            throw err;
+        }
+        return data;
+    };
+
+    /**
+     * Shared helper to upload multiple photos to backend (/api/upload).
+     * Automatically applies slot limiting, token attachment, and error handling.
+     * @param {FileList|File[]} files - Files from file input or drag-and-drop
+     * @param {number} currentLength - Current number of photos already attached
+     * @param {number} maxAllowed - Maximum photos allowed per asset (default: 5)
+     * @returns {Promise<string[]>} Array of uploaded image paths (urls)
+     */
+    window.uploadAssetPhotos = async function (files, currentLength = 0, maxAllowed = 5) {
+        if (!files || files.length === 0) return [];
+        const remaining = Math.max(0, maxAllowed - currentLength);
+        if (remaining <= 0) {
+            throw new Error(`สามารถอัปโหลดรูปภาพได้สูงสุด ${maxAllowed} รูปต่ออุปกรณ์`);
+        }
+        const filesToUpload = Array.from(files).slice(0, remaining);
+        const formData = new FormData();
+        filesToUpload.forEach(f => formData.append('photos', f));
+
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const res = await fetch(window.getApiUrl('/api/upload'), {
+            method: 'POST',
+            headers,
+            body: formData
+        });
+        let data = {};
+        try { data = await res.json(); } catch (_) {
+            throw new Error(`เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง (${res.status}: ${res.statusText})`);
+        }
+        if (!res.ok || !data.success || !Array.isArray(data.urls)) {
+            throw new Error(data.message || 'อัปโหลดรูปภาพไม่สำเร็จ');
+        }
+        return data.urls;
+    };
+
+    /**
      * Helper to change API Base URL dynamically (e.g. from UI or console).
      * @param {string} newUrl - e.g. 'https://my-tunnel.trycloudflare.com'
      */
