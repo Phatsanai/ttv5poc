@@ -354,7 +354,8 @@ db.exec(`
     password   TEXT    NOT NULL,
     name       TEXT    NOT NULL DEFAULT '',
     role       TEXT    NOT NULL DEFAULT 'viewer',
-    created_at TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+    created_at TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+    updated_at TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
   );
 
   CREATE TABLE IF NOT EXISTS assets (
@@ -510,6 +511,14 @@ try {
   if (!colInfo.some(c => c.name === 'deleted_at')) {
     db.exec("ALTER TABLE assets ADD COLUMN deleted_at TEXT DEFAULT NULL");
     console.log('✅ SQLite: Added deleted_at column to assets table');
+  }
+
+  // ตรวจสอบคอลัมน์ updated_at ในตาราง users
+  const userColInfo = db.pragma('table_info(users)');
+  if (!userColInfo.some(c => c.name === 'updated_at')) {
+    db.exec("ALTER TABLE users ADD COLUMN updated_at TEXT DEFAULT ''");
+    db.exec("UPDATE users SET updated_at = datetime('now','localtime') WHERE updated_at IS NULL OR updated_at = ''");
+    console.log('✅ SQLite: Added updated_at column to users table');
   }
 } catch (e) {
   console.warn('DB Migration warning:', e.message);
@@ -1979,8 +1988,79 @@ app.put('/api/users/:id/password', async (req, res) => {
   }
 });
 
+// PUT /api/auth/profile & /api/users/profile — แก้ไขข้อมูลโปรไฟล์ผู้ใช้งาน (ชื่อแสดงผล / Username)
+app.put(['/api/auth/profile', '/api/users/profile'], async (req, res) => {
+  const sess = await authenticate(req, res);
+  if (!sess) return;
+
+  try {
+    const { name, username } = req.body;
+    let newName = typeof name === 'string' ? name.trim() : undefined;
+    let newUsername = typeof username === 'string' ? username.trim() : undefined;
+
+    if (newName === undefined && newUsername === undefined) {
+      return res.status(400).json({ success: false, message: 'กรุณาระบุข้อมูลที่ต้องการแก้ไข (name หรือ username)' });
+    }
+
+    if (newName !== undefined && newName.length === 0) {
+      return res.status(400).json({ success: false, message: 'ชื่อผู้ใช้งาน (Name) ต้องไม่เป็นค่าว่าง' });
+    }
+    if (newName !== undefined && newName.length > 100) {
+      return res.status(400).json({ success: false, message: 'ชื่อผู้ใช้งานต้องมีความยาวไม่เกิน 100 ตัวอักษร' });
+    }
+
+    const currentUser = await dbGet('SELECT * FROM users WHERE id = ?', [sess.user_id]);
+    if (!currentUser) {
+      return res.status(404).json({ success: false, message: 'ไม่พบบัญชีผู้ใช้นี้ในระบบ' });
+    }
+
+    let finalName = newName !== undefined ? newName : currentUser.name;
+    let finalUsername = currentUser.username;
+
+    if (newUsername !== undefined && newUsername !== currentUser.username) {
+      if (newUsername.length < 3 || newUsername.length > 30) {
+        return res.status(400).json({ success: false, message: 'Username ต้องมีความยาวระหว่าง 3-30 ตัวอักษร' });
+      }
+      if (!/^[a-zA-Z0-9_.-]+$/.test(newUsername)) {
+        return res.status(400).json({ success: false, message: 'Username สามารถใช้ได้เฉพาะตัวอักษรภาษาอังกฤษ ตัวเลข, _, . หรือ - เท่านั้น' });
+      }
+      const existing = await dbGet('SELECT id FROM users WHERE username = ? AND id != ?', [newUsername, sess.user_id]);
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'Username นี้ถูกใช้งานแล้ว โปรดเลือกชื่ออื่น' });
+      }
+      finalUsername = newUsername;
+    }
+
+    // อัปเดตข้อมูลผู้ใช้ในตาราง users พร้อมบันทึกเวลา updated_at
+    await dbRun(
+      "UPDATE users SET name = ?, username = ?, updated_at = datetime('now','localtime') WHERE id = ?",
+      [finalName, finalUsername, sess.user_id]
+    );
+
+    // อัปเดต session เพื่อให้ /api/me และการตรวจสอบครั้งต่อไปได้ข้อมูลใหม่ทันที
+    await dbRun(
+      "UPDATE sessions SET name = ?, username = ? WHERE user_id = ?",
+      [finalName, finalUsername, sess.user_id]
+    );
+
+    // บันทึก Audit Log
+    logAudit('UPDATE_PROFILE', 'user', finalUsername, `แก้ไขข้อมูลโปรไฟล์เป็น: ${finalName} (@${finalUsername})`, req, finalName);
+
+    const updatedUser = await dbGet('SELECT id, username, name, role, created_at, updated_at FROM users WHERE id = ?', [sess.user_id]);
+
+    return res.json({
+      success: true,
+      message: 'เปลี่ยนชื่อผู้ใช้เรียบร้อยแล้ว',
+      user: updatedUser
+    });
+  } catch (err) {
+    console.error('Update profile error:', err);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + err.message });
+  }
+});
+
 // ============================================================
-//  OAUTH — Google & Facebook Account Linking
+//  OAUTH — Google Account Linking
 //  (อ่านการตั้งค่าจาก Environment Variables หรือ oauth.config.js แบบยืดหยุ่น)
 // ============================================================
 function getResolvedOAuthConfig() {
@@ -2061,8 +2141,6 @@ function getResolvedOAuthConfig() {
   const rawBase = resolveKey(['OAUTH_BASE_URL', 'RENDER_EXTERNAL_URL', 'BASE_URL'], oauthModule.OAUTH_BASE_URL) || `http://127.0.0.1:${PORT}`;
   const baseUrl = normalizeBaseUrl(rawBase);
   const isMock = resolveKey('GOOGLE_MOCK_LOGIN', oauthModule.GOOGLE_MOCK_LOGIN ? 'true' : '') === 'true';
-  const fbAppId = resolveKey(['FB_APP_ID', 'FACEBOOK_APP_ID'], oauthModule.FB_APP_ID);
-  const fbSecret = resolveKey(['FB_APP_SECRET', 'FACEBOOK_APP_SECRET'], oauthModule.FB_APP_SECRET);
 
   const isPlaceholder = (id, secret) => {
     const sId = String(id || '').toLowerCase();
@@ -2088,15 +2166,13 @@ function getResolvedOAuthConfig() {
     callbackUrl,
     baseUrl,
     isMock,
-    fbAppId,
-    fbSecret,
     isGoogleConfigured,
     redirectUri,
     errorMessage: isGoogleConfigured ? null : (isMock ? 'Google OAuth เปิดใช้งานในโหมดทดสอบ (Mock Login)' : 'Google OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน Environment Variables หรือไฟล์ .env')
   };
 }
 
-// GET /api/auth/status — ตรวจสอบสถานะว่าระบบเปิดใช้ Google / Facebook หรือไม่
+// GET /api/auth/status — ตรวจสอบสถานะว่าระบบเปิดใช้ Google หรือไม่
 app.get('/api/auth/status', (_req, res) => {
   const oauth = getResolvedOAuthConfig();
   return res.json({
@@ -2108,10 +2184,6 @@ app.get('/api/auth/status', (_req, res) => {
         isMock: oauth.isMock,
         callbackUrl: oauth.redirectUri,
         message: oauth.isGoogleConfigured ? 'พร้อมใช้งาน' : (oauth.isMock ? 'พร้อมใช้งาน (โหมดทดสอบ Mock Login)' : oauth.errorMessage)
-      },
-      facebook: {
-        enabled: Boolean(oauth.fbAppId && oauth.fbSecret),
-        configured: Boolean(oauth.fbAppId && oauth.fbSecret)
       }
     }
   });
@@ -2354,102 +2426,6 @@ app.get('/api/auth/google/callback', async (req, res) => {
     console.error('❌ Google OAuth callback unhandled exception:', err);
     const redirectUrl = clientBase ? `${clientBase}/${targetPage}?error=oauth_failed` : `/${targetPage}?error=oauth_failed`;
     return res.redirect(redirectUrl);
-  }
-});
-
-// ── Facebook OAuth ───────────────────────────────────────────
-app.get('/api/auth/facebook', (req, res) => {
-  const oauth = getResolvedOAuthConfig();
-  if (!oauth.fbAppId)
-    return res.status(503).json({ success: false, message: 'Facebook OAuth ยังไม่ได้ตั้งค่า (โปรดใส่ FB_APP_ID ใน oauth.config.js)' });
-  const returnTo = req.query.return_to || '/account.html';
-  const clientOrigin = req.query.client_origin || req.headers.origin || (req.headers.referer ? new URL(req.headers.referer).origin : '');
-  const params = new URLSearchParams({
-    client_id:     oauth.fbAppId,
-    redirect_uri:  `${oauth.baseUrl}/api/auth/facebook/callback`,
-    scope:         'email,public_profile',
-    state:         Buffer.from(JSON.stringify({ token: req.query.token || '', returnTo, clientOrigin })).toString('base64')
-  });
-  return res.redirect(`https://www.facebook.com/v18.0/dialog/oauth?${params}`);
-});
-
-app.get('/api/auth/facebook/callback', async (req, res) => {
-  const oauth = getResolvedOAuthConfig();
-  let clientBase = '';
-  try {
-    const { code, state } = req.query;
-    let stateObj = {};
-    try { stateObj = JSON.parse(Buffer.from(state || '', 'base64').toString()); } catch {}
-    const { token: sessToken, returnTo = '/account.html', clientOrigin = '' } = stateObj;
-    clientBase = clientOrigin ? clientOrigin.replace(/\/+$/, '') : '';
-
-    if (!oauth.fbAppId)
-      return res.redirect(`${clientBase}/account.html?error=oauth_disabled`);
-    if (!code) return res.redirect(`${clientBase}/account.html?error=no_code`);
-
-    // แลก code -> access_token
-    const tokenUrl = `https://graph.facebook.com/v18.0/oauth/access_token?` + new URLSearchParams({
-      client_id: oauth.fbAppId,
-      client_secret: oauth.fbSecret,
-      redirect_uri: `${oauth.baseUrl}/api/auth/facebook/callback`,
-      code
-    });
-    const tokenRes = await fetch(tokenUrl);
-    const tokenData = await tokenRes.json();
-    if (!tokenData.access_token) return res.redirect(`${clientBase}/account.html?error=token_failed`);
-
-    // ดึงโปรไฟล์ Facebook
-    const profileUrl = `https://graph.facebook.com/me?fields=id,name,email&access_token=${tokenData.access_token}`;
-    const profileRes = await fetch(profileUrl);
-    const profile = await profileRes.json();
-    const { id: provider_id, email = '', name: display_name = '' } = profile;
-
-    if (sessToken) {
-      // โหมดเชื่อมต่อบัญชี
-      const sess = db.prepare('SELECT * FROM sessions WHERE token=?').get([sessToken]);
-      if (sess && sess.expires_at > Date.now()) {
-        const already = db.prepare('SELECT id FROM oauth_accounts WHERE provider=? AND provider_id=?').get(['facebook', provider_id]);
-        if (!already) {
-          db.prepare('INSERT OR IGNORE INTO oauth_accounts (user_id,provider,provider_id,email,display_name) VALUES (?,?,?,?,?)')
-            .run([sess.user_id, 'facebook', provider_id, email, display_name]);
-        }
-        logAudit('LINK_OAUTH', 'user', sess.user_id, `เชื่อมต่อบัญชี Facebook: ${email || display_name}`, req, sess.name);
-        const dest = returnTo.startsWith('http') ? returnTo : `${clientBase}${returnTo.startsWith('/') ? returnTo : '/' + returnTo}`;
-        return res.redirect(`${dest}${dest.includes('?') ? '&' : '?'}linked=facebook`);
-      }
-    }
-
-    // โหมดเข้าสู่ระบบ
-    let oauthRow = db.prepare('SELECT * FROM oauth_accounts WHERE provider=? AND provider_id=?').get(['facebook', provider_id]);
-    let userId;
-    if (oauthRow) {
-      userId = oauthRow.user_id;
-    } else {
-      const fallbackUser = email || `fb_${provider_id}`;
-      const existingUser = db.prepare('SELECT id FROM users WHERE username=?').get([fallbackUser]);
-      if (existingUser) {
-        userId = existingUser.id;
-      } else {
-        const info = db.prepare('INSERT INTO users (username,password,name,role) VALUES (?,?,?,?)')
-          .run([fallbackUser, '', display_name || fallbackUser, 'viewer']);
-        userId = info.lastInsertRowid;
-      }
-      db.prepare('INSERT OR IGNORE INTO oauth_accounts (user_id,provider,provider_id,email,display_name) VALUES (?,?,?,?,?)')
-        .run([userId, 'facebook', provider_id, email, display_name]);
-    }
-
-    const user = db.prepare('SELECT * FROM users WHERE id=?').get([userId]);
-    const newToken = generateToken();
-    const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
-    db.prepare('DELETE FROM sessions WHERE user_id=?').run([userId]);
-    db.prepare('INSERT INTO sessions (token,user_id,username,name,role,expires_at) VALUES (?,?,?,?,?,?)')
-      .run([newToken, userId, user.username, user.name, user.role, expiresAt]);
-
-    logAudit('LOGIN_FACEBOOK', 'user', user.username, `เข้าสู่ระบบด้วย Facebook: ${email || display_name}`, req, user.name);
-    return res.redirect(`${clientBase}/dashboard.html?oauth_token=${newToken}`);
-  } catch (err) {
-    console.error('Facebook OAuth callback error:', err);
-    return res.redirect(`${clientBase}/index.html?error=oauth_failed`);
   }
 });
 

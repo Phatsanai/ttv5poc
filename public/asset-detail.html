@@ -12,6 +12,7 @@
     <script src="theme.js"></script>
     <script src="config.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="html5-qrcode.min.js"></script>
     <script src="scanner-modal.js"></script>
     <style>
@@ -590,6 +591,45 @@
         .qr-small-box img {
             border-radius: 6px;
             border: 3px solid white;
+        }
+
+        .btn-print-sticker-quick {
+            background-color: var(--accent-blue);
+            color: #ffffff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .btn-print-sticker-quick:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-pdf-sticker-quick {
+            background-color: #8957e5;
+            color: #ffffff;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .btn-pdf-sticker-quick:hover {
+            background-color: #a371f7;
+            transform: translateY(-1px);
         }
 
         /* =========================================================
@@ -1592,6 +1632,14 @@
                             <div class="qr-small-box">
                                 <div id="qrCodeSmall"></div>
                             </div>
+                            <div style="margin-top:10px; display:flex; justify-content:center; gap:6px;">
+                                <button type="button" class="btn-print-sticker-quick" onclick="directPrintSingleAssetSticker()" title="พิมพ์ด่วนสติ๊กเกอร์ QR สำหรับอุปกรณ์นี้">
+                                    <i class="fa-solid fa-print"></i> พิมพ์สติ๊กเกอร์
+                                </button>
+                                <button type="button" class="btn-pdf-sticker-quick" onclick="downloadSingleAssetStickerPDF()" title="ดาวน์โหลด PDF สติ๊กเกอร์ของอุปกรณ์นี้">
+                                    <i class="fa-solid fa-file-pdf"></i> PDF
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -2329,6 +2377,215 @@
                 const manual = prompt('กรุณากรอกรหัสทรัพย์สิน:');
                 if (manual) window.location.href = `asset-detail.html?id=${encodeURIComponent(manual.trim())}`;
             }
+        }
+
+        // ── Direct Clean Sticker Print for Single Asset (Hidden Iframe) ──
+        function directPrintSingleAssetSticker() {
+            if (!currentAsset) return;
+            const qrImg = document.querySelector('#qrCodeSmall img') || document.querySelector('#qrCodeSmall canvas');
+            const qrSrc = qrImg ? (qrImg.src || qrImg.toDataURL?.('image/png') || '') : '';
+            const code = currentAsset.asset_code;
+            const name = currentAsset.name || '';
+            const dept = currentAsset.department || currentAsset.category || '';
+
+            let iframe = document.getElementById('singlePrintIframe');
+            if (iframe) iframe.remove();
+
+            iframe = document.createElement('iframe');
+            iframe.id = 'singlePrintIframe';
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            iframe.style.visibility = 'hidden';
+            document.body.appendChild(iframe);
+
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Print Sticker - ${code}</title>
+                    <style>
+                        @page {
+                            size: 90mm 24.5mm;
+                            margin: 0mm;
+                        }
+                        * {
+                            box-sizing: border-box;
+                            margin: 0;
+                            padding: 0;
+                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            background: #ffffff;
+                            color: #000000;
+                        }
+                        .sticker {
+                            width: 90mm;
+                            height: 24.5mm;
+                            display: flex;
+                            align-items: center;
+                            padding: 1.5mm 3mm;
+                            gap: 3mm;
+                            box-sizing: border-box;
+                            overflow: hidden;
+                        }
+                        .qr-col {
+                            width: 18mm;
+                            height: 18mm;
+                            flex-shrink: 0;
+                        }
+                        .qr-col img {
+                            width: 100%;
+                            height: 100%;
+                            object-fit: contain;
+                        }
+                        .info-col {
+                            flex: 1;
+                            min-width: 0;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: center;
+                            overflow: hidden;
+                        }
+                        .tag-header {
+                            font-size: 6pt;
+                            font-weight: 700;
+                            color: #555;
+                            text-transform: uppercase;
+                            line-height: 1;
+                            margin-bottom: 1mm;
+                        }
+                        .tag-code {
+                            font-size: 13pt;
+                            font-weight: 900;
+                            color: #000;
+                            line-height: 1.1;
+                        }
+                        .tag-name {
+                            font-size: 7pt;
+                            color: #333;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            margin-top: 0.8mm;
+                        }
+                        .tag-dept {
+                            font-size: 6pt;
+                            color: #777;
+                            margin-top: 0.5mm;
+                        }
+                        .tag-line {
+                            width: 100%;
+                            height: 0.8px;
+                            background: #888;
+                            margin-top: 1mm;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="sticker">
+                        <div class="qr-col">
+                            ${qrSrc ? `<img src="${qrSrc}" alt="QR">` : ''}
+                        </div>
+                        <div class="info-col">
+                            <div class="tag-header">ASSET CONSOLE</div>
+                            <div class="tag-code">${code}</div>
+                            <div class="tag-name">${name}</div>
+                            ${dept ? `<div class="tag-dept">${dept}</div>` : ''}
+                            <div class="tag-line"></div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+            doc.close();
+
+            setTimeout(() => {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch (e) {
+                    console.error('Single direct print error:', e);
+                }
+            }, 300);
+        }
+
+        // ── Single Asset Sticker Vector PDF Download ──────────────────────
+        function downloadSingleAssetStickerPDF() {
+            if (!currentAsset) return;
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert('ไม่พบไลบรารี jsPDF กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const code = currentAsset.asset_code;
+            const name = currentAsset.name || '';
+            const dept = currentAsset.department || currentAsset.category || '';
+            const qrImg = document.querySelector('#qrCodeSmall img') || document.querySelector('#qrCodeSmall canvas');
+            const qrSrc = qrImg ? (qrImg.src || qrImg.toDataURL?.('image/png') || '') : '';
+
+            const width = 90;
+            const height = 24.5;
+            const qrSize = 17;
+
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: [width, height]
+            });
+
+            // กรอบป้าย
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.2);
+            doc.roundedRect(1, 1, width - 2, height - 2, 1, 1);
+
+            // วาง QR Code
+            if (qrSrc) {
+                try {
+                    doc.addImage(qrSrc, 'PNG', 3, (height - qrSize) / 2, qrSize, qrSize);
+                } catch (_) {}
+            }
+
+            // ข้อมูล
+            const textX = 3 + qrSize + 3;
+            let textY = 6;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.setTextColor(80, 80, 80);
+            doc.text('ASSET CONSOLE', textX, textY);
+
+            textY += 5.5;
+            doc.setFontSize(13);
+            doc.setTextColor(0, 0, 0);
+            doc.text(code, textX, textY);
+
+            if (name) {
+                textY += 4;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.setTextColor(50, 50, 50);
+                const safeName = name.length > 32 ? name.substring(0, 32) + '...' : name;
+                doc.text(safeName, textX, textY);
+            }
+
+            textY += 3;
+            doc.setDrawColor(180, 180, 180);
+            doc.setLineWidth(0.3);
+            doc.line(textX, textY, width - 3, textY);
+
+            doc.save(`Sticker-${code}.pdf`);
         }
 
         // ── Theme: จัดการโดย theme.js กลางใน <head> (window.toggleTheme) ──

@@ -1551,9 +1551,9 @@
                 json.data.forEach(u => {
                     const oauthHtml = (u.oauth_accounts || []).map(o => {
                         const isGoogle = o.provider === 'google';
-                        const icon = isGoogle ? 'fa-brands fa-google' : 'fa-brands fa-facebook';
-                        const color = isGoogle ? '#ea4335' : '#1877f2';
-                        const bg = isGoogle ? 'rgba(234,67,53,0.12)' : 'rgba(24,119,242,0.12)';
+                        const icon = isGoogle ? 'fa-brands fa-google' : 'fa-solid fa-link';
+                        const color = isGoogle ? '#ea4335' : 'var(--accent-blue)';
+                        const bg = isGoogle ? 'rgba(234,67,53,0.12)' : 'rgba(56,139,253,0.12)';
                         return `<span class="oauth-badge" style="background:${bg}; color:${color};"><i class="${icon}"></i> ${escapeHtml(o.email || o.display_name)}</span>`;
                     }).join('') || '<span style="color:var(--text-secondary);font-size:0.8rem;">—</span>';
 

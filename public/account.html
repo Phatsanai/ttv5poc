@@ -29,7 +29,6 @@
             --accent-red: #f85149;
             --btn-back-bg: #1c2333;
             --google-red: #ea4335;
-            --facebook-blue: #1877f2;
             --color-scheme: dark;
         }
 
@@ -256,11 +255,6 @@
             color: var(--google-red);
         }
 
-        .oauth-icon.facebook {
-            background-color: rgba(24, 119, 242, 0.12);
-            color: var(--facebook-blue);
-        }
-
         .oauth-name {
             font-weight: 500;
             font-size: 1rem;
@@ -275,6 +269,45 @@
         .oauth-status.connected {
             color: var(--accent-green);
             font-weight: 500;
+        }
+
+        /* Profile Edit Button & Controls */
+        .btn-edit-profile {
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .btn-edit-profile:hover {
+            background-color: var(--hover-bg);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .btn-cancel-edit {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel-edit:hover {
+            background-color: var(--hover-bg);
+            color: var(--text-primary);
         }
 
         /* Buttons */
@@ -297,25 +330,6 @@
         .btn-connect-google:hover {
             background-color: #f8f9fa;
             border-color: #c6c6c6;
-        }
-
-        .btn-connect-facebook {
-            background-color: var(--facebook-blue);
-            color: #ffffff;
-            border: none;
-            padding: 9px 18px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-        }
-
-        .btn-connect-facebook:hover {
-            filter: brightness(1.1);
         }
 
         .btn-unlink {
@@ -603,18 +617,44 @@
 
             <!-- Profile Overview Card -->
             <div class="card">
-                <div class="profile-hero">
-                    <div class="profile-avatar" id="userAvatar">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                    <div class="profile-details">
-                        <h3 id="userDisplayName">กำลังโหลดข้อมูล...</h3>
-                        <div class="username" id="userUsername">@loading</div>
-                        <div id="userRoleBadge">
-                            <span class="role-badge role-viewer"><i class="fa-solid fa-spinner fa-spin"></i>
-                                กำลังโหลด...</span>
+                <div class="profile-hero" style="justify-content:space-between; flex-wrap:wrap; gap:16px;">
+                    <div style="display:flex; align-items:center; gap:20px;">
+                        <div class="profile-avatar" id="userAvatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="profile-details">
+                            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                <h3 id="userDisplayName">กำลังโหลดข้อมูล...</h3>
+                                <button type="button" class="btn-edit-profile" id="btnEditNameTrigger" onclick="toggleEditProfile(true)" title="เปลี่ยนชื่อผู้ใช้ / ชื่อแสดงผล">
+                                    <i class="fa-solid fa-pen-to-square"></i> เปลี่ยนชื่อผู้ใช้
+                                </button>
+                            </div>
+                            <div class="username" id="userUsername">@loading</div>
+                            <div id="userRoleBadge">
+                                <span class="role-badge role-viewer"><i class="fa-solid fa-spinner fa-spin"></i>
+                                    กำลังโหลด...</span>
+                            </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Form เปลี่ยนชื่อผู้ใช้งาน (Edit Profile Name) -->
+                <div id="editProfileSection" style="display:none; margin-top:18px; padding-top:18px; border-top:1px solid var(--border-color);">
+                    <form id="editProfileForm" onsubmit="handleUpdateProfile(event)" style="max-width:520px;">
+                        <label for="editProfileNameInput" style="display:block; font-weight:500; font-size:0.9rem; margin-bottom:8px; color:var(--text-primary);">
+                            <i class="fa-solid fa-id-badge" style="color:var(--accent-blue); margin-right:6px;"></i>ชื่อผู้ใช้ / ชื่อแสดงผล (Display Name)
+                        </label>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <input type="text" id="editProfileNameInput" class="form-control" placeholder="ระบุชื่อที่ต้องการแสดง..." required maxlength="100" style="flex:1; min-width:220px;">
+                            <button type="submit" class="btn-submit" id="btnSaveProfileName" style="width:auto; padding:9px 18px; display:inline-flex; align-items:center; gap:6px;">
+                                <i class="fa-solid fa-floppy-disk"></i> บันทึกชื่อ
+                            </button>
+                            <button type="button" class="btn-cancel-edit" onclick="toggleEditProfile(false)">
+                                ยกเลิก
+                            </button>
+                        </div>
+                        <div id="profileEditError" style="color:var(--accent-red); font-size:0.85rem; margin-top:8px; display:none;"></div>
+                    </form>
                 </div>
             </div>
 
@@ -625,8 +665,8 @@
                         (OAuth Accounts)</h2>
                 </div>
                 <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:20px;">
-                    เชื่อมต่ออีเมลของคุณกับ Google หรือ Facebook เพื่อความสะดวกรวดเร็วในการเข้าสู่ระบบ
-                    และอนุญาตให้คุณเข้าถึงระบบได้ด้วยอีเมลอื่นๆ ของคุณ
+                    เชื่อมต่ออีเมลของคุณกับ Google เพื่อความสะดวกรวดเร็วในการเข้าสู่ระบบ
+                    และอนุญาตให้คุณเข้าถึงระบบได้ด้วยบัญชี Google ของคุณ
                 </p>
 
                 <div class="oauth-list">
@@ -645,30 +685,14 @@
                             <!-- ปุ่ม Render อัตโนมัติด้วย JS -->
                         </div>
                     </div>
-
-                    <!-- Facebook Item -->
-                    <div class="oauth-item" id="facebookItem">
-                        <div class="oauth-info">
-                            <div class="oauth-icon facebook">
-                                <i class="fa-brands fa-facebook-f"></i>
-                            </div>
-                            <div>
-                                <div class="oauth-name">Facebook Account</div>
-                                <div class="oauth-status" id="facebookStatusText">กำลังตรวจสอบสถานะ...</div>
-                            </div>
-                        </div>
-                        <div id="facebookActionArea">
-                            <!-- ปุ่ม Render อัตโนมัติด้วย JS -->
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Helper Note -->
                 <div
                     style="margin-top:20px; padding:14px 18px; background:rgba(56,139,253,0.08); border:1px solid rgba(56,139,253,0.2); border-radius:8px; font-size:0.85rem; color:var(--text-secondary);">
                     <i class="fa-solid fa-circle-info" style="color:var(--accent-blue);"></i>
-                    สามารถกำหนด Client ID & Secret ของ Google หรือ Facebook ได้ในไฟล์ <code>oauth.config.js</code>
-                    เพื่อเปิดใช้งานระบบ OAuth จริงอย่างสมบูรณ์
+                    สามารถกำหนด Client ID & Secret ของ Google ได้ในไฟล์ <code>oauth.config.js</code> หรือผ่าน Environment Variables
+                    เพื่อเปิดใช้งานระบบ Google OAuth อย่างสมบูรณ์
                 </div>
             </div>
 
@@ -720,6 +744,30 @@
         }
 
         // ── Auth & Profile ─────────────────────────────────────
+        function updateUIUserInfo(user) {
+            if (!user) return;
+            const displayName = user.name || user.username || 'User';
+            const initial = (displayName[0] || 'U').toUpperCase();
+
+            const dispEl = document.getElementById('userDisplayName');
+            if (dispEl) dispEl.textContent = displayName;
+
+            const uEl = document.getElementById('userUsername');
+            if (uEl) uEl.textContent = `@${user.username}`;
+
+            const topName = document.getElementById('topUserName');
+            if (topName) topName.textContent = displayName;
+
+            const sideName = document.getElementById('sidebarUserName');
+            if (sideName) sideName.textContent = displayName;
+
+            const topAv = document.getElementById('topAvatar');
+            if (topAv) topAv.textContent = initial;
+
+            const nameInput = document.getElementById('editProfileNameInput');
+            if (nameInput) nameInput.value = user.name || user.username || '';
+        }
+
         async function loadProfile() {
             if (!TOKEN) {
                 window.location.href = 'index.html';
@@ -739,8 +787,7 @@
                 }
 
                 currentUser = json.user;
-                document.getElementById('userDisplayName').textContent = currentUser.name || currentUser.username;
-                document.getElementById('userUsername').textContent = `@${currentUser.username}`;
+                updateUIUserInfo(currentUser);
 
                 // Role Badge
                 const roleMap = {
@@ -766,6 +813,97 @@
             }
         }
 
+        // ── Toggle & Update Profile Name ─────────────────────────
+        function toggleEditProfile(show) {
+            const section = document.getElementById('editProfileSection');
+            const errEl = document.getElementById('profileEditError');
+            if (!section) return;
+
+            if (show) {
+                section.style.display = 'block';
+                const input = document.getElementById('editProfileNameInput');
+                if (input) {
+                    input.value = currentUser?.name || currentUser?.username || '';
+                    input.focus();
+                    input.select();
+                }
+                if (errEl) errEl.style.display = 'none';
+            } else {
+                section.style.display = 'none';
+                if (errEl) errEl.style.display = 'none';
+            }
+        }
+
+        async function handleUpdateProfile(e) {
+            e.preventDefault();
+            const input = document.getElementById('editProfileNameInput');
+            const errEl = document.getElementById('profileEditError');
+            const btnEl = document.getElementById('btnSaveProfileName');
+            const newName = input.value.trim();
+
+            if (errEl) errEl.style.display = 'none';
+
+            if (!newName) {
+                if (errEl) {
+                    errEl.textContent = 'กรุณากรอกชื่อผู้ใช้งาน';
+                    errEl.style.display = 'block';
+                }
+                return;
+            }
+
+            btnEl.disabled = true;
+            btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+
+            try {
+                const res = await fetch(`${API}/api/auth/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${TOKEN}`
+                    },
+                    body: JSON.stringify({ name: newName })
+                });
+
+                const json = await res.json();
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกชื่อ';
+
+                if (json.success) {
+                    if (json.user) {
+                        currentUser = json.user;
+                    } else {
+                        currentUser.name = newName;
+                    }
+
+                    // อัปเดตการแสดงผลบนหน้าจอทันทีโดยไม่ต้องรีเฟรช
+                    updateUIUserInfo(currentUser);
+
+                    // บันทึกลง localStorage.auth_user ให้ตรงกัน
+                    try {
+                        const stored = JSON.parse(localStorage.getItem('auth_user') || '{}');
+                        stored.name = currentUser.name;
+                        if (currentUser.username) stored.username = currentUser.username;
+                        localStorage.setItem('auth_user', JSON.stringify(stored));
+                    } catch (e) {}
+
+                    toggleEditProfile(false);
+                    showToast('success', json.message || 'เปลี่ยนชื่อผู้ใช้สำเร็จเรียบร้อยแล้ว');
+                } else {
+                    if (errEl) {
+                        errEl.textContent = json.message || 'ไม่สามารถเปลี่ยนชื่อได้';
+                        errEl.style.display = 'block';
+                    }
+                }
+            } catch (err) {
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกชื่อ';
+                if (errEl) {
+                    errEl.textContent = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+                    errEl.style.display = 'block';
+                }
+            }
+        }
+
         // ── OAuth Linked Accounts ──────────────────────────────
         async function loadLinkedAccounts() {
             try {
@@ -776,7 +914,6 @@
                 const linkedAccounts = json.data || [];
 
                 const googleAcc = linkedAccounts.find(a => a.provider === 'google');
-                const facebookAcc = linkedAccounts.find(a => a.provider === 'facebook');
 
                 // Render Google UI
                 const googleStatus = document.getElementById('googleStatusText');
@@ -798,27 +935,6 @@
                         </a>
                     `;
                 }
-
-                // Render Facebook UI
-                const fbStatus = document.getElementById('facebookStatusText');
-                const fbAction = document.getElementById('facebookActionArea');
-                if (facebookAcc) {
-                    fbStatus.className = 'oauth-status connected';
-                    fbStatus.innerHTML = `<i class="fa-solid fa-check"></i> เชื่อมต่อแล้ว: ${facebookAcc.email || facebookAcc.display_name}`;
-                    fbAction.innerHTML = `
-                        <button class="btn-unlink" onclick="unlinkProvider('facebook')">
-                            <i class="fa-solid fa-link-slash"></i> ยกเลิกการเชื่อมต่อ
-                        </button>
-                    `;
-                } else {
-                    fbStatus.className = 'oauth-status';
-                    fbStatus.textContent = 'ยังไม่ได้เชื่อมต่อบัญชี';
-                    fbAction.innerHTML = `
-                        <a href="${API}/api/auth/facebook?token=${TOKEN}&return_to=/account.html&client_origin=${encodeURIComponent(window.location.origin)}" class="btn-connect-facebook">
-                            <i class="fa-brands fa-facebook-f"></i> เชื่อมต่อกับ Facebook
-                        </a>
-                    `;
-                }
             } catch (err) {
                 console.error('loadLinkedAccounts error:', err);
             }
@@ -826,7 +942,7 @@
 
         // ── Unlink Provider ────────────────────────────────────
         async function unlinkProvider(provider) {
-            const providerName = provider === 'google' ? 'Google' : 'Facebook';
+            const providerName = provider === 'google' ? 'Google' : provider;
             if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการเชื่อมต่อบัญชี ${providerName}?`)) return;
 
             try {
@@ -916,9 +1032,6 @@
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('linked') === 'google') {
                 showToast('success', 'เชื่อมต่อบัญชี Google สำเร็จเรียบร้อย!');
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } else if (urlParams.get('linked') === 'facebook') {
-                showToast('success', 'เชื่อมต่อบัญชี Facebook สำเร็จเรียบร้อย!');
                 window.history.replaceState({}, document.title, window.location.pathname);
             } else if (urlParams.get('error') === 'google_oauth_not_configured' || urlParams.get('error') === 'oauth_disabled') {
                 showToast('info', 'Google OAuth ยังไม่ได้ตั้งค่า Client ID & Secret ใน oauth.config.js หรือไฟล์ .env');

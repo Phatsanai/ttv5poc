@@ -54,9 +54,6 @@ const config = {
   // โหมดทดสอบการล็อกอิน (สำหรับ Development / Testing เมื่อยังไม่ได้สร้าง Google Cloud Project)
   GOOGLE_MOCK_LOGIN:    process.env.GOOGLE_MOCK_LOGIN === 'true',
 
-  // ── Facebook OAuth (ทางเลือกเสริม) ───────────────────────────
-  FB_APP_ID:            process.env.FB_APP_ID            || '',
-  FB_APP_SECRET:        process.env.FB_APP_SECRET        || '',
 
   // ── OAuth Base URL ─────────────────────────────────────────
   // โดเมนหลักของเซิร์ฟเวอร์ Backend สำหรับการ Redirect

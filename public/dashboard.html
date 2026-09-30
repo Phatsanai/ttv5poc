@@ -1336,7 +1336,7 @@
                 document.getElementById('themeIcon').className = 'fa-solid fa-sun';
             }
 
-            // Handle OAuth token if redirected from Google/Facebook login
+            // Handle OAuth token if redirected from Google OAuth login
             const urlParams = new URLSearchParams(window.location.search);
             const oauthToken = urlParams.get('oauth_token');
             if (oauthToken) {

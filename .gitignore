@@ -13,8 +13,8 @@ yarn-error.log*
 
 # Database (optional ignore if using volume mounts)
 # assets.db
-# assets.db-wal
-# assets.db-shm
+assets.db-wal
+assets.db-shm
 backup/
 backups/
 *.db.bak
@@ -30,3 +30,7 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Temporary & Duplicate Workspaces
+ttv5poc/
+scratch/
