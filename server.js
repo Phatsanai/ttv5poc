@@ -520,6 +520,14 @@ try {
     db.exec("UPDATE users SET updated_at = datetime('now','localtime') WHERE updated_at IS NULL OR updated_at = ''");
     console.log('✅ SQLite: Added updated_at column to users table');
   }
+  // ขยายเวลาหมดอายุของ Sessions เก่าในระบบให้มีอายุ 100 ปี (Permanent Session) ป้องกันผู้ใช้เดิมถูกเตะออกจากระบบ
+  try {
+    const farFuture = Date.now() + 100 * 365 * 24 * 60 * 60 * 1000;
+    db.exec(`UPDATE sessions SET expires_at = ${farFuture} WHERE expires_at < ${farFuture}`);
+    console.log('✅ SQLite: Sessions upgraded to permanent (100-year lifetime)');
+  } catch (sessErr) {
+    console.warn('Session migration notice:', sessErr.message);
+  }
 } catch (e) {
   console.warn('DB Migration warning:', e.message);
 }
@@ -633,7 +641,9 @@ function logAudit(action, entityType = '', entityId = '', details = '', req = nu
 }
 
 
-// ── Auth helpers ────────────────────────────────────────────
+// ── Auth helpers (Permanent Sessions: 100 Years) ────────────
+const SESSION_LIFETIME_MS = 100 * 365 * 24 * 60 * 60 * 1000; // 100 ปี (ไม่หมดอายุ)
+
 function generateToken() {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -647,10 +657,15 @@ async function authenticate(req, res) {
   }
   try {
     const sess = await dbGet('SELECT * FROM sessions WHERE token = ?', [token]);
-    if (!sess || sess.expires_at < Date.now()) {
-      if (sess) await dbRun('DELETE FROM sessions WHERE token = ?', [token]);
-      if (res) res.status(401).json({ success: false, message: 'Session หมดอายุ กรุณาเข้าสู่ระบบใหม่' });
+    if (!sess) {
+      if (res) res.status(401).json({ success: false, message: 'ไม่พบ Session หรือออกจากระบบแล้ว กรุณาเข้าสู่ระบบใหม่' });
       return null;
+    }
+    // ตรวจสอบและต่ออายุ Session ให้อยู่ได้ตลอดเวลา (100 ปี) เพื่อป้องกันผู้ใช้งานถูกเด้งออกจากระบบ
+    const farFuture = Date.now() + SESSION_LIFETIME_MS;
+    if (sess.expires_at < Date.now()) {
+      await dbRun('UPDATE sessions SET expires_at = ? WHERE token = ?', [farFuture, token]);
+      sess.expires_at = farFuture;
     }
     if (req) {
       req.session = sess;
@@ -670,9 +685,11 @@ async function getOptionalUser(req) {
   if (!token) return null;
   try {
     const sess = await dbGet('SELECT * FROM sessions WHERE token = ?', [token]);
-    if (!sess || sess.expires_at < Date.now()) return null;
-    req.session = sess;
-    req.user = { id: sess.user_id, username: sess.username, name: sess.name, role: sess.role };
+    if (!sess) return null;
+    if (req) {
+      req.session = sess;
+      req.user = { id: sess.user_id, username: sess.username, name: sess.name, role: sess.role };
+    }
     return sess;
   } catch {
     return null;
@@ -713,7 +730,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
 
     const token     = generateToken();
-    const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+    const expiresAt = Date.now() + SESSION_LIFETIME_MS; // 100 ปี (ไม่หมดอายุ)
     await dbRun('DELETE FROM sessions WHERE user_id = ?', [user.id]);
     await dbRun('INSERT INTO sessions (token,user_id,username,name,role,expires_at) VALUES (?,?,?,?,?,?)',
       [token, user.id, user.username, user.name, user.role, expiresAt]);
@@ -1144,7 +1161,7 @@ app.post('/api/categories', async (req, res) => {
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : req.query.token || '';
     if (token) {
       const sess = await dbGet('SELECT * FROM sessions WHERE token = ?', [token]);
-      if (sess && sess.expires_at >= Date.now()) {
+      if (sess) {
         actorName = sess.name || sess.username;
       }
     } else if (req.body.operator) {
@@ -1268,7 +1285,7 @@ app.delete('/api/categories/:id', async (req, res) => {
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : req.query.token || '';
     if (token) {
       const sess = await dbGet('SELECT * FROM sessions WHERE token = ?', [token]);
-      if (sess && sess.expires_at >= Date.now()) {
+      if (sess) {
         actorName = sess.name || sess.username;
       }
     }
@@ -2348,7 +2365,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
     // 6. โหมดเชื่อมต่อบัญชี (Account Linking) จากหน้า account.html
     if (sessToken) {
       const sess = db.prepare('SELECT * FROM sessions WHERE token = ?').get([sessToken]);
-      if (sess && sess.expires_at > Date.now()) {
+      if (sess) {
         const already = db.prepare('SELECT id FROM oauth_accounts WHERE provider = ? AND provider_id = ?').get(['google', provider_id]);
         if (!already) {
           db.prepare('INSERT OR IGNORE INTO oauth_accounts (user_id, provider, provider_id, email, display_name) VALUES (?, ?, ?, ?, ?)')
@@ -2406,9 +2423,9 @@ app.get('/api/auth/google/callback', async (req, res) => {
 
     const userName = (user.name && user.name.trim()) ? user.name.trim() : (displayName || user.username || 'User');
 
-    // 8. สร้าง Session Token ใหม่
+    // 8. สร้าง Session Token ใหม่ (อายุ 100 ปี - ไม่หมดอายุ)
     const newToken = generateToken();
-    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 ชั่วโมง
+    const expiresAt = Date.now() + SESSION_LIFETIME_MS; // 100 ปี (ไม่หมดอายุ)
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run([userId]);
     db.prepare('INSERT INTO sessions (token, user_id, username, name, role, expires_at) VALUES (?, ?, ?, ?, ?, ?)')
       .run([newToken, userId, user.username, userName, user.role, expiresAt]);
