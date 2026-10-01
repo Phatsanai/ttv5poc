@@ -14,9 +14,9 @@
     <script src="config.js"></script>
 
     <!-- ใช้ QRCode Library แบบนำเข้าสคริปต์เพื่อเรนเดอร์แบบ Offline รวดเร็ว ไม่ติด Block API -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- jsPDF สำหรับสร้างไฟล์สติ๊กเกอร์ PDF ขนาดมิลลิเมตรเป๊ะแบบ Vector ดาวน์โหลดในคลิกเดียว -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="qrcode.min.js"></script>
+    <script>if (typeof QRCode === "undefined") document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');</script>
+
 
     <style>
         * {
@@ -293,86 +293,40 @@
         .print-actions-wrapper {
             grid-column: span 3;
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+            gap: 12px;
             align-items: center;
             margin-top: 14px;
             padding-top: 16px;
             border-top: 1px solid #1e2638;
         }
 
-        .btn-direct-print {
-            background: linear-gradient(135deg, #1f6feb, #388bfd);
-        }
-        .btn-direct-print:hover {
-            background: linear-gradient(135deg, #388bfd, #58a6ff);
-            box-shadow: 0 0 12px rgba(56, 139, 253, 0.4);
-        }
-
-        .btn-pdf-export {
-            background-color: #8957e5;
-        }
-        .btn-pdf-export:hover {
-            background-color: #a371f7;
-            box-shadow: 0 0 12px rgba(137, 87, 229, 0.4);
-        }
-
-        .btn-usb-print {
-            background-color: #d29922;
-            color: #0b0e14;
+        .btn-main-print {
+            background: linear-gradient(135deg, #238636, #2ea043);
+            color: #ffffff;
+            font-size: 1.05rem;
             font-weight: 600;
-        }
-        .btn-usb-print:hover {
-            background-color: #e3b341;
-            box-shadow: 0 0 12px rgba(227, 179, 65, 0.4);
-        }
-
-        .btn-silent-guide {
-            background: transparent;
-            color: #8b949e;
-            border: 1px solid #30363d;
-            padding: 9px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
+            padding: 10px 24px;
+            height: 46px;
+            border-radius: 8px;
+            box-shadow: 0 4px 14px rgba(35, 134, 54, 0.4);
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-            height: 42px;
+            gap: 10px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             font-family: inherit;
         }
-        .btn-silent-guide:hover {
-            background-color: #161b26;
-            color: #f0f6fc;
-            border-color: #58a6ff;
+
+        .btn-main-print:hover {
+            background: linear-gradient(135deg, #2ea043, #3fb950);
+            box-shadow: 0 6px 20px rgba(46, 160, 67, 0.5);
+            transform: translateY(-1px);
         }
 
-        /* Modal Styles */
-        .guide-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.75);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 99999;
-            backdrop-filter: blur(4px);
-        }
-        .guide-modal-box {
-            background: #121721;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 620px;
-            max-height: 85vh;
-            overflow-y: auto;
-            padding: 24px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-            color: #f0f6fc;
+        .btn-main-print:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 8px rgba(35, 134, 54, 0.4);
         }
 
         /* Range Slider Panel */
@@ -475,11 +429,14 @@
             justify-content: center;
         }
 
-        .sticker-qr img,
         .sticker-qr canvas {
+            display: none !important;
+        }
+        .sticker-qr img {
             width: 100% !important;
             height: 100% !important;
             object-fit: contain;
+            display: block !important;
         }
 
         .sticker-info {
@@ -546,10 +503,24 @@
         ========================================== */
         @page {
             size: A4 portrait;
-            margin: 15mm 12mm;
+            margin: 5mm;
         }
 
         @media print {
+
+            /* 1. กำหนดชุดสี Light Mode, พื้นหลังขาว 100% (#ffffff) และข้อความดำ (#000000) ไม่ให้เปลืองหมึก */
+            :root {
+                color-scheme: light !important;
+            }
+
+            *,
+            *::before,
+            *::after {
+                box-shadow: none !important;
+                text-shadow: none !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
 
             html,
             html body,
@@ -558,6 +529,7 @@
             body.light-mode,
             body.dark-theme,
             [data-theme] {
+                color-scheme: light !important;
                 background: #ffffff !important;
                 background-color: #ffffff !important;
                 color: #000000 !important;
@@ -574,7 +546,7 @@
                 print-color-adjust: exact !important;
             }
 
-            /* ซ่อนแถบเมนูด้านบน, เมนูข้าง, ตัวควบคุม, ข้อมูลผู้ใช้ และแผงปรับแต่งทั้งหมด โดยใช้ Selector ที่มีความจำเพาะสูงกว่า theme.css */
+            /* 2. ซ่อนแถบเมนูข้าง (Sidebar), ส่วนหัว (Topbar), การ์ดตั้งค่า, ปุ่มกด และ UI ทุกส่วนที่ไม่เกี่ยวข้อง */
             header,
             aside,
             nav,
@@ -600,6 +572,10 @@
             .btn-logout,
             .card-box,
             div.card-box,
+            .radio-group,
+            .form-grid,
+            .form-group,
+            .print-actions-wrapper,
             .slider-panel,
             div.slider-panel,
             .preview-header,
@@ -607,7 +583,10 @@
             .page-title,
             h1.page-title,
             .individual-controls,
+            div.individual-controls,
+            .individual-controls *,
             .btn-print,
+            .btn-main-print,
             .glow-bg,
             .glow-bg-bottom,
             .nav-group-label,
@@ -618,6 +597,7 @@
                 height: 0 !important;
                 min-height: 0 !important;
                 max-height: 0 !important;
+                width: 0 !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 border: none !important;
@@ -627,14 +607,20 @@
                 overflow: hidden !important;
             }
 
+            /* 3. คืนพื้นที่ Wrapper ทั้งหมดให้เป็นสีขาวล้วนและเต็มขนาดหน้ากระดาษ */
             .main-wrapper,
             div.main-wrapper,
             main.content-area,
             .content-area {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
                 padding: 0 !important;
                 margin: 0 !important;
                 border: none !important;
+                box-shadow: none !important;
                 width: 100% !important;
+                max-width: 100% !important;
                 height: auto !important;
                 min-height: 0 !important;
                 max-height: none !important;
@@ -644,23 +630,29 @@
                 overflow: visible !important;
             }
 
-            /* เลย์เอาต์ 2 คอลัมน์ 10 แถว (รวม 20 ชิ้นพอดีต่อ 1 หน้ากระดาษ A4) จัดกึ่งกลางหน้ากระดาษทั้งแนวตั้งและแนวนอน */
+            /* 4. เลย์เอาต์แผ่นสติกเกอร์: ย่อสเกล 88% ให้พอดีกระดาษ A4 หน้าเดียว ไม่ล้นขอบหรือตกหน้า */
             .sticker-sheet,
             div.sticker-sheet {
-                background: transparent !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
                 border: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
                 padding: 0 !important;
                 margin: 0 auto !important;
                 display: grid !important;
                 grid-template-columns: repeat(2, var(--sticker-width-mm, 90mm)) !important;
                 justify-content: center !important;
-                align-content: center !important;
-                gap: var(--sticker-gap-v, 2mm) 4mm !important;
-                width: 100% !important;
+                align-content: start !important;
+                column-gap: 6mm !important;
+                row-gap: var(--sticker-gap-v, 2.0mm) !important;
+                width: max-content !important;
                 max-width: 100% !important;
                 height: auto !important;
                 min-height: 0 !important;
                 overflow: visible !important;
+                transform: scale(0.88) !important;
+                transform-origin: top center !important;
                 page-break-before: avoid !important;
                 break-before: avoid !important;
                 page-break-inside: auto !important;
@@ -669,14 +661,20 @@
 
             .sticker-card-wrapper {
                 background: transparent !important;
+                background-color: transparent !important;
                 border: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
                 padding: 0 !important;
-                margin: 0 auto !important;
-                width: var(--sticker-width-mm, 90mm) !important;
-                max-width: var(--sticker-width-mm, 90mm) !important;
+                margin: 0 !important;
+                width: var(--item-w, var(--sticker-width-mm, 90mm)) !important;
+                max-width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
                 box-sizing: border-box !important;
                 display: flex !important;
                 justify-content: center !important;
+                align-items: center !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
                 page-break-before: auto !important;
@@ -689,46 +687,98 @@
                 break-before: avoid !important;
             }
 
-            /* บังคับตัดหน้ากระดาษเมื่อครบ 20 ป้ายพอดี (2 คอลัมน์ x 10 แถว) */
+            /* จัดการตัดหน้ากระดาษ (Page Break): บังคับตัดหน้าเมื่อครบ 20 ดวง (2 คอลัมน์ x 10 แถว) */
             .sticker-card-wrapper:nth-child(20n) {
                 page-break-after: always !important;
                 break-after: page !important;
             }
 
-            /* ป้องกันไม่ให้แผ่นสุดท้ายถูกสั่งตัดขึ้นหน้าใหม่เป็นกระดาษเปล่า */
+            /* ป้องกันแผ่นสุดท้ายไม่ให้ดีดขึ้นหน้ากระดาษเปล่า */
             .sticker-card-wrapper:last-child {
                 page-break-after: avoid !important;
                 break-after: avoid !important;
             }
 
+            /* 5. สติกเกอร์แต่ละใบ (Sticker Item) แสดงผลคมชัดและตรงตามสัดส่วนหน้าพรีวิว */
             .sticker-item {
-                border: 1.5px solid #000000 !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                border: 2px solid #000000 !important;
                 border-radius: 6px !important;
-                padding: 4px 8px !important;
+                box-shadow: none !important;
+                padding: 6px 10px !important;
                 width: var(--item-w, var(--sticker-width-mm, 90mm)) !important;
+                max-width: 100% !important;
                 height: var(--item-h, var(--sticker-height-mm, 24.5mm)) !important;
+                max-height: var(--item-h, var(--sticker-height-mm, 24.5mm)) !important;
                 box-sizing: border-box !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
+                overflow: hidden !important;
             }
 
             .sticker-qr {
                 width: var(--item-qr, var(--qr-size-mm, 17mm)) !important;
                 height: var(--item-qr, var(--qr-size-mm, 17mm)) !important;
+                flex-shrink: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                overflow: hidden !important;
+            }
+
+            .sticker-qr canvas {
+                display: none !important;
+            }
+            .sticker-qr img {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: contain !important;
+                display: block !important;
+                image-rendering: -webkit-optimize-contrast !important;
+                image-rendering: crisp-edges !important;
+                image-rendering: pixelated !important;
+                -ms-interpolation-mode: nearest-neighbor !important;
+            }
+
+            .sticker-info {
+                flex: 1 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                gap: 4px !important;
+                min-width: 0 !important;
+                background: transparent !important;
+                color: #000000 !important;
+                overflow: hidden !important;
             }
 
             .sticker-code {
                 font-size: 0.72rem !important;
-                font-weight: 500 !important;
+                font-weight: 600 !important;
                 color: #000000 !important;
+                line-height: 1.1 !important;
+                letter-spacing: 0.5px !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
 
             .sticker-line {
+                width: 100% !important;
+                height: 0 !important;
                 border-bottom: 1.5px solid #000000 !important;
+                background: transparent !important;
             }
 
             .sticker-line+.sticker-line {
-                margin-top: 17px !important;
+                margin-top: 16px !important;
             }
         }
 
@@ -927,29 +977,10 @@
                     </div>
 
                     <div class="print-actions-wrapper">
-                        <!-- ปุ่ม 1: พิมพ์ด่วน (Direct Iframe Print / Silent Print) -->
-                        <button type="button" class="btn-print btn-direct-print" onclick="triggerDirectPrint()" title="ส่งคำสั่งพิมพ์ด่วนผ่าน Isolated Frame (รองรับ Silent Print ไร้ขอบ/หัวกระดาษกวนใจ)">
-                            <i class="fa-solid fa-bolt"></i> พิมพ์ด่วน (Direct Print)
-                        </button>
-
-                        <!-- ปุ่ม 2: ดาวน์โหลด PDF สติ๊กเกอร์ (Vector PDF) -->
-                        <button type="button" class="btn-print btn-pdf-export" onclick="exportStickersToPDF()" title="ดาวน์โหลดไฟล์ PDF ขนาดสติ๊กเกอร์มิลลิเมตรจริงในคลิกเดียว">
-                            <i class="fa-solid fa-file-pdf"></i> ดาวน์โหลด PDF (<span id="btnPdfCount">20</span> ป้าย)
-                        </button>
-
-                        <!-- ปุ่ม 3: พิมพ์ตรงผ่าน USB Thermal Printer (Web Serial TSPL) -->
-                        <button type="button" class="btn-print btn-usb-print" onclick="printDirectUSBSerial()" title="ส่งคำสั่งพิมพ์ตรงเข้าเครื่องพิมพ์สติ๊กเกอร์ความร้อน USB ด้วยคำสั่ง TSPL (ไม่ต้องผ่านหน้าต่างพิมพ์)">
-                            <i class="fa-solid fa-microchip"></i> พิมพ์ผ่าน USB Thermal (TSPL)
-                        </button>
-
-                        <!-- ปุ่ม 4: พิมพ์ผ่านหน้าต่างเบราว์เซอร์ปกติ -->
-                        <button type="button" class="btn-print" onclick="window.print()" style="background:#21262d; border:1px solid #30363d;" title="พิมพ์ผ่านหน้าต่างเลือกเครื่องพิมพ์ของเบราว์เซอร์ตามปกติ">
-                            <i class="fa-solid fa-print"></i> พิมพ์ปกติ (Browser)
-                        </button>
-
-                        <!-- ปุ่ม 5: คู่มือ Silent Print -->
-                        <button type="button" class="btn-silent-guide" onclick="openSilentPrintGuideModal()" title="วิธีเปิดใช้งาน Silent Print พิมพ์ทันทีไร้หน้าต่างป๊อปอัป 100%">
-                            <i class="fa-solid fa-circle-question" style="color:#58a6ff;"></i> คู่มือ Silent Print
+                        <!-- ปุ่ม ปริ้น หลักเพียงปุ่มเดียว (เรียก Print Dialog ของเบราว์เซอร์) -->
+                        <button type="button" class="btn-print btn-main-print" onclick="handlePrint()" id="btnPrintQr" title="เปิดหน้าต่างเครื่องพิมพ์ (Print Dialog) เพื่อเลือกเครื่องพิมพ์และพิมพ์สติกเกอร์">
+                            <span style="font-size: 1.05rem;">🖨️ ปริ้น</span>
+                            <span style="font-size: 0.88rem; opacity: 0.9; font-weight: 400;">(<span id="btnPrintCount">20</span> ป้าย)</span>
                         </button>
                     </div>
                 </div>
@@ -1119,83 +1150,64 @@
             }
         }
 
-        async function generatePreview() {
+        function generatePreview() {
             const currentSeq = ++_previewSeq;
-            const printType = document.querySelector('input[name="printType"]:checked').value;
-            const container = document.getElementById('previewContainer');
+            const printTypeRadio = document.querySelector('input[name="printType"]:checked');
+            const printType = printTypeRadio ? printTypeRadio.value : "batch";
+            const container = document.getElementById("previewContainer");
+            if (!container) return;
 
             let codesToPrint = [];
-            let skippedCodes = [];
 
-            if (printType === 'batch') {
-                const prefix = document.getElementById('prefixSelect').value || 'A';
-                const startNum = parseInt(document.getElementById('startNum').value) || 1;
-                const count = parseInt(document.getElementById('printCount').value) || 1;
+            if (printType === "batch") {
+                const prefixSelect = document.getElementById("prefixSelect");
+                const prefix = ((prefixSelect && prefixSelect.value) || "A").toUpperCase().trim() || "A";
+                const startInput = document.getElementById("startNum");
+                const startNum = Math.max(1, parseInt(startInput ? startInput.value : 1, 10) || 1);
+                const countInput = document.getElementById("printCount");
+                const count = Math.max(1, parseInt(countInput ? countInput.value : 20, 10) || 20);
 
-                try {
-                    const res = await fetch(getApiUrl(`/api/assets/available-codes?prefix=${encodeURIComponent(prefix)}&start=${startNum}&count=${count}`));
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.success && Array.isArray(data.codes)) {
-                            codesToPrint = data.codes;
-                            skippedCodes = data.skipped || [];
-                        }
+                let currentPrefixCode = prefix.charCodeAt(0);
+                let currentNum = startNum;
+                for (let i = 0; i < count; i++) {
+                    if (currentNum > 999) {
+                        currentNum = 1;
+                        currentPrefixCode++;
+                        if (currentPrefixCode > 90) currentPrefixCode = 65; // Rollover to A
                     }
-                } catch (e) {
-                    console.warn('API available-codes error, using client fallback:', e);
-                }
-
-                if (codesToPrint.length === 0) {
-                    let currentPrefixCode = prefix.charCodeAt(0);
-                    let currentNum = startNum;
-                    let safety = 0;
-                    const needed = count;
-                    const candidates = [];
-                    while (candidates.length < needed + 50 && safety < 26000) {
-                        safety++;
-                        if (currentNum > 999) {
-                            currentNum = 1;
-                            currentPrefixCode++;
-                            if (currentPrefixCode > 90) currentPrefixCode = 65;
-                        }
-                        candidates.push(`${String.fromCharCode(currentPrefixCode)}${String(currentNum).padStart(3, '0')}`);
-                        currentNum++;
-                    }
-                    const existingInDB = await fetchRegisteredCodes(candidates);
-                    skippedCodes = existingInDB;
-                    codesToPrint = candidates.filter(c => !existingInDB.includes(c)).slice(0, count);
+                    const p = String.fromCharCode(currentPrefixCode);
+                    const code = `${p}${String(currentNum).padStart(3, "0")}`;
+                    codesToPrint.push(code);
+                    currentNum++;
                 }
             } else {
-                const customVal = document.getElementById('customCodes').value;
-                let allCodes = [];
-                if (customVal.trim() !== '') {
-                    allCodes = customVal.split(',').map(item => item.trim().toUpperCase()).filter(item => item !== '');
+                const customInput = document.getElementById("customCodes");
+                const customVal = (customInput ? customInput.value : "").trim();
+                if (customVal) {
+                    codesToPrint = customVal.split(",")
+                        .map(item => item.trim().toUpperCase())
+                        .filter(item => item.length > 0);
                 }
-                if (allCodes.length > 0) {
-                    const existingInDB = await fetchRegisteredCodes(allCodes);
-                    if (existingInDB.length > 0) {
-                        skippedCodes = existingInDB;
-                    }
-                    codesToPrint = allCodes;
+                if (codesToPrint.length === 0) {
+                    codesToPrint = ["A001"];
                 }
             }
 
             if (currentSeq !== _previewSeq) return;
 
-            container.innerHTML = '';
-            const btnCount = document.getElementById('btnCountLabel');
-            if (btnCount) btnCount.innerText = codesToPrint.length;
-            const pdfCount = document.getElementById('btnPdfCount');
-            if (pdfCount) pdfCount.innerText = codesToPrint.length;
-            document.getElementById('totalPreviewCount').innerText = codesToPrint.length;
+            container.innerHTML = "";
+            const printCountEl = document.getElementById("btnPrintCount");
+            if (printCountEl) printCountEl.innerText = codesToPrint.length;
+            const totalCountEl = document.getElementById("totalPreviewCount");
+            if (totalCountEl) totalCountEl.innerText = codesToPrint.length;
 
-            const globalW = document.getElementById('sliderWidth').value;
-            const globalH = document.getElementById('sliderHeight').value;
-            const globalQR = document.getElementById('sliderQR').value;
+            const globalW = document.getElementById("sliderWidth") ? document.getElementById("sliderWidth").value : "90";
+            const globalH = document.getElementById("sliderHeight") ? document.getElementById("sliderHeight").value : "24.5";
+            const globalQR = document.getElementById("sliderQR") ? document.getElementById("sliderQR").value : "17.0";
 
             codesToPrint.forEach((code, idx) => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'sticker-card-wrapper';
+                const wrapper = document.createElement("div");
+                wrapper.className = "sticker-card-wrapper";
                 wrapper.id = `sticker-wrap-${idx}`;
 
                 wrapper.innerHTML = `
@@ -1224,14 +1236,37 @@
                 `;
                 container.appendChild(wrapper);
 
-                new QRCode(document.getElementById(`qrcode-${idx}`), {
-                    text: `${location.protocol}//${location.host}/asset-detail.html?id=${code}`,
-                    width: 128,
-                    height: 128,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.M
-                });
+                const qrBox = wrapper.querySelector(".sticker-qr");
+                if (!qrBox) return;
+                qrBox.innerHTML = "";
+                const fullUrl = `${window.location.origin}/asset-detail.html?id=${encodeURIComponent(code)}`;
+
+                if (typeof QRCode !== "undefined") {
+                    try {
+                        new QRCode(qrBox, {
+                            text: fullUrl,
+                            width: 256,
+                            height: 256,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+
+                        const canvas = qrBox.querySelector("canvas");
+                        const img = qrBox.querySelector("img");
+                        if (canvas && img && (!img.src || img.src.startsWith("data:image/gif"))) {
+                            try {
+                                img.src = canvas.toDataURL("image/png");
+                                img.style.display = "block";
+                            } catch (_) {}
+                        }
+                    } catch (qrErr) {
+                        console.warn(`QRCode library error for ${code}:`, qrErr);
+                        qrBox.innerHTML = `<img src="${getApiUrl("/api/qr?id=" + encodeURIComponent(code))}" alt="${code}" style="width:100%;height:100%;object-fit:contain;display:block;">`;
+                    }
+                } else {
+                    qrBox.innerHTML = `<img src="${getApiUrl("/api/qr?id=" + encodeURIComponent(code))}" alt="${code}" style="width:100%;height:100%;object-fit:contain;display:block;">`;
+                }
             });
         }
 
@@ -1267,400 +1302,55 @@
         }
 
         window.onload = function () {
-            if (!localStorage.getItem('auth_token')) {
-                window.location.href = 'index.html';
+            if (!localStorage.getItem("auth_token")) {
+                window.location.href = "index.html";
                 return;
             }
             try {
-                const user = JSON.parse(localStorage.getItem('auth_user') || '{}');
+                const user = JSON.parse(localStorage.getItem("auth_user") || "{}");
                 if (user.username || user.name) {
                     const name = user.name || user.username;
-                    document.getElementById('userName').innerText = name;
-                    document.getElementById('avatarIcon').innerText = name.charAt(0).toUpperCase();
+                    document.getElementById("userName").innerText = name;
+                    document.getElementById("avatarIcon").innerText = name.charAt(0).toUpperCase();
                 }
             } catch (e) { }
+
+            const params = new URLSearchParams(window.location.search);
+            const codeParam = params.get("code") || params.get("id");
+            if (codeParam) {
+                const m = codeParam.trim().match(/^([A-Za-z])(\d+)$/);
+                if (m) {
+                    const prefEl = document.getElementById("prefixSelect");
+                    if (prefEl) prefEl.value = m[1].toUpperCase();
+                    const startEl = document.getElementById("startNum");
+                    if (startEl) startEl.value = parseInt(m[2], 10);
+                    const countEl = document.getElementById("printCount");
+                    if (countEl) {
+                        countEl.value = params.get("count") ? parseInt(params.get("count"), 10) : 1;
+                    }
+                } else {
+                    const customRadio = document.querySelector('input[name="printType"][value="custom"]');
+                    if (customRadio) customRadio.checked = true;
+                    const customCodesEl = document.getElementById("customCodes");
+                    if (customCodesEl) customCodesEl.value = codeParam;
+                    toggleMode();
+                }
+            }
 
             loadSavedConfig();
             generatePreview();
         };
 
-        // ── Direct / Silent Print via Isolated Clean Iframe ────────────────
-        function triggerDirectPrint() {
-            const width = parseFloat(document.getElementById('sliderWidth').value) || 90;
-            const height = parseFloat(document.getElementById('sliderHeight').value) || 24.5;
-            const qrSize = parseFloat(document.getElementById('sliderQR').value) || 17;
-            const items = document.querySelectorAll('.sticker-item');
-
-            if (!items || items.length === 0) {
-                alert('ไม่พบสติ๊กเกอร์ในหน้ารายการที่จะพิมพ์');
-                return;
-            }
-
-            let printIframe = document.getElementById('directPrintIframe');
-            if (printIframe) printIframe.remove();
-
-            printIframe = document.createElement('iframe');
-            printIframe.id = 'directPrintIframe';
-            printIframe.style.position = 'fixed';
-            printIframe.style.right = '0';
-            printIframe.style.bottom = '0';
-            printIframe.style.width = '0';
-            printIframe.style.height = '0';
-            printIframe.style.border = '0';
-            printIframe.style.visibility = 'hidden';
-            document.body.appendChild(printIframe);
-
-            let stickersHtml = '';
-            items.forEach((item, idx) => {
-                const qrImg = item.querySelector('img') || item.querySelector('canvas');
-                const qrSrc = qrImg ? (qrImg.src || qrImg.toDataURL?.('image/png') || '') : '';
-                const codeText = item.querySelector('.sticker-code')?.textContent || `ASSET-${idx + 1}`;
-
-                stickersHtml += `
-                    <div class="print-label-sticker">
-                        <div class="qr-col">
-                            ${qrSrc ? `<img src="${qrSrc}" alt="QR">` : ''}
-                        </div>
-                        <div class="info-col">
-                            <div class="label-header">ASSET CONSOLE</div>
-                            <div class="label-code">${codeText}</div>
-                            <div class="label-sub">PROPERTY OF CO.</div>
-                            <div class="label-decor-line"></div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            const doc = printIframe.contentWindow.document;
-            doc.open();
-            doc.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Direct Sticker Print</title>
-                    <style>
-                        @page {
-                            size: ${width}mm ${height}mm;
-                            margin: 0mm;
-                        }
-                        * {
-                            box-sizing: border-box;
-                            margin: 0;
-                            padding: 0;
-                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                        body {
-                            margin: 0;
-                            padding: 0;
-                            background: #ffffff;
-                            color: #000000;
-                        }
-                        .print-label-sticker {
-                            width: ${width}mm;
-                            height: ${height}mm;
-                            max-width: ${width}mm;
-                            max-height: ${height}mm;
-                            page-break-after: always;
-                            break-after: page;
-                            display: flex;
-                            align-items: center;
-                            padding: 1.5mm 2.5mm;
-                            gap: 3mm;
-                            box-sizing: border-box;
-                            overflow: hidden;
-                            background: #fff;
-                        }
-                        .qr-col {
-                            width: ${qrSize}mm;
-                            height: ${qrSize}mm;
-                            flex-shrink: 0;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                        }
-                        .qr-col img {
-                            width: 100%;
-                            height: 100%;
-                            object-fit: contain;
-                            display: block;
-                        }
-                        .info-col {
-                            flex: 1;
-                            min-width: 0;
-                            display: flex;
-                            flex-direction: column;
-                            justify-content: center;
-                            overflow: hidden;
-                        }
-                        .label-header {
-                            font-size: 6.5pt;
-                            font-weight: 700;
-                            letter-spacing: 0.6px;
-                            color: #444;
-                            text-transform: uppercase;
-                            line-height: 1;
-                            margin-bottom: 1.5mm;
-                        }
-                        .label-code {
-                            font-size: 13.5pt;
-                            font-weight: 900;
-                            color: #000;
-                            line-height: 1.1;
-                            letter-spacing: 0.5px;
-                            white-space: nowrap;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                        }
-                        .label-sub {
-                            font-size: 6pt;
-                            color: #666;
-                            margin-top: 1mm;
-                            line-height: 1;
-                        }
-                        .label-decor-line {
-                            width: 100%;
-                            height: 1px;
-                            background: #aaa;
-                            margin-top: 1.5mm;
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${stickersHtml}
-                </body>
-                </html>
-            `);
-            doc.close();
-
-            setTimeout(() => {
-                try {
-                    printIframe.contentWindow.focus();
-                    printIframe.contentWindow.print();
-                } catch (e) {
-                    console.error('Direct print failed:', e);
-                }
-            }, 350);
-        }
-
-        // ── Vector PDF Export in 1-Click (jsPDF) ───────────────────────────
-        async function exportStickersToPDF() {
-            if (!window.jspdf || !window.jspdf.jsPDF) {
-                alert('ไม่พบไลบรารี jsPDF กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
-                return;
-            }
-
-            const { jsPDF } = window.jspdf;
-            const width = parseFloat(document.getElementById('sliderWidth').value) || 90;
-            const height = parseFloat(document.getElementById('sliderHeight').value) || 24.5;
-            const qrSize = parseFloat(document.getElementById('sliderQR').value) || 17;
-            const items = document.querySelectorAll('.sticker-item');
-
-            if (!items || items.length === 0) {
-                alert('ไม่มีสติ๊กเกอร์ที่จะสร้าง PDF');
-                return;
-            }
-
-            // แสดงสถานะกำลังสร้าง PDF
-            const btnPdf = document.querySelector('.btn-pdf-export');
-            const origHtml = btnPdf ? btnPdf.innerHTML : '';
-            if (btnPdf) {
-                btnPdf.disabled = true;
-                btnPdf.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้าง PDF...';
-            }
-
-            try {
-                const orientation = width >= height ? 'landscape' : 'portrait';
-                const doc = new jsPDF({
-                    orientation: orientation,
-                    unit: 'mm',
-                    format: [width, height]
-                });
-
-                items.forEach((item, idx) => {
-                    if (idx > 0) {
-                        doc.addPage([width, height], orientation);
-                    }
-
-                    const qrImg = item.querySelector('img') || item.querySelector('canvas');
-                    let qrDataUrl = '';
-                    if (qrImg) {
-                        qrDataUrl = qrImg.src || (qrImg.toDataURL ? qrImg.toDataURL('image/png') : '');
-                    }
-                    const codeText = item.querySelector('.sticker-code')?.textContent || `A${String(idx+1).padStart(3, '0')}`;
-
-                    // ขอบป้ายบางๆ
-                    doc.setDrawColor(210, 210, 210);
-                    doc.setLineWidth(0.2);
-                    doc.roundedRect(1, 1, width - 2, height - 2, 1, 1);
-
-                    // ใส่ QR Code
-                    const qrX = 3;
-                    const qrY = (height - qrSize) / 2;
-                    if (qrDataUrl) {
-                        try {
-                            doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-                        } catch (_) {}
-                    }
-
-                    // ข้อมูลข้อความ
-                    const textX = qrX + qrSize + 3;
-                    let textY = qrY + 3.5;
-
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(7);
-                    doc.setTextColor(80, 80, 80);
-                    doc.text('ASSET CONSOLE', textX, textY);
-
-                    textY += 5.5;
-                    doc.setFontSize(14);
-                    doc.setTextColor(0, 0, 0);
-                    doc.text(codeText, textX, textY);
-
-                    textY += 3.5;
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(6.5);
-                    doc.setTextColor(110, 110, 110);
-                    doc.text('ASSET MANAGEMENT SYSTEM', textX, textY);
-
-                    // เส้นคั่น
-                    textY += 2;
-                    doc.setDrawColor(180, 180, 180);
-                    doc.setLineWidth(0.3);
-                    doc.line(textX, textY, width - 3, textY);
-                });
-
-                const firstCode = items[0]?.querySelector('.sticker-code')?.textContent || '1';
-                const lastCode = items[items.length - 1]?.querySelector('.sticker-code')?.textContent || String(items.length);
-                const filename = `Stickers-${firstCode}-to-${lastCode}-${Date.now().toString().slice(-4)}.pdf`;
-
-                doc.save(filename);
-            } catch (err) {
-                console.error('PDF generation error:', err);
-                alert('เกิดข้อผิดพลาดในการสร้าง PDF: ' + err.message);
-            } finally {
-                if (btnPdf) {
-                    btnPdf.disabled = false;
-                    btnPdf.innerHTML = origHtml;
-                }
-            }
-        }
-
-        // ── Direct Web Serial TSPL Hardware Print (Xprinter / TSC / Zebra) ─
-        async function printDirectUSBSerial() {
-            if (!navigator.serial) {
-                alert('เบราว์เซอร์ของคุณยังไม่รองรับ Web Serial API\nโปรดใช้งานบน Google Chrome หรือ Microsoft Edge เวอร์ชันล่าสุด');
-                return;
-            }
-
+        // ── พิมพ์สติกเกอร์ QR Code (เปิด Browser Print Dialog) ──────────────
+        function handlePrint() {
             const items = document.querySelectorAll('.sticker-item');
             if (!items || items.length === 0) {
-                alert('ไม่มีสติ๊กเกอร์ที่จะพิมพ์');
+                alert('ไม่พบสติกเกอร์ในรายการที่จะพิมพ์ กรุณารอโหลดข้อมูลหรือระบุรหัสก่อนสั่งพิมพ์');
                 return;
             }
-
-            const width = Math.round(parseFloat(document.getElementById('sliderWidth').value) || 90);
-            const height = Math.round(parseFloat(document.getElementById('sliderHeight').value) || 24);
-
-            try {
-                // ขออนุญาตเลือกพอร์ตเครื่องพิมพ์ผ่านหน้าต่างเบราว์เซอร์
-                const port = await navigator.serial.requestPort();
-                await port.open({ baudRate: 9600 });
-
-                const writer = port.writable.getWriter();
-                const encoder = new TextEncoder();
-
-                // สร้างคำสั่ง TSPL (มาตรฐานสากลสำหรับ Barcode / Label Thermal Printer)
-                for (const item of items) {
-                    const codeText = item.querySelector('.sticker-code')?.textContent || '';
-                    const fullUrl = `${location.protocol}//${location.host}/asset-detail.html?id=${codeText}`;
-
-                    const tspl = `
-SIZE ${width} mm, ${height} mm
-GAP 2 mm, 0 mm
-DIRECTION 1
-CLS
-QRCODE 24,16,L,4,A,0,"${fullUrl}"
-TEXT 180,24,"3",0,1,1,"${codeText}"
-TEXT 180,68,"2",0,1,1,"ASSET MANAGEMENT"
-PRINT 1
-`;
-                    await writer.write(encoder.encode(tspl));
-                }
-
-                writer.releaseLock();
-                await port.close();
-                alert(`ส่งคำสั่งพิมพ์ตรงไปยังเครื่องพิมพ์สติ๊กเกอร์ USB สำเร็จเรียบร้อย (${items.length} ป้าย)`);
-            } catch (err) {
-                if (err.name !== 'NotFoundError') {
-                    console.error('Serial print error:', err);
-                    alert('การเชื่อมต่อกับเครื่องพิมพ์ USB ขัดข้อง: ' + err.message);
-                }
-            }
-        }
-
-        // ── Guide Modal Controls ──────────────────────────────────────────
-        function openSilentPrintGuideModal() {
-            const m = document.getElementById('silentGuideModal');
-            if (m) m.style.display = 'flex';
-        }
-        function closeSilentPrintGuideModal(e) {
-            if (e && e.target && e.target.id !== 'silentGuideModal') return;
-            const m = document.getElementById('silentGuideModal');
-            if (m) m.style.display = 'none';
+            window.print();
         }
     </script>
-
-    <!-- Modal: คู่มือการตั้งค่า Silent Print (พิมพ์เงียบ 100%) -->
-    <div class="guide-modal-overlay" id="silentGuideModal" onclick="closeSilentPrintGuideModal(event)">
-        <div class="guide-modal-box" onclick="event.stopPropagation()">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid #30363d; padding-bottom:12px;">
-                <h3 style="font-size:1.15rem; color:#f0f6fc; display:flex; align-items:center; gap:8px;">
-                    <i class="fa-solid fa-bolt" style="color:#388bfd;"></i> การตั้งค่า Silent Print (พิมพ์ทันที ไร้หน้าต่างเด้ง)
-                </h3>
-                <button type="button" onclick="closeSilentPrintGuideModal()" style="background:none; border:none; color:#8b949e; font-size:1.4rem; cursor:pointer;">&times;</button>
-            </div>
-            <div style="font-size:0.9rem; line-height:1.6; color:#c9d1d9;">
-                <p style="margin-bottom:12px;">
-                    เนื่องจากระบบเว็บทำงานอยู่บนคลาวด์ (Render) ทำให้เซิร์ฟเวอร์หลังบ้านไม่สามารถส่งสัญญาณตรงไปยังพอร์ต USB ของคอมพิวเตอร์ผู้ใช้ได้โดยตรง คุณสามารถเลือกใช้งานได้ตามความเหมาะสม:
-                </p>
-
-                <div style="background:#161b26; border-left:4px solid #388bfd; padding:12px 14px; border-radius:4px; margin-bottom:14px;">
-                    <strong style="color:#58a6ff;"><i class="fa-solid fa-star"></i> วิธีที่ 1: ใช้ปุ่ม "พิมพ์ด่วน (Direct Print)" ร่วมกับโหมด Kiosk (แนะนำสูงสุด)</strong>
-                    <p style="font-size:0.85rem; margin-top:6px; color:#8b949e;">
-                        สร้าง Shortcut ของ Google Chrome หรือ Microsoft Edge ไว้บน Desktop เพื่อเปิดโหมดพิมพ์เงียบ:
-                    </p>
-                    <code style="display:block; background:#0b0e14; padding:8px 10px; border-radius:4px; color:#7ee787; font-size:0.8rem; margin:8px 0; word-break:break-all;">
-                        chrome.exe --kiosk-printing "https://your-domain.com/print-qr.html"
-                    </code>
-                    <p style="font-size:0.82rem; color:#8b949e;">
-                        เมื่อกดปุ่ม "พิมพ์ด่วน" เบราว์เซอร์จะสั่งส่งงานไปยังเครื่องพิมพ์เริ่มต้น (Default Printer) ทันที 100% โดยไม่เด้งหน้าต่างถาม
-                    </p>
-                </div>
-
-                <div style="background:#161b26; border-left:4px solid #8957e5; padding:12px 14px; border-radius:4px; margin-bottom:14px;">
-                    <strong style="color:#a371f7;"><i class="fa-solid fa-file-pdf"></i> วิธีที่ 2: ใช้ปุ่ม "ดาวน์โหลด PDF (Vector PDF)"</strong>
-                    <p style="font-size:0.85rem; margin-top:6px; color:#8b949e;">
-                        ระบบจะสร้างไฟล์ PDF ขนาดตามมิลลิเมตรจริงของสติ๊กเกอร์ (เช่น 90x24.5mm) ลงเครื่องทันทีใน 1 คลิก จากนั้นเปิดไฟล์แล้วสั่งพิมพ์จากโปรแกรม PDF ได้อย่างคมชัดเป๊ะทุกมิลลิเมตร
-                    </p>
-                </div>
-
-                <div style="background:#161b26; border-left:4px solid #d29922; padding:12px 14px; border-radius:4px; margin-bottom:14px;">
-                    <strong style="color:#e3b341;"><i class="fa-solid fa-microchip"></i> วิธีที่ 3: ใช้ "พิมพ์ผ่าน USB Thermal (TSPL)"</strong>
-                    <p style="font-size:0.85rem; margin-top:6px; color:#8b949e;">
-                        สำหรับเครื่องพิมพ์สติ๊กเกอร์ความร้อน (Xprinter, Zebra, TSC, Gprinter) ที่ต่อสาย USB/Serial เข้าคอมพิวเตอร์ ระบบจะใช้ Web Serial API สื่อสารโดยตรงกับเครื่องพิมพ์ สั่งพิมพ์ออกมาทันทีโดยไม่ต้องผ่านไดรเวอร์ของวินโดวส์
-                    </p>
-                </div>
-            </div>
-            <div style="text-align:right; margin-top:16px;">
-                <button type="button" class="btn-print" onclick="closeSilentPrintGuideModal()" style="padding:6px 18px; font-size:0.85rem;">
-                    รับทราบและปิดหน้าต่าง
-                </button>
-            </div>
-        </div>
-    </div>
 </body>
 
 </html>
