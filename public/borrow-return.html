@@ -1100,17 +1100,21 @@
         }
 
         function requireAuth() {
-            const token = localStorage.getItem('auth_token');
-            if (!token) { window.location.href = 'index.html'; return null; }
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (!token) { 
+                window.location.href = `index.html?return_to=${encodeURIComponent(window.location.href)}`; 
+                return null; 
+            }
             return token;
         }
 
         async function handleLogout() {
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
             if (token) {
                 try { await fetch(getApiUrl('/api/logout'), { method:'POST', headers:{'Authorization':`Bearer ${token}`} }); } catch(e){}
             }
             localStorage.removeItem('auth_token');
+            localStorage.removeItem('authToken');
             localStorage.removeItem('auth_user');
             window.location.href = 'index.html';
         }
@@ -1171,7 +1175,7 @@
         }
 
         // ── Load Borrows from SQLite ──────────────────────────────
-        async function loadBorrowsFromAPI() {
+        async function loadBorrows() {
             const token = requireAuth();
             if (!token) return;
             try {
@@ -1206,6 +1210,11 @@
                 console.warn('loadBorrows error:', err);
             }
         }
+
+        // Aliases for compatibility
+        const loadBorrowsFromAPI = loadBorrows;
+        window.loadBorrows = loadBorrows;
+        window.loadBorrowsFromAPI = loadBorrows;
 
         /**
          * Dynamic Table Rendering with RBAC
@@ -1566,7 +1575,25 @@
             if (userSpan && user.name) userSpan.textContent = `${user.name} (${user.role || 'viewer'})`;
 
             await loadAssetsForBorrow();
-            await loadBorrowsFromAPI();
+            await loadBorrows();
+
+            // รองรับการส่งรหัสทรัพย์สินข้ามหน้าผ่าน URL Parameter (เช่น borrow-return.html?code=A001)
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetCode = (urlParams.get('asset_code') || urlParams.get('code') || '').trim();
+            if (targetCode && ['admin', 'editor'].includes(user.role)) {
+                openBorrowModal();
+                const sel = document.getElementById('modalAssetSelect');
+                if (sel) {
+                    let hasOpt = Array.from(sel.options).some(o => o.value.toUpperCase() === targetCode.toUpperCase());
+                    if (!hasOpt) {
+                        const opt = document.createElement('option');
+                        opt.value = targetCode;
+                        opt.textContent = `${targetCode} (เลือกอัตโนมัติจากหน้ารายการ)`;
+                        sel.appendChild(opt);
+                    }
+                    sel.value = targetCode;
+                }
+            }
         };
     </script>
 </body>

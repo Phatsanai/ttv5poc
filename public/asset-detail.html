@@ -1875,19 +1875,38 @@
             document.getElementById('btnGroupEdit').style.display = 'none';
 
             document.getElementById('pageContent').innerHTML = `
+                ${canEdit ? `
                 <div style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); border-radius:10px; padding:14px 20px; margin-bottom:24px; display:flex; align-items:center; gap:14px;">
                     <div style="width:40px; height:40px; border-radius:50%; background:rgba(16,185,129,0.2); display:flex; align-items:center; justify-content:center; color:var(--accent-green); font-size:1.2rem; flex-shrink:0;">
                         <i class="fa-solid fa-qrcode"></i>
                     </div>
                     <div>
                         <div style="color:var(--text-title); font-weight:600; font-size:0.95rem;">
-                            เปิดให้ลงทะเบียนทรัพย์สินใหม่ได้ทันที (ไม่ต้องล็อกอิน)
+                            ลงทะเบียนทรัพย์สินใหม่เข้าระบบ
                         </div>
                         <div style="color:var(--text-body); font-size:0.84rem; margin-top:2px;">
                             รหัส <strong>"${escapeHtml(pageAssetCode)}"</strong> ยังไม่มีในระบบ สามารถกรอกข้อมูลและบันทึกอุปกรณ์นี้ได้เลย
                         </div>
                     </div>
-                </div>
+                </div>` : `
+                <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:14px 20px; margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+                    <div style="display:flex; align-items:center; gap:14px;">
+                        <div style="width:40px; height:40px; border-radius:50%; background:rgba(239,68,68,0.2); display:flex; align-items:center; justify-content:center; color:#ef4444; font-size:1.2rem; flex-shrink:0;">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-title); font-weight:600; font-size:0.95rem;">
+                                ต้องเข้าสู่ระบบเพื่อลงทะเบียนทรัพย์สิน
+                            </div>
+                            <div style="color:var(--text-body); font-size:0.84rem; margin-top:2px;">
+                                รหัส <strong>"${escapeHtml(pageAssetCode)}"</strong> ยังไม่ได้ลงทะเบียน (เฉพาะ Admin, Manager หรือ Editor เท่านั้นที่ลงทะเบียนได้)
+                            </div>
+                        </div>
+                    </div>
+                    <a href="index.html?return_to=${encodeURIComponent(window.location.href)}" style="background:var(--accent-blue); color:white; padding:8px 18px; border-radius:8px; text-decoration:none; font-weight:500; font-size:0.85rem; display:inline-flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบเพื่อลงทะเบียน
+                    </a>
+                </div>`}
 
                 <div class="detail-grid">
                     <!-- LEFT: Photo Upload Preview -->
@@ -1999,6 +2018,15 @@
         async function submitRegistration(e) {
             e.preventDefault();
             const btn = document.getElementById('btnSubmitReg');
+
+            if (!canEdit) {
+                showToast('error', 'สิทธิ์ไม่เพียงพอ: กรุณาเข้าสู่ระบบด้วยบัญชี Admin, Manager หรือ Editor เพื่อลงทะเบียนทรัพย์สิน');
+                if (confirm('คุณต้องเข้าสู่ระบบก่อนลงทะเบียนทรัพย์สิน\n\nต้องการไปที่หน้าเข้าสู่ระบบทันทีหรือไม่?')) {
+                    window.location.href = `index.html?return_to=${encodeURIComponent(window.location.href)}`;
+                }
+                return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึกข้อมูล...';
 

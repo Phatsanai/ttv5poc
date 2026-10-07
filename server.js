@@ -780,14 +780,17 @@ app.get('/api/assets', async (req, res) => {
     if (category) { where.push('category = ?'); params.push(category); }
 
     const whereStr = where.length ? `WHERE ${where.join(' AND ')}` : '';
-    const offset   = (parseInt(page) - 1) * parseInt(limit);
+    // ควบคุมค่า limit ให้อยู่ระหว่าง 1 ถึง 100 เพื่อความปลอดภัยและเสถียรภาพของเซิร์ฟเวอร์
+    const safeLimit = Math.min(Math.max(parseInt(limit) || 50, 1), 100);
+    const safePage  = Math.max(parseInt(page) || 1, 1);
+    const offset    = (safePage - 1) * safeLimit;
 
     const countRow = await dbGet(`SELECT COUNT(*) as cnt FROM assets ${whereStr}`, params);
     const total    = countRow ? countRow.cnt : 0;
-    const assets   = await dbAll(`SELECT * FROM assets ${whereStr} ORDER BY id DESC LIMIT ? OFFSET ?`, [...params, parseInt(limit), offset]);
+    const assets   = await dbAll(`SELECT * FROM assets ${whereStr} ORDER BY id DESC LIMIT ? OFFSET ?`, [...params, safeLimit, offset]);
 
     const result = assets.map(formatAssetOutput);
-    return res.json({ success: true, data: result, total, page: parseInt(page), limit: parseInt(limit) });
+    return res.json({ success: true, data: result, total, page: safePage, limit: safeLimit });
   } catch (err) {
     console.error('/api/assets GET error:', err);
     return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
@@ -880,19 +883,40 @@ app.get('/api/assets/:id', async (req, res) => {
   }
 });
 
-// POST /api/assets (register new) — เปิดให้ทุกคนลงทะเบียนได้ ไม่ต้อง login
+// POST /api/assets (register new) — ต้องมีสิทธิ์เข้าใช้งานระบบ (Admin, Manager, Editor) และตรวจสอบความถูกต้องของรหัส
 app.post('/api/assets', async (req, res) => {
-  try {
-    const { asset_code, name, serial_number, category, department, holder, received_date, status, notes, photos, image } = req.body;
-    if (!asset_code)
-      return res.status(400).json({ success: false, message: 'กรุณาระบุรหัสทรัพย์สิน' });
+  const sess = await authenticate(req, res);
+  if (!sess) return;
+  if (!['admin', 'manager', 'editor'].includes(sess.role)) {
+    return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ลงทะเบียนทรัพย์สินใหม่ (ต้องเป็น Admin, Manager หรือ Editor)' });
+  }
 
-    const existing = await dbGet('SELECT id, is_deleted FROM assets WHERE asset_code = ?', [asset_code]);
+  try {
+    let { asset_code, name, serial_number, category, department, holder, received_date, status, notes, photos, image } = req.body;
+    
+    // ตรวจสอบความถูกต้องและรูปแบบของรหัสทรัพย์สิน (ป้องกันข้อมูลผิดพลาดหรือ XSS จากการสแกน)
+    if (!asset_code || typeof asset_code !== 'string') {
+      return res.status(400).json({ success: false, message: 'กรุณาระบุรหัสทรัพย์สิน' });
+    }
+    const cleanCode = asset_code.trim().toUpperCase();
+    if (cleanCode.length < 1 || cleanCode.length > 50) {
+      return res.status(400).json({ success: false, message: 'รหัสทรัพย์สินต้องมีความยาวระหว่าง 1 ถึง 50 ตัวอักษร' });
+    }
+    if (!/^[A-Za-z0-9\-_./#]+$/.test(cleanCode)) {
+      return res.status(400).json({ success: false, message: 'รหัสทรัพย์สินต้องประกอบด้วยตัวอักษร ตัวเลข หรือเครื่องหมาย - _ . / # เท่านั้น (ไม่อนุญาตให้ใช้ URL หรือข้อความแปลกปลอม)' });
+    }
+
+    const cleanName = (name || '').trim();
+    if (!cleanName) {
+      return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อทรัพย์สิน' });
+    }
+
+    const existing = await dbGet('SELECT id, is_deleted FROM assets WHERE UPPER(asset_code) = ?', [cleanCode]);
     if (existing) {
       if (existing.is_deleted) {
-        return res.status(409).json({ success: false, message: `รหัส ${asset_code} อยู่ในถังขยะ คุณสามารถกู้คืนได้ที่หน้าถังขยะ (Recycle Bin)` });
+        return res.status(409).json({ success: false, message: `รหัส ${cleanCode} อยู่ในถังขยะ คุณสามารถกู้คืนได้ที่หน้าถังขยะ (Recycle Bin)` });
       }
-      return res.status(409).json({ success: false, message: `รหัส ${asset_code} ถูกลงทะเบียนในระบบแล้ว` });
+      return res.status(409).json({ success: false, message: `รหัส ${cleanCode} ถูกลงทะเบียนในระบบแล้ว` });
     }
 
     // Normalize photos & image (handles raw path strings, arrays, and safely decodes base64 without bloating DB)
@@ -903,13 +927,12 @@ app.post('/api/assets', async (req, res) => {
     const result = await dbRun(
       `INSERT INTO assets (asset_code,name,serial_number,category,department,holder,received_date,status,notes,photos,image,is_deleted,deleted_at,updated_at)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,0,NULL,datetime('now','localtime'))`,
-      [asset_code, name||'', serial_number||'', category||'', department||'', holder||'', received_date||'', status||'active', notes||'', photosJson, primaryImage]
+      [cleanCode, cleanName, (serial_number||'').trim(), category||'', (department||'').trim(), (holder||'').trim(), received_date||'', status||'active', (notes||'').trim(), photosJson, primaryImage]
     );
     const newAsset = await dbGet('SELECT * FROM assets WHERE id = ?', [result.lastID]);
 
-    const sess = await getOptionalUser(req);
-    const actor = sess ? (sess.name || sess.username) : (req.body.operator || 'Guest');
-    logAudit('CREATE_ASSET', 'asset', asset_code, `เพิ่มทรัพย์สินใหม่: ${name||''} (${asset_code})`, req, actor);
+    const actor = sess.name || sess.username || 'System';
+    logAudit('CREATE_ASSET', 'asset', cleanCode, `เพิ่มทรัพย์สินใหม่: ${cleanName} (${cleanCode})`, req, actor);
 
     return res.status(201).json({ success: true, data: formatAssetOutput(newAsset) });
   } catch (err) {
@@ -983,6 +1006,48 @@ app.put('/api/assets/:id', async (req, res) => {
         asset.id
       ]
     );
+
+    // ── Auto-sync with borrows and maintenance tables when status changes ──
+    const newStatus = status !== undefined ? status : asset.status;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const borrowerName = (holder !== undefined ? holder : asset.holder || '').trim() || 'ผู้ยืม (ระบุผ่านรายการทรัพย์สิน)';
+    const deptName = (department !== undefined ? department : asset.department || '').trim();
+
+    if (newStatus === 'borrowed') {
+      const existingBorrow = await dbGet(
+        'SELECT id FROM borrows WHERE (asset_id = ? OR asset_code = ?) AND status = ? LIMIT 1',
+        [asset.id, asset.asset_code, 'borrowed']
+      );
+      if (!existingBorrow) {
+        await dbRun(
+          `INSERT INTO borrows (asset_id, asset_code, borrower, department, borrow_date, due_date, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [asset.id, asset.asset_code, borrowerName, deptName, todayStr, '', (notes || asset.notes || 'บันทึกการยืมอัตโนมัติจากการเปลี่ยนสถานะ').trim(), sess.name]
+        );
+      }
+    } else if (newStatus === 'maintenance') {
+      const existingMaint = await dbGet(
+        'SELECT id FROM maintenance WHERE (asset_id = ? OR asset_code = ?) AND status != ? LIMIT 1',
+        [asset.id, asset.asset_code, 'completed']
+      );
+      if (!existingMaint) {
+        await dbRun(
+          `INSERT INTO maintenance (asset_id, asset_code, type, description, technician, cost, start_date, end_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [asset.id, asset.asset_code, 'repair', (notes || asset.notes || 'ส่งซ่อมบำรุงรักษาจากการเปลี่ยนสถานะ').trim(), sess.name || 'เจ้าหน้าที่', 0, todayStr, '', 'สร้างรายการอัตโนมัติจากการเปลี่ยนสถานะทรัพย์สิน']
+        );
+      }
+    } else if (newStatus === 'active') {
+      // คืนสถานะ: ปิดรายการยืมที่ยังค้างอยู่
+      await dbRun(
+        `UPDATE borrows SET status = 'returned', return_date = ? WHERE (asset_id = ? OR asset_code = ?) AND status = 'borrowed'`,
+        [todayStr, asset.id, asset.asset_code]
+      );
+      // ปิดรายการซ่อมที่ยังค้างอยู่
+      await dbRun(
+        `UPDATE maintenance SET status = 'completed', end_date = ? WHERE (asset_id = ? OR asset_code = ?) AND status != 'completed'`,
+        [todayStr, asset.id, asset.asset_code]
+      );
+    }
+
     const updated = await dbGet('SELECT * FROM assets WHERE id = ?', [asset.id]);
 
     logAudit('UPDATE_ASSET', 'asset', asset.asset_code, `แก้ไขข้อมูลทรัพย์สิน: ${name || asset.name} (${asset.asset_code})`, req, sess.name);
@@ -1516,7 +1581,14 @@ app.get('/api/borrows', async (req, res) => {
     if (status)     { where.push('b.status = ?');     params.push(status); }
     if (asset_code) { where.push('b.asset_code = ?'); params.push(asset_code); }
     const whereStr = where.length ? `WHERE ${where.join(' AND ')}` : '';
-    const rows = await dbAll(`SELECT b.*, a.name as asset_name FROM borrows b LEFT JOIN assets a ON a.id = b.asset_id ${whereStr} ORDER BY b.id DESC`, params);
+    const rows = await dbAll(
+      `SELECT b.*, COALESCE(NULLIF(a.name, ''), b.asset_code) as asset_name 
+       FROM borrows b 
+       LEFT JOIN assets a ON (a.id = b.asset_id OR UPPER(a.asset_code) = UPPER(b.asset_code)) 
+       ${whereStr} 
+       ORDER BY b.id DESC`, 
+      params
+    );
     return res.json({ success: true, data: rows });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
@@ -1533,20 +1605,61 @@ app.post('/api/borrows', async (req, res) => {
     const { asset_code, borrower, department, borrow_date, due_date, notes } = req.body;
     if (!asset_code || !borrower)
       return res.status(400).json({ success: false, message: 'กรุณาระบุรหัสอุปกรณ์และชื่อผู้ยืม' });
-    const asset = await dbGet('SELECT * FROM assets WHERE asset_code = ?', [asset_code]);
-    if (!asset) return res.status(404).json({ success: false, message: 'ไม่พบทรัพย์สินนี้' });
-    if (asset.status === 'borrowed')
-      return res.status(409).json({ success: false, message: 'อุปกรณ์นี้ถูกยืมไปแล้ว' });
 
-    const result = await dbRun(
-      `INSERT INTO borrows (asset_id,asset_code,borrower,department,borrow_date,due_date,notes,created_by) VALUES (?,?,?,?,?,?,?,?)`,
-      [asset.id, asset_code, borrower, department||'', borrow_date||new Date().toISOString().slice(0,10), due_date||'', notes||'', sess.name]
-    );
-    await dbRun(`UPDATE assets SET status='borrowed', holder=?, updated_at=datetime('now','localtime') WHERE id=?`, [borrower, asset.id]);
-    const newBorrow = await dbGet('SELECT * FROM borrows WHERE id=?', [result.lastID]);
-    logAudit('BORROW_ASSET', 'asset', asset_code, `ยืมอุปกรณ์: ${asset.name || asset_code} โดย ${borrower}`, req, sess.name);
+    const cleanCode = asset_code.trim().toUpperCase();
+    const cleanBorrower = borrower.trim();
+    let borrowRecordId;
+    let assetInfo;
+
+    // รันการตรวจสอบและบันทึกข้อมูลใน db.transaction() เพื่อป้องกัน Race Condition (Double Borrowing)
+    const borrowTx = db.transaction(() => {
+      const asset = db.prepare('SELECT * FROM assets WHERE UPPER(asset_code) = ?').get([cleanCode]);
+      if (!asset) {
+        throw new Error('NOT_FOUND: ไม่พบทรัพย์สินนี้ในระบบ');
+      }
+      if (asset.is_deleted) {
+        throw new Error('DELETED: ทรัพย์สินนี้อยู่ในถังขยะ ไม่สามารถทำรายการยืมได้');
+      }
+      if (asset.status === 'borrowed') {
+        throw new Error('ALREADY_BORROWED: อุปกรณ์นี้ถูกยืมไปแล้ว');
+      }
+      if (asset.status === 'maintenance') {
+        throw new Error('IN_MAINTENANCE: อุปกรณ์นี้อยู่ระหว่างส่งซ่อม/บำรุงรักษา ไม่สามารถยืมได้');
+      }
+      if (asset.status === 'disposed') {
+        throw new Error('DISPOSED: อุปกรณ์นี้ถูกตัดจำหน่ายแล้ว ไม่สามารถยืมได้');
+      }
+
+      const insertInfo = db.prepare(
+        `INSERT INTO borrows (asset_id,asset_code,borrower,department,borrow_date,due_date,notes,created_by) VALUES (?,?,?,?,?,?,?,?)`
+      ).run(
+        asset.id, asset.asset_code, cleanBorrower, (department||'').trim(), borrow_date||new Date().toISOString().slice(0,10), due_date||'', (notes||'').trim(), sess.name
+      );
+      borrowRecordId = insertInfo.lastInsertRowid;
+
+      db.prepare(
+        `UPDATE assets SET status='borrowed', holder=?, updated_at=datetime('now','localtime') WHERE id=?`
+      ).run(cleanBorrower, asset.id);
+
+      assetInfo = asset;
+    });
+
+    borrowTx();
+
+    const newBorrow = await dbGet('SELECT * FROM borrows WHERE id=?', [borrowRecordId]);
+    logAudit('BORROW_ASSET', 'asset', cleanCode, `ยืมอุปกรณ์: ${assetInfo?.name || cleanCode} โดย ${cleanBorrower}`, req, sess.name);
     return res.status(201).json({ success: true, data: newBorrow });
   } catch (err) {
+    const msg = err.message || '';
+    if (msg.startsWith('NOT_FOUND:')) {
+      return res.status(404).json({ success: false, message: msg.replace('NOT_FOUND: ', '') });
+    }
+    if (msg.startsWith('ALREADY_BORROWED:')) {
+      return res.status(409).json({ success: false, message: msg.replace('ALREADY_BORROWED: ', '') });
+    }
+    if (msg.startsWith('DELETED:') || msg.startsWith('IN_MAINTENANCE:') || msg.startsWith('DISPOSED:')) {
+      return res.status(400).json({ success: false, message: msg.replace(/^[A-Z_]+: /, '') });
+    }
     return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด: ' + err.message });
   }
 });
@@ -1558,15 +1671,42 @@ app.put('/api/borrows/:id/return', async (req, res) => {
     return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์ทำรายการ (ต้องเป็น Admin, Manager หรือ Editor)' });
   }
   try {
-    const borrow = await dbGet('SELECT * FROM borrows WHERE id=?', [parseInt(req.params.id)]);
-    if (!borrow) return res.status(404).json({ success: false, message: 'ไม่พบรายการยืมนี้' });
+    const borrowId = parseInt(req.params.id);
     const returnDate = req.body.return_date || new Date().toISOString().slice(0,10);
-    await dbRun(`UPDATE borrows SET status='returned', return_date=? WHERE id=?`, [returnDate, borrow.id]);
-    await dbRun(`UPDATE assets SET status='active', holder='', updated_at=datetime('now','localtime') WHERE id=? OR asset_code=?`, [borrow.asset_id, borrow.asset_code]);
-    logAudit('RETURN_ASSET', 'asset', borrow.asset_code, `คืนอุปกรณ์: ${borrow.asset_code} โดย ${borrow.borrower}`, req, sess.name);
+    let borrowInfo;
+
+    // รันการคืนอุปกรณ์ใน db.transaction() เพื่อป้องกัน Race Condition และข้อมูลไม่สอดคล้อง
+    const returnTx = db.transaction(() => {
+      const borrow = db.prepare('SELECT * FROM borrows WHERE id=?').get([borrowId]);
+      if (!borrow) {
+        throw new Error('NOT_FOUND: ไม่พบรายการยืมนี้');
+      }
+      if (borrow.status === 'returned') {
+        throw new Error('ALREADY_RETURNED: รายการยืมนี้ได้รับการบันทึกคืนแล้ว');
+      }
+
+      db.prepare(`UPDATE borrows SET status='returned', return_date=? WHERE id=?`).run(returnDate, borrow.id);
+
+      db.prepare(
+        `UPDATE assets SET status='active', holder='', updated_at=datetime('now','localtime') WHERE id=? AND (is_deleted = 0 OR is_deleted IS NULL)`
+      ).run(borrow.asset_id);
+
+      borrowInfo = borrow;
+    });
+
+    returnTx();
+
+    logAudit('RETURN_ASSET', 'asset', borrowInfo.asset_code, `คืนอุปกรณ์: ${borrowInfo.asset_code} โดย ${borrowInfo.borrower}`, req, sess.name);
     return res.json({ success: true, message: 'บันทึกการคืนอุปกรณ์แล้ว' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
+    const msg = err.message || '';
+    if (msg.startsWith('NOT_FOUND:')) {
+      return res.status(404).json({ success: false, message: msg.replace('NOT_FOUND: ', '') });
+    }
+    if (msg.startsWith('ALREADY_RETURNED:')) {
+      return res.status(409).json({ success: false, message: msg.replace('ALREADY_RETURNED: ', '') });
+    }
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด: ' + err.message });
   }
 });
 
@@ -1621,7 +1761,14 @@ app.get('/api/maintenance', async (req, res) => {
     const { status = '' } = req.query;
     const whereStr = status ? 'WHERE m.status = ?' : '';
     const params = status ? [status] : [];
-    const rows = await dbAll(`SELECT m.*, a.name as asset_name FROM maintenance m LEFT JOIN assets a ON a.id = m.asset_id ${whereStr} ORDER BY m.id DESC`, params);
+    const rows = await dbAll(
+      `SELECT m.*, COALESCE(NULLIF(a.name, ''), m.asset_code) as asset_name 
+       FROM maintenance m 
+       LEFT JOIN assets a ON (a.id = m.asset_id OR UPPER(a.asset_code) = UPPER(m.asset_code)) 
+       ${whereStr} 
+       ORDER BY m.id DESC`, 
+      params
+    );
     return res.json({ success: true, data: rows });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });
@@ -1637,15 +1784,25 @@ app.post('/api/maintenance', async (req, res) => {
   try {
     const { asset_code, type, description, technician, cost, start_date, end_date, notes } = req.body;
     if (!asset_code) return res.status(400).json({ success: false, message: 'กรุณาระบุรหัสอุปกรณ์' });
-    const asset = await dbGet('SELECT * FROM assets WHERE asset_code = ?', [asset_code]);
-    if (!asset) return res.status(404).json({ success: false, message: 'ไม่พบทรัพย์สินนี้' });
+    const cleanCode = asset_code.trim().toUpperCase();
+
+    const asset = await dbGet('SELECT * FROM assets WHERE UPPER(asset_code) = ?', [cleanCode]);
+    if (!asset) return res.status(404).json({ success: false, message: 'ไม่พบทรัพย์สินนี้ในระบบ' });
+    // ตรวจสอบเงื่อนไข is_deleted = 0 ป้องกันการเปิดใบแจ้งซ่อมทรัพย์สินที่อยู่ในถังขยะแล้ว
+    if (asset.is_deleted) {
+      return res.status(400).json({ success: false, message: `ทรัพย์สินรหัส ${asset.asset_code} อยู่ในถังขยะ (Recycle Bin) ไม่สามารถเปิดใบแจ้งซ่อมได้ กรุณากู้คืนทรัพย์สินก่อน` });
+    }
+    if (asset.status === 'disposed') {
+      return res.status(400).json({ success: false, message: `ทรัพย์สินรหัส ${asset.asset_code} ถูกตัดจำหน่ายแล้ว ไม่สามารถเปิดใบแจ้งซ่อมได้` });
+    }
 
     const result = await dbRun(
       `INSERT INTO maintenance (asset_id,asset_code,type,description,technician,cost,start_date,end_date,notes) VALUES (?,?,?,?,?,?,?,?,?)`,
-      [asset.id, asset_code, type||'repair', description||'', technician||'', parseFloat(cost)||0, start_date||new Date().toISOString().slice(0,10), end_date||'', notes||'']
+      [asset.id, asset.asset_code, type||'repair', (description||'').trim(), (technician||'').trim(), parseFloat(cost)||0, start_date||new Date().toISOString().slice(0,10), end_date||'', (notes||'').trim()]
     );
     await dbRun(`UPDATE assets SET status='maintenance', updated_at=datetime('now','localtime') WHERE id=?`, [asset.id]);
     const newRec = await dbGet('SELECT * FROM maintenance WHERE id=?', [result.lastID]);
+    logAudit('CREATE_MAINTENANCE', 'asset', asset.asset_code, `แจ้งซ่อมอุปกรณ์: ${asset.name || asset.asset_code} (${type || 'repair'})`, req, sess.name);
     return res.status(201).json({ success: true, data: newRec });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด: ' + err.message });
@@ -1680,7 +1837,9 @@ app.put('/api/maintenance/:id/complete', async (req, res) => {
     if (!rec) return res.status(404).json({ success: false, message: 'ไม่พบรายการซ่อมนี้' });
     const endDate = req.body.end_date || new Date().toISOString().slice(0,10);
     await dbRun(`UPDATE maintenance SET status='completed', end_date=? WHERE id=?`, [endDate, rec.id]);
-    await dbRun(`UPDATE assets SET status='active', updated_at=datetime('now','localtime') WHERE id=?`, [rec.asset_id]);
+    // ปรับสถานะกลับเป็น active เฉพาะทรัพย์สินที่ยังไม่ถูกลบลงถังขยะ
+    await dbRun(`UPDATE assets SET status='active', updated_at=datetime('now','localtime') WHERE id=? AND (is_deleted = 0 OR is_deleted IS NULL)`, [rec.asset_id]);
+    logAudit('COMPLETE_MAINTENANCE', 'asset', rec.asset_code, `บันทึกซ่อมเสร็จสิ้น: ${rec.asset_code}`, req, sess.name);
     return res.json({ success: true, message: 'บันทึกการซ่อมเสร็จสิ้นแล้ว' });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด' });

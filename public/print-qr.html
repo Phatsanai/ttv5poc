@@ -432,6 +432,7 @@
         .sticker-qr canvas {
             display: none !important;
         }
+
         .sticker-qr img {
             width: 100% !important;
             height: 100% !important;
@@ -736,6 +737,7 @@
             .sticker-qr canvas {
                 display: none !important;
             }
+
             .sticker-qr img {
                 width: 100% !important;
                 height: 100% !important;
@@ -965,8 +967,8 @@
                     </div>
 
                     <div class="form-group" id="groupCount">
-                        <label>จำนวนป้ายที่ต้องการพิมพ์</label>
-                        <input type="number" class="form-control" id="printCount" value="20" min="1" max="26000"
+                        <label>จำนวนป้ายที่ต้องการพิมพ์ (สูงสุด 300 ป้าย)</label>
+                        <input type="number" class="form-control" id="printCount" value="20" min="1" max="300"
                             oninput="debounceGeneratePreview()">
                     </div>
 
@@ -978,9 +980,11 @@
 
                     <div class="print-actions-wrapper">
                         <!-- ปุ่ม ปริ้น หลักเพียงปุ่มเดียว (เรียก Print Dialog ของเบราว์เซอร์) -->
-                        <button type="button" class="btn-print btn-main-print" onclick="handlePrint()" id="btnPrintQr" title="เปิดหน้าต่างเครื่องพิมพ์ (Print Dialog) เพื่อเลือกเครื่องพิมพ์และพิมพ์สติกเกอร์">
+                        <button type="button" class="btn-print btn-main-print" onclick="handlePrint()" id="btnPrintQr"
+                            title="เปิดหน้าต่างเครื่องพิมพ์ (Print Dialog) เพื่อเลือกเครื่องพิมพ์และพิมพ์สติกเกอร์">
                             <span style="font-size: 1.05rem;">🖨️ ปริ้น</span>
-                            <span style="font-size: 0.88rem; opacity: 0.9; font-weight: 400;">(<span id="btnPrintCount">20</span> ป้าย)</span>
+                            <span style="font-size: 0.88rem; opacity: 0.9; font-weight: 400;">(<span
+                                    id="btnPrintCount">20</span> ป้าย)</span>
                         </button>
                     </div>
                 </div>
@@ -1150,8 +1154,15 @@
             }
         }
 
+        let _activeRenderTimeout = null;
+
         function generatePreview() {
             const currentSeq = ++_previewSeq;
+            if (_activeRenderTimeout) {
+                clearTimeout(_activeRenderTimeout);
+                _activeRenderTimeout = null;
+            }
+
             const printTypeRadio = document.querySelector('input[name="printType"]:checked');
             const printType = printTypeRadio ? printTypeRadio.value : "batch";
             const container = document.getElementById("previewContainer");
@@ -1165,7 +1176,12 @@
                 const startInput = document.getElementById("startNum");
                 const startNum = Math.max(1, parseInt(startInput ? startInput.value : 1, 10) || 1);
                 const countInput = document.getElementById("printCount");
-                const count = Math.max(1, parseInt(countInput ? countInput.value : 20, 10) || 20);
+                // ป้องกัน Memory Spike โดยจำกัดสูงสุดไม่เกิน 300 ป้ายต่อครั้ง
+                const rawCount = parseInt(countInput ? countInput.value : 20, 10) || 20;
+                const count = Math.min(Math.max(1, rawCount), 300);
+                if (countInput && parseInt(countInput.value, 10) > 300) {
+                    countInput.value = 300;
+                }
 
                 let currentPrefixCode = prefix.charCodeAt(0);
                 let currentNum = startNum;
@@ -1176,8 +1192,8 @@
                         if (currentPrefixCode > 90) currentPrefixCode = 65; // Rollover to A
                     }
                     const p = String.fromCharCode(currentPrefixCode);
-                    const code = `${p}${String(currentNum).padStart(3, "0")}`;
-                    codesToPrint.push(code);
+                    const itemCode = `${p}${String(currentNum).padStart(3, "0")}`;
+                    codesToPrint.push(itemCode);
                     currentNum++;
                 }
             } else {
@@ -1190,6 +1206,10 @@
                 }
                 if (codesToPrint.length === 0) {
                     codesToPrint = ["A001"];
+                }
+                // จำกัดรหัสระบุเองไม่เกิน 300 ป้าย
+                if (codesToPrint.length > 300) {
+                    codesToPrint = codesToPrint.slice(0, 300);
                 }
             }
 
@@ -1205,69 +1225,89 @@
             const globalH = document.getElementById("sliderHeight") ? document.getElementById("sliderHeight").value : "24.5";
             const globalQR = document.getElementById("sliderQR") ? document.getElementById("sliderQR").value : "17.0";
 
-            codesToPrint.forEach((code, idx) => {
-                const wrapper = document.createElement("div");
-                wrapper.className = "sticker-card-wrapper";
-                wrapper.id = `sticker-wrap-${idx}`;
+            // Progressive Chunked Rendering (15 ป้ายต่อ Batch เพื่อรักษา UI ความลื่นไหล ป้องกันเบราว์เซอร์ค้าง)
+            const CHUNK_SIZE = 15;
+            let currentChunkIndex = 0;
 
-                wrapper.innerHTML = `
-                    <div class="sticker-item">
-                        <div class="sticker-qr" id="qrcode-${idx}"></div>
-                        <div class="sticker-info">
-                            <div class="sticker-code">${code}</div>
-                            <div class="sticker-line"></div>
-                            <div class="sticker-line"></div>
-                        </div>
-                    </div>
-                    <div class="individual-controls">
-                        <div class="ind-group">
-                            <span>กว้าง: <b id="ind-w-val-${idx}">${globalW}</b></span>
-                            <input type="range" id="ind-w-${idx}" min="40" max="95" step="1" value="${globalW}" oninput="updateIndividualSticker(${idx})">
-                        </div>
-                        <div class="ind-group">
-                            <span>สูง: <b id="ind-h-val-${idx}">${globalH}</b></span>
-                            <input type="range" id="ind-h-${idx}" min="15" max="40" step="0.5" value="${globalH}" oninput="updateIndividualSticker(${idx})">
-                        </div>
-                        <div class="ind-group">
-                            <span>QR: <b id="ind-qr-val-${idx}">${globalQR}</b></span>
-                            <input type="range" id="ind-qr-${idx}" min="10" max="25" step="0.5" value="${globalQR}" oninput="updateIndividualSticker(${idx})">
-                        </div>
-                    </div>
-                `;
-                container.appendChild(wrapper);
+            function renderChunk() {
+                if (currentSeq !== _previewSeq) return;
 
-                const qrBox = wrapper.querySelector(".sticker-qr");
-                if (!qrBox) return;
-                qrBox.innerHTML = "";
-                const fullUrl = `${window.location.origin}/asset-detail.html?id=${encodeURIComponent(code)}`;
+                const startIdx = currentChunkIndex * CHUNK_SIZE;
+                const endIdx = Math.min(startIdx + CHUNK_SIZE, codesToPrint.length);
 
-                if (typeof QRCode !== "undefined") {
-                    try {
-                        new QRCode(qrBox, {
-                            text: fullUrl,
-                            width: 256,
-                            height: 256,
-                            colorDark: "#000000",
-                            colorLight: "#ffffff",
-                            correctLevel: QRCode.CorrectLevel.M
-                        });
+                for (let idx = startIdx; idx < endIdx; idx++) {
+                    const code = codesToPrint[idx];
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "sticker-card-wrapper";
+                    wrapper.id = `sticker-wrap-${idx}`;
 
-                        const canvas = qrBox.querySelector("canvas");
-                        const img = qrBox.querySelector("img");
-                        if (canvas && img && (!img.src || img.src.startsWith("data:image/gif"))) {
+                    wrapper.innerHTML = `
+                        <div class="sticker-item">
+                            <div class="sticker-qr" id="qrcode-${idx}"></div>
+                            <div class="sticker-info">
+                                <div class="sticker-code">${code}</div>
+                                <div class="sticker-line"></div>
+                                <div class="sticker-line"></div>
+                            </div>
+                        </div>
+                        <div class="individual-controls">
+                            <div class="ind-group">
+                                <span>กว้าง: <b id="ind-w-val-${idx}">${globalW}</b></span>
+                                <input type="range" id="ind-w-${idx}" min="40" max="95" step="1" value="${globalW}" oninput="updateIndividualSticker(${idx})">
+                            </div>
+                            <div class="ind-group">
+                                <span>สูง: <b id="ind-h-val-${idx}">${globalH}</b></span>
+                                <input type="range" id="ind-h-${idx}" min="15" max="40" step="0.5" value="${globalH}" oninput="updateIndividualSticker(${idx})">
+                            </div>
+                            <div class="ind-group">
+                                <span>QR: <b id="ind-qr-val-${idx}">${globalQR}</b></span>
+                                <input type="range" id="ind-qr-${idx}" min="10" max="25" step="0.5" value="${globalQR}" oninput="updateIndividualSticker(${idx})">
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(wrapper);
+
+                    const qrBox = wrapper.querySelector(".sticker-qr");
+                    if (qrBox) {
+                        qrBox.innerHTML = "";
+                        const fullUrl = `${window.location.origin}/asset-detail.html?id=${encodeURIComponent(code)}`;
+
+                        if (typeof QRCode !== "undefined") {
                             try {
-                                img.src = canvas.toDataURL("image/png");
-                                img.style.display = "block";
-                            } catch (_) {}
+                                new QRCode(qrBox, {
+                                    text: fullUrl,
+                                    width: 256,
+                                    height: 256,
+                                    colorDark: "#000000",
+                                    colorLight: "#ffffff",
+                                    correctLevel: QRCode.CorrectLevel.M
+                                });
+
+                                const canvas = qrBox.querySelector("canvas");
+                                const img = qrBox.querySelector("img");
+                                if (canvas && img && (!img.src || img.src.startsWith("data:image/gif"))) {
+                                    try {
+                                        img.src = canvas.toDataURL("image/png");
+                                        img.style.display = "block";
+                                    } catch (_) { }
+                                }
+                            } catch (qrErr) {
+                                console.warn(`QRCode library error for ${code}:`, qrErr);
+                                qrBox.innerHTML = `<img src="${getApiUrl("/api/qr?id=" + encodeURIComponent(code))}" alt="${code}" style="width:100%;height:100%;object-fit:contain;display:block;">`;
+                            }
+                        } else {
+                            qrBox.innerHTML = `<img src="${getApiUrl("/api/qr?id=" + encodeURIComponent(code))}" alt="${code}" style="width:100%;height:100%;object-fit:contain;display:block;">`;
                         }
-                    } catch (qrErr) {
-                        console.warn(`QRCode library error for ${code}:`, qrErr);
-                        qrBox.innerHTML = `<img src="${getApiUrl("/api/qr?id=" + encodeURIComponent(code))}" alt="${code}" style="width:100%;height:100%;object-fit:contain;display:block;">`;
                     }
-                } else {
-                    qrBox.innerHTML = `<img src="${getApiUrl("/api/qr?id=" + encodeURIComponent(code))}" alt="${code}" style="width:100%;height:100%;object-fit:contain;display:block;">`;
                 }
-            });
+
+                currentChunkIndex++;
+                if (endIdx < codesToPrint.length) {
+                    _activeRenderTimeout = setTimeout(renderChunk, 16);
+                }
+            }
+
+            renderChunk();
         }
 
         function toggleMode() {

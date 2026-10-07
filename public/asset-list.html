@@ -728,6 +728,22 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination Controls -->
+                <div class="pagination-wrapper" id="paginationWrapper" style="display:flex; justify-content:space-between; align-items:center; padding:16px 8px 8px 8px; flex-wrap:wrap; gap:12px; border-top:1px solid var(--border-color, #1e2638); margin-top:16px;">
+                    <div id="paginationInfo" style="font-size:0.875rem; color:var(--text-muted, #8b949e); font-weight:500;">
+                        กำลังโหลดข้อมูล...
+                    </div>
+                    <div class="pagination-controls" style="display:flex; align-items:center; gap:8px;">
+                        <button type="button" class="btn-action" id="btnPrevPage" onclick="goToPage(currentPage - 1)" style="padding:6px 14px; font-size:0.85rem; cursor:pointer;" disabled>
+                            <i class="fa-solid fa-chevron-left"></i> ก่อนหน้า
+                        </button>
+                        <span id="pageIndicators" style="display:flex; gap:4px; align-items:center;"></span>
+                        <button type="button" class="btn-action" id="btnNextPage" onclick="goToPage(currentPage + 1)" style="padding:6px 14px; font-size:0.85rem; cursor:pointer;" disabled>
+                            ถัดไป <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -1027,6 +1043,7 @@
                 console.error('loadAssets error:', err);
             }
         }
+        window.loadAssets = loadAssets;
 
         function getCurrentUser() {
             try {
@@ -1075,6 +1092,20 @@
                 `;
 
                 if (canEdit) {
+                    if (a.status !== 'borrowed' && a.status !== 'disposed') {
+                        actionHtml += `
+                            <a href="borrow-return.html?code=${encodeURIComponent(a.asset_code)}" class="btn-action" title="ยืมอุปกรณ์นี้" style="color:#3b82f6;">
+                                <i class="fa-solid fa-right-left"></i> ยืม
+                            </a>
+                        `;
+                    }
+                    if (a.status !== 'maintenance' && a.status !== 'disposed') {
+                        actionHtml += `
+                            <a href="maintenance.html?code=${encodeURIComponent(a.asset_code)}" class="btn-action" title="แจ้งซ่อมอุปกรณ์นี้" style="color:#f59e0b;">
+                                <i class="fa-solid fa-wrench"></i> แจ้งซ่อม
+                            </a>
+                        `;
+                    }
                     actionHtml += `
                         <button class="btn-action" title="แก้ไขข้อมูล" onclick="openEditModalFromData(${JSON.stringify(a).replace(/"/g, '&quot;')})">
                             <i class="fa-regular fa-pen-to-square"></i> แก้ไข
@@ -1148,10 +1179,66 @@
             }
         }
 
+                let totalPages = 1;
+
+        function goToPage(page) {
+            if (page < 1 || page > totalPages || page === currentPage) return;
+            const searchVal = document.getElementById('searchInput')?.value?.trim() || '';
+            const statusVal = document.getElementById('statusFilter')?.value || '';
+            const catVal = document.getElementById('categoryFilter')?.value || '';
+            loadAssets(searchVal, statusVal, page, catVal);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
         function updatePagination(total, page, limit) {
-            const totalPages = Math.max(1, Math.ceil(total / limit));
+            totalPages = Math.max(1, Math.ceil(total / limit));
+            currentPage = page;
             const el = document.getElementById('paginationInfo');
-            if (el) el.textContent = total === 0 ? 'ทั้งหมด 0 รายการ' : `หน้า ${page} / ${totalPages} (ทั้งหมด ${total} รายการ)`;
+            const prevBtn = document.getElementById('btnPrevPage');
+            const nextBtn = document.getElementById('btnNextPage');
+            const indicatorsEl = document.getElementById('pageIndicators');
+
+            if (total === 0) {
+                if (el) el.textContent = 'ไม่พบข้อมูลทรัพย์สิน';
+                if (prevBtn) prevBtn.disabled = true;
+                if (nextBtn) nextBtn.disabled = true;
+                if (indicatorsEl) indicatorsEl.innerHTML = '';
+                return;
+            }
+
+            const from = (page - 1) * limit + 1;
+            const to = Math.min(page * limit, total);
+            if (el) el.innerHTML = `แสดงรายการที่ <strong>${from}-${to}</strong> จากทั้งหมด <strong>${total}</strong> รายการ (หน้า <strong>${page}</strong> / <strong>${totalPages}</strong>)`;
+
+            if (prevBtn) prevBtn.disabled = page <= 1;
+            if (nextBtn) nextBtn.disabled = page >= totalPages;
+
+            if (indicatorsEl) {
+                let html = '';
+                const maxButtons = 5;
+                let startP = Math.max(1, page - 2);
+                let endP = Math.min(totalPages, startP + maxButtons - 1);
+                if (endP - startP < maxButtons - 1) {
+                    startP = Math.max(1, endP - maxButtons + 1);
+                }
+
+                if (startP > 1) {
+                    html += `<button type="button" class="btn-action" style="padding:4px 10px; font-size:0.8rem;" onclick="goToPage(1)">1</button>`;
+                    if (startP > 2) html += `<span style="color:var(--text-muted); padding:0 4px;">...</span>`;
+                }
+
+                for (let p = startP; p <= endP; p++) {
+                    const isActive = p === page;
+                    html += `<button type="button" class="btn-action" style="padding:4px 10px; font-size:0.8rem; ${isActive ? 'background:var(--accent-blue, #388bfd); color:#fff; border-color:var(--accent-blue, #388bfd); font-weight:bold;' : ''}" onclick="goToPage(${p})">${p}</button>`;
+                }
+
+                if (endP < totalPages) {
+                    if (endP < totalPages - 1) html += `<span style="color:var(--text-muted); padding:0 4px;">...</span>`;
+                    html += `<button type="button" class="btn-action" style="padding:4px 10px; font-size:0.8rem;" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+                }
+
+                indicatorsEl.innerHTML = html;
+            }
         }
 
         function openAddModal() {
@@ -1255,7 +1342,10 @@
                 if (!r.ok || !data.success) throw new Error(data.message);
                 alert('อัปเดตข้อมูลสำเร็จ!');
                 closeModal('editAssetModal');
-                loadAssets();
+                const searchVal = document.getElementById('searchInput')?.value?.trim() || '';
+                const statusVal = document.getElementById('statusFilter')?.value || '';
+                const catVal = document.getElementById('categoryFilter')?.value || '';
+                loadAssets(searchVal, statusVal, currentPage, catVal);
             } catch (err) {
                 alert('เกิดข้อผิดพลาด: ' + err.message);
             }
